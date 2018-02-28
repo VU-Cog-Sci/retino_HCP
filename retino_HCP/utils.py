@@ -33,6 +33,8 @@ def sg_filter_cii(cii_file, polyorder=3, deriv=0, window_length=210, tr=1):
     out_file = os.path.abspath(out_name)
     nb.save(cii_out, out_file)
 
+    return out_file
+
 def psc_cii(cii_file, method='median'):
     """psc_cii performs percent signal change conversion on cii file contents"""
 
@@ -55,6 +57,15 @@ def psc_cii(cii_file, method='median'):
     out_name = os.path.splitext(cii_file)[0] + '_psc.nii'
     out_file = os.path.abspath(out_name)
     nb.save(cii_out, out_file)
+
+    return out_file
+
+
+def sg_psc_cii(cii_file):
+    sg_file = sg_filter_cii(cii_file)
+    psc_file = psc_cii(sg_file)
+
+    return psc_file
 
 #########################################################################################################################
 ## 
@@ -97,7 +108,7 @@ def design_matrix_ring(direction='EXP',
                         n_reps=8, 
                         size_slope=0.5, 
                         n_pix=100):
-    """design_matrix_wedge creates a wedge design matrix"""
+    """design_matrix_ring creates a ring design matrix"""
 
     total_steps = (n_stim_steps+n_blank_steps)
 
@@ -114,7 +125,7 @@ def design_matrix_ring(direction='EXP',
     elif direction == 'CON':
         dir_indices = np.arange(n_stim_steps)[::-1]
 
-    one_cycle = np.zeros((n_stim_steps+n_blank_steps, n_pix, n_pix))
+    one_cycle = np.zeros((total_steps, n_pix, n_pix))
     for i, p,s in zip(np.arange(n_stim_steps), ecc_pos_steps, ecc_size_steps):
         s2 = s/2.0
         one_cycle[i] = (ecc >= (p-s2)) & (ecc <= (p+s2))
@@ -124,7 +135,7 @@ def design_matrix_ring(direction='EXP',
 
     for rep in range(n_reps):
         these_tps = pre_post_blank + rep*total_steps
-        dm[these_tps:these_tps+n_steps,:,:] = one_cycle
+        dm[these_tps:these_tps+total_steps,:,:] = one_cycle
     
     return dm.astype(bool)
 
@@ -139,6 +150,7 @@ def design_matrix_prf(pre_post_blank=16,
 
     s2 = bar_width/2.0
     total_steps = (n_stim_steps+n_blank_steps)
+
     X,Y = np.meshgrid(np.linspace(-1, 1, n_pix, endpoint=True), np.linspace(-1, 1, n_pix, endpoint=True))
     ecc_mask = np.sqrt(X**2+Y**2) <= 1.01
 
