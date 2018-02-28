@@ -5,7 +5,7 @@ API
 Classes
 -------
 
-.. currentmodule:: shablona
+.. currentmodule:: retino_HCP
 
 .. autosummary::
    :template: class.rst

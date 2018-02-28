@@ -1,7 +1,7 @@
 [run]
 branch = True
-source = shablona/*
-include = shablona/*
+source = retino_HCP/*
+include = retino_HCP/*
 omit = */setup.py
 [report]
-include = shablona/*
+include = retino_HCP/*
