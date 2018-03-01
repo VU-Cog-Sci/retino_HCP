@@ -27,13 +27,9 @@ from hrf_estimation.hrf import spmt  # , dspmt, ddspmt
 subject_folder = '/home/shared/2018/visual/HCP7TFIXED/671855/'
 # subject_folder = sys.argv[1]
 
-
-TR = 1.0
-screen_distance = 101
-screen_width = 29
-n_timepoints_per_run = 300
-run_order = ['RETCCW','RETCW','RETEXP','RETCON','RETBAR1','RETBAR2']
-direction_order = ['CCW','CW','EXP','CON','PRF','PRF']
+with open('../settings.json') as f:
+    json_s = f.read()
+    analysis_info = json.loads(json_s)
 
 ############################################################################################################################################
 #
@@ -42,7 +38,7 @@ direction_order = ['CCW','CW','EXP','CON','PRF','PRF']
 ############################################################################################################################################
 
 visual_dm = []
-for i, d in enumerate(direction_order):
+for i, d in enumerate(analysis_info["direction_order"]):
     if i in (0,1):
         visual_dm.append(design_matrix_wedge(direction=d))
     if i in (2,3):
@@ -53,13 +49,11 @@ for i, d in enumerate(direction_order):
 visual_dm = np.vstack(visual_dm).transpose((1,2,0))
 
 stimulus = VisualStimulus(stim_arr=visual_dm, 
-                            viewing_distance=screen_distance, 
-                            screen_width=screen_width, 
-                            scale_factor=1.0/5.0, 
-                            tr_length=TR, 
-                            dtype=np.short)#, interp='nearest'
-
-
+                            viewing_distance=analysis_info["screen_distance"], 
+                            screen_width=analysis_info["screen_width"], 
+                            scale_factor=0.05, 
+                            tr_length=analysis_info["TR"], 
+                            dtype=np.short)
 
 
 ############################################################################################################################################
@@ -68,7 +62,7 @@ stimulus = VisualStimulus(stim_arr=visual_dm,
 #
 ############################################################################################################################################
 
-cii_files = [glob.glob(os.path.join(subject_folder, '*%s*_sg_psc.nii'%run))[0] for run in run_order]
+cii_files = [glob.glob(os.path.join(subject_folder, '*%s*_sg_psc.nii'%run))[0] for run in analysis_info["run_order"]]
 
 data = []
 for cii_file in cii_files:
@@ -129,20 +123,29 @@ css_bounds = (x_bound, y_bound, s_bound, n_bound, b_bound, bas_bound)
 voxel_indices = [(xx, 0, 0) for xx in np.arange(data.shape[1])]
 
 bundle = utils.multiprocess_bundle(Fit=css.CompressiveSpatialSummationFit, model=css_model, data=data.T,
-                                   grids=css_grids, bounds=css_bounds, indices=voxel_indices, auto_fit=True, verbose=1, Ns=6)
+                                   grids=css_grids, bounds=css_bounds, indices=voxel_indices, auto_fit=True, verbose=1, Ns=4)
 
-output = Parallel(n_jobs=3)(delayed(css.CompressiveSpatialSummationFit)(model=css_model,
-                                    data=d,
-                                    grids=css_grids, 
-                                    bounds=css_bounds, 
-                                    voxel_index=vi, 
-                                    auto_fit=True, 
-                                    verbose=1, 
-                                    Ns=6) for vi, d in zip(voxel_indices, data.T))
+# output = Parallel(n_jobs=3)(delayed(css.CompressiveSpatialSummationFit)(model=css_model,
+#                                     data=d,
+#                                     grids=css_grids, 
+#                                     bounds=css_bounds, 
+#                                     voxel_index=vi, 
+#                                     auto_fit=True, 
+#                                     verbose=1, 
+#                                     Ns=6) for vi, d in zip(voxel_indices, data.T))
 
+
+# fit = css.CompressiveSpatialSummationFit(model=css_model,
+#                                     data=data[:,4],
+#                                     grids=css_grids, 
+#                                     bounds=css_bounds, 
+#                                     voxel_index=(4,0,0), 
+#                                     auto_fit=True, 
+#                                     verbose=1, 
+#                                     Ns=6)
 
 # run analysis
-pool = multiprocessing.Pool(3)
+pool = multiprocessing.Pool(12)
 output = pool.map(utils.parallel_fit, bundle)
 
 for fit in output:

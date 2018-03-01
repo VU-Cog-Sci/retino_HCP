@@ -60,12 +60,54 @@ def psc_cii(cii_file, method='median'):
 
     return out_file
 
-
 def sg_psc_cii(cii_file):
     sg_file = sg_filter_cii(cii_file)
     psc_file = psc_cii(sg_file)
 
     return psc_file
+
+def average_phase_encoded_ciis(file_1, file_2, shift=9):
+    """second data file will be reversed and shifted by twice the haemodynamic delay
+    """
+    # cii data
+    ciis = [nb.load(cii_file) for cii_file in [file_1, file_2]]
+    data = [cii_in.get_data() for cii_in in ciis]
+
+    data[1] = data[1][::-1]
+    data[1] = np.roll(data[1], shift, axis=0)
+
+    m_data = np.mean(np.array(data), axis = 0)
+
+    cii_out = nb.Cifti2Image(dataobj=m_data, 
+                            header=ciis[0].header, 
+                            nifti_header=ciis[0].nifti_header, 
+                            extra=ciis[0].extra)
+
+    out_name = os.path.splitext(file_1)[0] + '_av.nii'
+    out_file = os.path.abspath(out_name)
+    nb.save(cii_out, out_file)
+
+    return out_file
+
+def average_bar_ciis(file_1, file_2):
+    """no reversal or shifting necessary for the bar files
+    """
+    # cii data
+    ciis = [nb.load(cii_file) for cii_file in [file_1, file_2]]
+    data = [cii_in.get_data() for cii_in in ciis]
+
+    m_data = np.mean(np.array(data), axis = 0)
+
+    cii_out = nb.Cifti2Image(dataobj=m_data, 
+                            header=ciis[0].header, 
+                            nifti_header=ciis[0].nifti_header, 
+                            extra=ciis[0].extra)
+
+    out_name = (os.path.splitext(file_1)[0] + '_av.nii').replace('BAR1', 'BOTHBARS')
+    out_file = os.path.abspath(out_name)
+    nb.save(cii_out, out_file)
+
+    return out_file
 
 #########################################################################################################################
 ## 
