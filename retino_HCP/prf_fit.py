@@ -22,10 +22,12 @@ from joblib import Parallel, delayed
 
 from hrf_estimation.hrf import spmt  # , dspmt, ddspmt
 
-# from .utils import *
+from .utils import *
 
-subject_folder = '/home/shared/2018/visual/HCP7TFIXED/783462/'
-# subject_folder = sys.argv[1]
+base_folder = '/projects/0/pqsh283/'
+subject = sys.argv[1]
+
+subject_folder = os.path.join(base_folder, subject)
 
 with open('../settings.json') as f:
     json_s = f.read()
@@ -61,7 +63,7 @@ visual_dm = np.vstack(visual_dm).transpose((1,2,0))
 stimulus = VisualStimulus(stim_arr=visual_dm, 
                             viewing_distance=analysis_info["screen_distance"], 
                             screen_width=analysis_info["screen_width"], 
-                            scale_factor=0.05, 
+                            scale_factor=0.1, 
                             tr_length=analysis_info["TR"], 
                             dtype=np.short)
 
@@ -80,6 +82,9 @@ for cii_file in cii_files:
     cii_in = nb.load(cii_file)
     data.append(cii_in.get_data())
 
+data = np.vstack(data)
+
+data = data.squeeze()
 data = np.vstack(data)
 
 estimates = np.zeros((7,data.shape[1]))
@@ -156,7 +161,7 @@ bundle = utils.multiprocess_bundle(Fit=css.CompressiveSpatialSummationFit, model
 #                                     Ns=6)
 
 # run analysis
-pool = multiprocessing.Pool(12)
+pool = multiprocessing.Pool(23)
 output = pool.map(utils.parallel_fit, bundle)
 
 for fit in output:
