@@ -9,7 +9,7 @@ with open('../settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
-base_dir = '/home/shared/2018/visual/HCP7TFIXED'
+base_dir = analysis_info['cluster_base_folder'] 
 
 subject_directories = [fn for fn in glob.glob(os.path.join(base_dir, '*')) if os.path.isdir(fn)]
 

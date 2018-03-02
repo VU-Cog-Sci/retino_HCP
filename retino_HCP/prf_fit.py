@@ -24,14 +24,15 @@ from hrf_estimation.hrf import spmt  # , dspmt, ddspmt
 
 from utils import *
 
-base_folder = '/projects/0/pqsh283/'
-subject = sys.argv[1]
-
-subject_folder = os.path.join(base_folder, subject)
 
 with open('../settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
+
+base_dir = analysis_info['cluster_base_folder'] 
+subject = sys.argv[1]
+
+subject_folder = os.path.join(base_dir, subject)
 
 ############################################################################################################################################
 #
