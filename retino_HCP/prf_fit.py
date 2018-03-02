@@ -139,7 +139,7 @@ css_bounds = (x_bound, y_bound, s_bound, n_bound, b_bound, bas_bound)
 voxel_indices = [(xx, 0, 0) for xx in np.arange(data.shape[1])]
 
 bundle = utils.multiprocess_bundle(Fit=css.CompressiveSpatialSummationFit, model=css_model, data=data.T,
-                                   grids=css_grids, bounds=css_bounds, indices=voxel_indices, auto_fit=True, verbose=1, Ns=4)
+                                   grids=css_grids, bounds=css_bounds, indices=voxel_indices, auto_fit=True, verbose=1, Ns=5)
 
 # run analysis
 pool = multiprocessing.Pool(23)
