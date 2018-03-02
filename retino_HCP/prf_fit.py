@@ -22,7 +22,7 @@ from joblib import Parallel, delayed
 
 from hrf_estimation.hrf import spmt  # , dspmt, ddspmt
 
-from .utils import *
+from utils import *
 
 base_folder = '/projects/0/pqsh283/'
 subject = sys.argv[1]
