@@ -15,7 +15,7 @@ with open('../settings.json') as f:
 
 base_dir = analysis_info['cluster_base_folder'] 
 
-subject_directories = [os.path.split(fn)[1] for fn in glob.glob(os.path.join(base_dir, '*')) if os.path.isdir(fn)]
+subject_directories = sorted([os.path.split(fn)[1] for fn in glob.glob(os.path.join(base_dir, '*')) if os.path.isdir(fn)])
 
 
 for sd in subject_directories[:10]:

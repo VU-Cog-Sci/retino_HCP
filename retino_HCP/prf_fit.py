@@ -24,7 +24,6 @@ from hrf_estimation.hrf import spmt  # , dspmt, ddspmt
 
 from utils import *
 
-
 with open('../settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
@@ -162,7 +161,7 @@ pool.join()
 ############################################################################################################################################
 
 
-cii_out = nb.Cifti2Image(dataobj=estimates, 
+cii_out = nb.cifti2.Cifti2Image(dataobj=estimates, 
                         header=cii_in.header, 
                         nifti_header=cii_in.nifti_header, 
                         extra=cii_in.extra)

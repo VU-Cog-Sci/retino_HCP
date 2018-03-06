@@ -5,5 +5,5 @@
     "n_timepoints_per_run" : 300,
     "run_order" : ["RETCCW","RETCW","RETEXP","RETCON","RETBAR1","RETBAR2"],
     "direction_order" : ["CCW","CW","EXP","CON","PRF","PRF"],
-    "cluster_base_folder": "/projects/0/pqsh283/"
+    "cluster_base_folder": "/projects/0/pqsh283/HCP7TFIXED"
 }
