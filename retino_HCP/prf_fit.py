@@ -76,7 +76,8 @@ subject_folder = os.path.join(base_dir, subject)
 
 # the code above recreates Kendrick's design matrices, we'll now just load them.
 visual_dm = []
-for i in [1,3,5]:
+# for i in [1,3,5]:
+for i in [5]:
     file = tables.open_file(os.path.join(base_dir, 'retinotopysmall{i}.mat'.format(i=i)))
     visual_dm.append(file.get_node('/stim')[:])
     file.close()
@@ -96,7 +97,8 @@ stimulus = VisualStimulus(stim_arr=visual_dm,
 #
 ############################################################################################################################################
 
-averaged_runs = ['CCW','EXP','RETBAR1']
+# averaged_runs = ['CCW','EXP','RETBAR1']
+averaged_runs = ['RETBAR1']
 gii_files = [glob.glob(os.path.join(subject_folder, '*{run}*_{hemi}.func_bla_psc_av.gii'.format(run=run, hemi=hemi)))[0] for run in averaged_runs]
 
 data = []
