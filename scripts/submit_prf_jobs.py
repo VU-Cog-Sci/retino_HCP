@@ -6,14 +6,19 @@ import glob
 import json
 import sys
 import nibabel as nb
+import platform
 
-jobscript_template_file = os.path.join(os.getcwd(), 'jobscript_template.sh')
+if 'lisa' in platform.uname()[1]:
+    jobscript_template_file = os.path.join(os.getcwd(), 'lisa_jobscript_template.sh')
+    base_dir = analysis_info['lisa_cluster_base_folder'] 
+else:
+    jobscript_template_file = os.path.join(os.getcwd(), 'cartesius_jobscript_template.sh')
+    base_dir = analysis_info['cartesius_cluster_base_folder'] 
 
 with open('../settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
-base_dir = analysis_info['cluster_base_folder'] 
 
 subject_directories = sorted([os.path.split(fn)[1] for fn in glob.glob(os.path.join(base_dir, '*')) if os.path.isdir(fn)])
 
@@ -26,8 +31,8 @@ for sd in subject_directories[:10]:
         jobscript.close()
 
         RE_dict = {
-            '---SUBJECT---':                sd
-            '---HEMI---':                   hemi
+            '---SUBJECT---':                sd,
+            '---HEMI---':                   hemi,
         }
 
         for e in RE_dict.keys():

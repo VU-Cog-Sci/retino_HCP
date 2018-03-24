@@ -30,8 +30,8 @@ with open('../settings.json') as f:
     analysis_info = json.loads(json_s)
 
 base_dir = analysis_info['cluster_base_folder'] 
-subject = sys.argv[1]
-hemi = sys.argv[2]
+subject = str(sys.argv[1])
+hemi = str(sys.argv[2])
 
 subject_folder = os.path.join(base_dir, subject)
 
@@ -84,8 +84,8 @@ stimulus = VisualStimulus(stim_arr=visual_dm,
 #
 ############################################################################################################################################
 
-averaged_runs = ['CCW','EXP','BOTHBARS']
-gii_files = [glob.glob(os.path.join(subject_folder, '*{run}*_AP_Atlas_MSMAll_hp2000_clean.dtseries_{hemi}.func_bla_psc_av.gii'.format(run=run, hemi=hemi)))[0] for run in averaged_runs]
+averaged_runs = ['CCW','EXP','RETBAR1']
+gii_files = [glob.glob(os.path.join(subject_folder, '*{run}*_{hemi}.func_bla_psc_av.gii'.format(run=run, hemi=hemi)))[0] for run in averaged_runs]
 
 data = []
 for gii_file in gii_files:

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -t 25:00:00
+#SBATCH -t 15:00:00
 #SBATCH -N 1
 #SBATCH -n 23
 #SBATCH -p normal
