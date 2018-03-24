@@ -8,6 +8,7 @@ from popeye.visual_stimulus import VisualStimulus, simulate_bar_stimulus
 import popeye.css_nohrf as css
 from skimage.transform import rotate
 import tables
+import platform
 
 from skimage.morphology import disk
 import nibabel as nb
@@ -29,7 +30,15 @@ with open('../settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
-base_dir = analysis_info['cluster_base_folder'] 
+if 'lisa' in platform.uname()[1]:
+    base_dir = analysis_info['lisa_cluster_base_folder'] 
+    N_PROCS = 15
+    print('on lisa')
+else:
+    base_dir = analysis_info['cartesius_cluster_base_folder'] 
+    N_PROCS = 23
+    print('on cartesius')
+
 subject = str(sys.argv[1])
 hemi = str(sys.argv[2])
 
@@ -152,7 +161,7 @@ bundle = utils.multiprocess_bundle(Fit=css.CompressiveSpatialSummationFit, model
                                    grids=css_grids, bounds=css_bounds, indices=voxel_indices, auto_fit=True, verbose=1, Ns=5)
 
 # run analysis
-pool = multiprocessing.Pool(23)
+pool = multiprocessing.Pool(N_PROCS)
 output = pool.map(utils.parallel_fit, bundle)
 
 for fit in output:
