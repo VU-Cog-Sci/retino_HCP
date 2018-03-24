@@ -34,7 +34,7 @@ if 'lisa' in platform.uname()[1]:
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     N_PROCS = 15
     print('on lisa')
-else if 'ascanius' in platform.uname()[1]:
+elif 'localhost' in platform.uname()[1]:
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     N_PROCS = 127
     print('on ascanius')
