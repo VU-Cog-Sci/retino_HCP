@@ -67,6 +67,7 @@ visual_dm = []
 for i in [1,3,5]:
     file = tables.open_file(os.path.join(base_dir, 'retinotopysmall{i}.mat'.format(i=i)))
     visual_dm.append(file.get_node('/stim')[:])
+    file.close()
 visual_dm = np.vstack(visual_dm).transpose((1,2,0))
 
 stimulus = VisualStimulus(stim_arr=visual_dm, 
