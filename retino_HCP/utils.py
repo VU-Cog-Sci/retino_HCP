@@ -7,7 +7,11 @@ from scipy.signal import savgol_filter
 from skimage.transform import rotate
 from math import *
 
-
+#################################################################################
+#####
+#####   cii workflow
+#####
+#################################################################################
 
 def sg_filter_cii(cii_file, polyorder=3, deriv=0, window_length=210, tr=1):
     """sg_filter_cii temporally filters cii file contents"""
@@ -108,6 +112,124 @@ def average_bar_ciis(file_1, file_2):
     nb.save(cii_out, out_file)
 
     return out_file
+
+
+#################################################################################
+#####
+#####   gii workflow
+#####
+#################################################################################
+
+def sg_filter_gii(gii_file, polyorder=3, deriv=0, window_length=210, tr=1):
+    """sg_filter_gii temporally filters gii file contents"""
+
+    # gii data
+    gii_in = nb.load(gii_file)
+
+    window = np.int(window_length / tr)
+    if window % 2 == 0:
+        window += 1
+
+    data = np.array([gii_in.darrays[i].data for i in range(len(gii_in.darrays))])
+
+    data_filt = savgol_filter(data.T, window_length=window, polyorder=polyorder,
+                              deriv=deriv, axis=1, mode='nearest').T
+    data_filt = data - data_filt + data_filt.mean(axis=0)
+
+    darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in data_filt]
+
+    gii_out = nb.gifti.gifti.GiftiImage(header=gii_in.header, 
+                            extra=gii_in.extra,
+                            darrays=darrays)
+
+    out_name = os.path.splitext(gii_file)[0] + '_bla.gii'
+    out_file = os.path.abspath(out_name)
+    nb.save(gii_out, out_file)
+
+    return out_file
+
+def psc_gii(gii_file, method='median'):
+    """psc_gii performs percent signal change conversion on gii file contents"""
+
+    # gii data
+    gii_in = nb.load(gii_file)
+
+    data = np.array([gii_in.darrays[i].data for i in range(len(gii_in.darrays))])
+    if method == 'mean':
+        data_m = data.mean(axis=0)
+    elif method == 'median':
+        data_m = np.median(data, axis=0)
+
+    data_conv = 100.0 * (data - data_m)/data_m
+
+    darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in data_conv]
+
+    gii_out = nb.gifti.gifti.GiftiImage(header=gii_in.header, 
+                            extra=gii_in.extra,
+                            darrays=darrays)
+
+    out_name = os.path.splitext(gii_file)[0] + '_psc.gii'
+    out_file = os.path.abspath(out_name)
+    nb.save(gii_out, out_file)
+
+    return out_file
+
+def sg_psc_gii(gii_file):
+    sg_file = sg_filter_gii(gii_file)
+    psc_file = psc_gii(sg_file)
+
+    return psc_file
+
+def average_phase_encoded_giis(file_1, file_2, shift=9):
+    """second data file will be reversed and shifted by twice the haemodynamic delay
+    """
+    # gii data
+    giis = [nb.load(gii_file) for gii_file in [file_1, file_2]]
+
+    data = []
+    for gii in giis:
+        data.append(np.array([gii.darrays[i].data for i in range(len(gii.darrays))]))
+
+    data[1] = data[1][::-1]
+    data[1] = np.roll(data[1], shift, axis=0)
+
+    m_data = np.mean(np.array(data), axis = 0)
+
+    darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in m_data]
+
+    gii_out = nb.gifti.gifti.GiftiImage(header=giis[0].header, 
+                            extra=giis[0].extra,
+                            darrays=darrays)
+
+    out_name = os.path.splitext(file_1)[0] + '_av.gii'
+    out_file = os.path.abspath(out_name)
+    nb.save(gii_out, out_file)
+
+    return out_file
+
+def average_bar_giis(file_1, file_2):
+    """no reversal or shifting necessary for the bar files
+    """
+    # gii data
+    giis = [nb.load(gii_file) for gii_file in [file_1, file_2]]
+
+    data = []
+    for gii in giis:
+        data.append(np.array([gii.darrays[i].data for i in range(len(gii.darrays))]))
+
+    m_data = np.mean(np.array(data), axis = 0)
+    darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in m_data]
+
+    gii_out = nb.gifti.gifti.GiftiImage(header=giis[0].header, 
+                            extra=giis[0].extra,
+                            darrays=darrays)
+
+    out_name = os.path.splitext(file_1)[0] + '_av.gii'
+    out_file = os.path.abspath(out_name)
+    nb.save(gii_out, out_file)
+
+    return out_file
+
 
 #########################################################################################################################
 ## 

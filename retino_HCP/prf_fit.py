@@ -7,6 +7,7 @@ import popeye.utilities as utils
 from popeye.visual_stimulus import VisualStimulus, simulate_bar_stimulus
 import popeye.css_nohrf as css
 from skimage.transform import rotate
+import tables
 
 from skimage.morphology import disk
 import nibabel as nb
@@ -30,6 +31,7 @@ with open('../settings.json') as f:
 
 base_dir = analysis_info['cluster_base_folder'] 
 subject = sys.argv[1]
+hemi = sys.argv[2]
 
 subject_folder = os.path.join(base_dir, subject)
 
@@ -49,15 +51,22 @@ subject_folder = os.path.join(base_dir, subject)
 #         visual_dm.append(design_matrix_prf())
 
 # using only the even runs which are the 'standards'
-visual_dm = []
-for i, d in enumerate(analysis_info["direction_order"]):
-    if i == 0:
-        visual_dm.append(design_matrix_wedge(direction=d))
-    if i == 2:
-        visual_dm.append(design_matrix_ring(direction=d))
-    if i == 4:
-        visual_dm.append(design_matrix_prf())
+# visual_dm = []
+# for i, d in enumerate(analysis_info["direction_order"]):
+#     if i == 0:
+#         visual_dm.append(design_matrix_wedge(direction=d))
+#     if i == 2:
+#         visual_dm.append(design_matrix_ring(direction=d))
+#     if i == 4:
+#         visual_dm.append(design_matrix_prf())
 
+# visual_dm = np.vstack(visual_dm).transpose((1,2,0))
+
+# the code above recreates Kendrick's design matrices, we'll now just load them.
+visual_dm = []
+for i in [1,3,5]:
+    file = tables.open_file(os.path.join(base_dir, 'retinotopysmall{i}.mat'.format(i=i)))
+    visual_dm.append(file.get_node('/stim')[:])
 visual_dm = np.vstack(visual_dm).transpose((1,2,0))
 
 stimulus = VisualStimulus(stim_arr=visual_dm, 
@@ -75,12 +84,12 @@ stimulus = VisualStimulus(stim_arr=visual_dm,
 ############################################################################################################################################
 
 averaged_runs = ['CCW','EXP','BOTHBARS']
-cii_files = [glob.glob(os.path.join(subject_folder, '*%s*_sg_psc_av.nii'%run))[0] for run in averaged_runs]
+gii_files = [glob.glob(os.path.join(subject_folder, '*{run}*_AP_Atlas_MSMAll_hp2000_clean.dtseries_{hemi}.func_bla_psc_av.gii'.format(run=run, hemi=hemi)))[0] for run in averaged_runs]
 
 data = []
-for cii_file in cii_files:
-    cii_in = nb.load(cii_file)
-    data.append(cii_in.get_data())
+for gii_file in gii_files:
+    gii_in = nb.load(gii_file)
+    data.append(np.array([gii_in.darrays[i].data for i in range(len(gii_in.darrays))]))
 
 data = np.vstack(data)
 
@@ -160,12 +169,12 @@ pool.join()
 #
 ############################################################################################################################################
 
+darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in estimates]
 
-cii_out = nb.cifti2.Cifti2Image(dataobj=estimates, 
-                        header=cii_in.header, 
-                        nifti_header=cii_in.nifti_header, 
-                        extra=cii_in.extra)
+gii_out = nb.gifti.gifti.GiftiImage(header=gii_in.header, 
+                        extra=gii_in.extra,
+                        darrays=darrays)
 
-out_name = os.path.splitext(cii_file)[0] + '_est.nii'
+out_name = os.path.splitext(gii_files[0])[0] + '_est.gii'
 out_file = os.path.abspath(out_name)
-nb.save(cii_out, out_file)
+nb.save(gii_out, out_file)

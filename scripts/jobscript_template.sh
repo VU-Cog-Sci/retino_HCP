@@ -8,4 +8,4 @@ source activate i2
 
 cd $HOME/retino_HCP/retino_HCP
 
-python prf_fit.py ---SUBJECT---
+python prf_fit.py ---SUBJECT--- ---HEMI---

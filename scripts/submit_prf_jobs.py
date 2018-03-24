@@ -19,22 +19,25 @@ subject_directories = sorted([os.path.split(fn)[1] for fn in glob.glob(os.path.j
 
 
 for sd in subject_directories[:10]:
-    jobscript = open(jobscript_template_file)
-    working_string = jobscript.read()
-    jobscript.close()
+    for hemi in ["L","R"]: # gifti files are separated into different hemis
 
-    RE_dict = {
-        '---SUBJECT---':                sd
-    }
+        jobscript = open(jobscript_template_file)
+        working_string = jobscript.read()
+        jobscript.close()
 
-    for e in RE_dict.keys():
-        working_string = working_string.replace(e, RE_dict[e])
+        RE_dict = {
+            '---SUBJECT---':                sd
+            '---HEMI---':                   hemi
+        }
 
-    js_name = os.path.expanduser(os.path.join('~', 'jobs', sd + '.sh'))
-    of = open(js_name, 'w')
-    of.write(working_string)
-    of.close()
+        for e in RE_dict.keys():
+            working_string = working_string.replace(e, RE_dict[e])
 
-    print('submitting ' + js_name + ' to queue')
-    print(working_string)
-    os.system('sbatch ' + js_name)
+        js_name = os.path.expanduser(os.path.join('~', 'jobs', sd + '.sh'))
+        of = open(js_name, 'w')
+        of.write(working_string)
+        of.close()
+
+        print('submitting ' + js_name + ' to queue')
+        print(working_string)
+        os.system('sbatch ' + js_name)
