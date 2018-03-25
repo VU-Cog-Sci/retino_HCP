@@ -1,5 +1,5 @@
 #PBS -S /bin/bash
-#PBS -lwalltime=18:00:00 -lnodes=1
+#PBS -lwalltime=0:15:00 -lnodes=1:mem64gb
 
 # call the programs
 echo "Job $PBS_JOBID started at `date`" | mail $USER -s "Job $PBS_JOBID"

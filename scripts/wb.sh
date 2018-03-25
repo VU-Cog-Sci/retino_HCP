@@ -23,3 +23,10 @@ do
       ${hemi}_${t}.label.gii -unlabeled-value -1
     done
 done
+
+
+
+
+git filter-branch --force --index-filter \
+'git rm --cached --ignore-unmatch data/dm.npz' \
+--prune-empty --tag-name-filter cat -- --all
