@@ -7,6 +7,7 @@ import json
 import os
 import glob
 import gc
+import sys
 
 import tables
 from joblib import Parallel, delayed
@@ -18,6 +19,14 @@ from popeye.visual_stimulus import VisualStimulus, simulate_bar_stimulus
 import popeye.css as css
 from hrf_estimation.hrf import spmt  # , dspmt, ddspmt
 
+from tqdm import tqdm
+
+# for s in $(ls -d /home/shared/2018/visual/HCP7TFIXED/*/)
+# do
+#     sj=`basename $s`
+#     time python ridge.py ${sj} L &
+#     time python ridge.py ${sj} R
+# done
 
 #################################################################################
 #####
@@ -35,30 +44,6 @@ subject = str(sys.argv[1])
 hemi = str(sys.argv[2])
 
 subject_folder = os.path.join(base_dir, subject)
-
-
-#################################################################################
-#####
-#####   create stimulus
-#####
-#################################################################################
-
-
-visual_dm = []
-# for i in [1,3,5]:
-for i in [5]:
-    file = tables.open_file(os.path.join(base_dir, 'retinotopysmall{i}.mat'.format(i=i)))
-    visual_dm.append(file.get_node('/stim')[:])
-    file.close()
-visual_dm = np.vstack(visual_dm).transpose((1,2,0))
-
-stimulus = VisualStimulus(stim_arr=visual_dm[::2,::2],
-                            viewing_distance=analysis_info["screen_distance"],
-                            screen_width=analysis_info["screen_width"],
-                            scale_factor=0.05,
-                            tr_length=analysis_info["TR"],
-                            dtype=np.short)
-
 
 #################################################################################
 #####
@@ -80,21 +65,13 @@ data = data.squeeze()
 data = np.vstack(data)
 
 data = np.nan_to_num(data)
-estimates = np.zeros((16,data.shape[1]))
+estimates = np.zeros((18,data.shape[1]))
 
 #################################################################################
 #####
 #####   parameters for modeling
 #####
 #################################################################################
-
-def my_spmt(delay, tr):
-    return spmt(np.arange(0, 33, tr))
-
-# MODEL
-# initialize css model
-css_model = css.CompressiveSpatialSummationModel(stimulus, my_spmt)
-css_model.hrf_delay = 0
 
 xy_parspace = np.sort(np.r_[np.logspace(0,1.7,20)-1, -(np.logspace(0,1.4,20)-1)])
 x_pars, y_pars, sigma_pars, n_pars = np.meshgrid(xy_parspace, xy_parspace, np.logspace(0,1.4,10)-0.8, np.linspace(0.1,1.2,5))
@@ -112,17 +89,40 @@ x_space, y_space = np.meshgrid(np.linspace(-30,30,100), np.linspace(-30,30,100))
 #####
 #################################################################################
 
-if os.path.isfile('../scripts/dm.npz'):
-    regs = np.load('../scripts/dm.npz')['arr_0']
+if os.path.isfile('../data/dm.npz'):
+    regs = np.load('../data/dm.npz')['arr_0']
 else:
     regs = np.ones((data.shape[0], n_pars.shape[0]+1))
 
+    visual_dm = []
+    # for i in [1,3,5]:
+    for i in [5]:
+        file = tables.open_file(os.path.join(base_dir, 'retinotopysmall{i}.mat'.format(i=i)))
+        visual_dm.append(file.get_node('/stim')[:])
+        file.close()
+    visual_dm = np.vstack(visual_dm).transpose((1,2,0))
+
+    stimulus = VisualStimulus(stim_arr=visual_dm[::2,::2],
+                                viewing_distance=analysis_info["screen_distance"],
+                                screen_width=analysis_info["screen_width"],
+                                scale_factor=0.05,
+                                tr_length=analysis_info["TR"],
+                                dtype=np.short)
+
+    def my_spmt(delay, tr):
+        return spmt(np.arange(0, 33, tr))
+
+    # MODEL
+    # initialize css model
+    css_model = css.CompressiveSpatialSummationModel(stimulus, my_spmt)
+    css_model.hrf_delay = 0
+
     i=1
-    for ixr, iyr, isigmar, inr in zip(x_pars, y_pars, sigma_pars, n_pars):
+    for ixr, iyr, isigmar, inr in tqdm(zip(x_pars, y_pars, sigma_pars, n_pars)):
         regs[:,i] = css_model.generate_prediction(x=ixr, y=iyr, n=inr, sigma=isigmar, beta=1, baseline=0, hrf_delay=0)
         i += 1
-        if i%1000 == 0:
-            print('bla %i'%i)
+
+    np.savez('../data/dm.npz', regs)
 
 #################################################################################
 #####
@@ -141,7 +141,8 @@ trough_pars = np.argmin(clf.coef_, axis = 1)
 #####
 #################################################################################
 
-for i, d in enumerate(data.T):
+for i, d in tqdm(enumerate(data.T), total=data.shape[1]):
+    # re-model peak and trough regressors for rsq
     peak_x = np.array([np.ones(data.shape[0]), regs[:,peak_pars[i]]]).T
     peak_lr = Ridge(alpha=0)
     peak_lr.fit(peak_x, d.reshape(-1, 1))
@@ -152,6 +153,7 @@ for i, d in enumerate(data.T):
     trough_lr.fit(trough_x, d.reshape(-1, 1))
     rsq_trough = trough_lr.score(trough_x, d.reshape(-1, 1))
 
+    # save estimates
     estimates[:,i] = np.array([x_pars[peak_pars[i]], 
                     y_pars[peak_pars[i]],
                     np.angle(x_pars[peak_pars[i]] + 1j * y_pars[peak_pars[i]]), 
@@ -171,8 +173,8 @@ for i, d in enumerate(data.T):
                     trough_lr.coef_[0,1], 
                     rsq_trough])
 
-    if i%1000 == 0:
-        print('fitting %i'%i)
+    # if i%1000 == 0:
+    #     print('fitting %i'%i)
 
 #################################################################################
 #####
