@@ -112,8 +112,8 @@ x_space, y_space = np.meshgrid(np.linspace(-30,30,100), np.linspace(-30,30,100))
 #####
 #################################################################################
 
-if os.path.isfile('dm.npz'):
-    regs = np.load('dm.npz')['arr_0']
+if os.path.isfile('../scripts/dm.npz'):
+    regs = np.load('../scripts/dm.npz')['arr_0']
 else:
     regs = np.ones((data.shape[0], n_pars.shape[0]+1))
 
