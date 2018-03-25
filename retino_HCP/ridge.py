@@ -8,6 +8,7 @@ import os
 import glob
 import gc
 import sys
+import platform 
 
 import tables
 from joblib import Parallel, delayed
