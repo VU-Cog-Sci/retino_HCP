@@ -59,3 +59,12 @@ for sd in subject_directories[:10]:
         #     wbc_c = wbc_c[:-1]
         print(wbc_c)
         os.system(wbc_c)
+
+
+
+
+
+
+
+
+

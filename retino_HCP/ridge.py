@@ -8,6 +8,7 @@ import os
 import glob
 import gc
 import sys
+import platform 
 
 import tables
 from joblib import Parallel, delayed
@@ -38,7 +39,18 @@ with open('../settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
-base_dir = '/home/shared/2018/visual/HCP7TFIXED/'
+if 'lisa' in platform.uname()[1]:
+    base_dir = analysis_info['lisa_cluster_base_folder'] 
+    print('on lisa')
+elif 'localhost' in platform.uname()[1]:
+    base_dir = analysis_info['lisa_cluster_base_folder'] 
+    print('on ascanius')
+else:
+    base_dir = analysis_info['cartesius_cluster_base_folder'] 
+    print('on cartesius')
+
+# for testing
+# base_dir = '/home/shared/2018/visual/HCP7TFIXED/'
 
 subject = str(sys.argv[1])
 hemi = str(sys.argv[2])
@@ -73,7 +85,7 @@ estimates = np.zeros((18,data.shape[1]))
 #####
 #################################################################################
 
-xy_parspace = np.sort(np.r_[np.logspace(0,1.7,20)-1, -(np.logspace(0,1.4,20)-1)])
+xy_parspace = np.unique(np.sort(np.r_[np.logspace(0,1.7,20)-1, -(np.logspace(0,1.7,20)-1)]))
 x_pars, y_pars, sigma_pars, n_pars = np.meshgrid(xy_parspace, xy_parspace, np.logspace(0,1.4,10)-0.8, np.linspace(0.1,1.2,5))
 
 x_pars = x_pars.ravel()
@@ -90,8 +102,10 @@ x_space, y_space = np.meshgrid(np.linspace(-30,30,100), np.linspace(-30,30,100))
 #################################################################################
 
 if os.path.isfile('../data/dm.npz'):
+    print('Loading older design matrix')
     regs = np.load('../data/dm.npz')['arr_0']
 else:
+    print('Creating new design matrix')
     regs = np.ones((data.shape[0], n_pars.shape[0]+1))
 
     visual_dm = []
@@ -118,7 +132,7 @@ else:
     css_model.hrf_delay = 0
 
     i=1
-    for ixr, iyr, isigmar, inr in tqdm(zip(x_pars, y_pars, sigma_pars, n_pars)):
+    for ixr, iyr, isigmar, inr in tqdm(zip(x_pars, y_pars, sigma_pars, n_pars), total=n_pars.shape[0]):
         regs[:,i] = css_model.generate_prediction(x=ixr, y=iyr, n=inr, sigma=isigmar, beta=1, baseline=0, hrf_delay=0)
         i += 1
 
@@ -188,7 +202,7 @@ gii_out = nb.gifti.gifti.GiftiImage(header=gii_in.header,
                         extra=gii_in.extra,
                         darrays=darrays)
 
-out_name = os.path.splitext(gii_file)[0] + '_est.gii'
+out_name = os.path.splitext(gii_file)[0] + '_ridge_est.gii'
 out_file = os.path.abspath(out_name)
 nb.save(gii_out, out_file)
 
