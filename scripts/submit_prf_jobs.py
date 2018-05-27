@@ -23,7 +23,8 @@ else:
     sub_command = 'sbatch '
     print('on cartesius')
 
-subject_directories = sorted([os.path.split(fn)[1] for fn in glob.glob(os.path.join(base_dir, '*')) if os.path.isdir(fn)])
+# only run the last, mean subject.
+subject_directories = [sorted([os.path.split(fn)[1] for fn in glob.glob(os.path.join(base_dir, '*')) if os.path.isdir(fn)])[-1]]
 
 
 for sd in subject_directories:
@@ -41,7 +42,7 @@ for sd in subject_directories:
         for e in RE_dict.keys():
             working_string = working_string.replace(e, RE_dict[e])
 
-        js_name = os.path.expanduser(os.path.join('~', 'jobs', sd + '.sh'))
+        js_name = os.path.expanduser(os.path.join('~', 'jobs', '{sd}_{hemi}.sh'.format(sd=sd, hemi=hemi)))
         of = open(js_name, 'w')
         of.write(working_string)
         of.close()
