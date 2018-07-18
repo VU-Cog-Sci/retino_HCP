@@ -17,16 +17,14 @@ for hemi in L R
 do
     for t in pos neg
     do
-        /Applications/workbench/bin_macosx64/wb_command \
-        -metric-label-import ${hemi}_${t}.metric.gii \
-      ${hemi}_${t}.metriclabel.txt \
-      ${hemi}_${t}.label.gii -unlabeled-value -1
+        for pe in polar ecc
+        do
+            /Applications/workbench/bin_macosx64/wb_command \
+            -metric-label-import ${hemi}_${t}_${pe}.metric.gii \
+            ${hemi}_${t}_${pe}.metriclabel.txt \
+            ${hemi}_${t}_${pe}.label.gii -unlabeled-value -1
+        done
     done
 done
 
 
-
-
-git filter-branch --force --index-filter \
-'git rm --cached --ignore-unmatch data/dm.npz' \
---prune-empty --tag-name-filter cat -- --all

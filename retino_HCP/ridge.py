@@ -19,6 +19,7 @@ from popeye.spinach import generate_og_timeseries
 from popeye.visual_stimulus import VisualStimulus, simulate_bar_stimulus
 import popeye.css as css
 from hrf_estimation.hrf import spmt  # , dspmt, ddspmt
+from IPython import embed as shell
 
 from tqdm import tqdm
 
@@ -45,12 +46,15 @@ if 'lisa' in platform.uname()[1]:
 elif 'localhost' in platform.uname()[1]:
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     print('on ascanius')
+elif 'aeneas' in platform.uname()[1]:
+    base_dir = analysis_info['aeneas_base_folder'] 
+    print('on aeneas')
 else:
     base_dir = analysis_info['cartesius_cluster_base_folder'] 
     print('on cartesius')
 
 # for testing
-# base_dir = '/home/shared/2018/visual/HCP7TFIXED/'
+base_dir = '/home/shared/2018/visual/HCP7TFIXED/'
 
 subject = str(sys.argv[1])
 hemi = str(sys.argv[2])
@@ -144,6 +148,7 @@ else:
 #####
 #################################################################################
 
+print('starting ridge regress fit')
 clf = Ridge(alpha=1e15)
 clf.fit(regs, data)
 peak_pars = np.argmax(clf.coef_, axis = 1)

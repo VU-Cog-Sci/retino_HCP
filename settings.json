@@ -5,6 +5,7 @@
     "n_timepoints_per_run" : 300,
     "run_order" : ["RETCCW","RETCW","RETEXP","RETCON","RETBAR1","RETBAR2"],
     "direction_order" : ["CCW","CW","EXP","CON","PRF","PRF"],
+    "aeneas_base_folder": "/home/shared/2018/visual/HCP7TFIXED",
     "cartesius_cluster_base_folder": "/projects/0/pqsh283/HCP7TFIXED",
     "lisa_cluster_base_folder": "/home/knapen/data/HCP7TFIXED"
 }

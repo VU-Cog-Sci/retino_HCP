@@ -38,6 +38,10 @@ elif 'localhost' in platform.uname()[1]:
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     N_PROCS = 250
     print('on ascanius')
+elif 'aeneas' in platform.uname()[1]:
+    base_dir = analysis_info['aeneas_base_folder'] 
+    N_PROCS = 31
+    print('on aeneas')
 else:
     base_dir = analysis_info['cartesius_cluster_base_folder'] 
     N_PROCS = 23
