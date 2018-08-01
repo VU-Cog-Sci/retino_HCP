@@ -14,9 +14,10 @@ Output(s):
 .sh file to execute in server
 -----------------------------------------------------------------------------------------
 Exemple:
-cd /Users/martin/Dropbox/GitHub/retino_HCP/
+cd /Users/martin/Dropbox/GitHub/retino_HCP/ 
 or
 cd /home/szinte/projects/retino_HCP/
+
 python scripts/submit_prf_jobs.py 536647 L 5
 python scripts/submit_prf_jobs.py 536647 R 5
 -----------------------------------------------------------------------------------------
@@ -48,7 +49,7 @@ if 'lisa' in platform.uname()[1]:
     jobscript_template_file = os.path.join(os.getcwd(),'scripts','lisa_jobscript_template.sh')
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     sub_command = 'qsub '
-    fit_per_hour = 200.0
+    fit_per_hour = 500.0
     print('analysis running on lisa')
 elif 'aeneas' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','aeneas_jobscript_template.sh')
@@ -119,7 +120,8 @@ for subject in subjects:
         jobscript.close()
         job_dur = str(datetime.timedelta(hours=job_dur_req))
         
-        re_dict = { '---fit_file---':fit_script,
+        re_dict = { '---job_dur---':job_dur,
+                    '---fit_file---':fit_script,
                     '---subject---':subject,
                     '---start_idx---':str(int(start_idx[iter_job])),
                     '---end_idx---':str(int(end_idx[iter_job])),
@@ -142,11 +144,7 @@ for subject in subjects:
             os.system('qsub ' + js_name)
         elif 'aeneas' in platform.uname()[1]:
             os.system('sh ' + js_name)
-
         elif 'local' in platform.uname()[1]:            
             os.system('sh ' + js_name)
         else:
             os.system('sbatch ' + js_name)
-
-        # Submit jobs
-        print(js_name + ' done')
