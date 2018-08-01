@@ -13,9 +13,12 @@ sys.argv[3]: job duration requested in hours (1)
 Output(s):
 .sh file to execute in server
 -----------------------------------------------------------------------------------------
-To run:
-cd /Users/martin/Dropbox/GitHub/retino_HCP/scripts/
-python scripts/submit_prf_jobs.py 536647 L 1
+Exemple:
+cd /Users/martin/Dropbox/GitHub/retino_HCP/
+or
+cd /home/szinte/projects/retino_HCP/
+python scripts/submit_prf_jobs.py 536647 L 5
+python scripts/submit_prf_jobs.py 536647 R 5
 -----------------------------------------------------------------------------------------
 """
 
@@ -93,7 +96,7 @@ for subject in subjects:
     end_idx = start_idx+fit_per_hour
     end_idx[-1] = data_size[1]
 
-    print('%i jobs of %1.1fh each will be send to %s'%(start_idx.shape[0],job_dur_req,platform.uname()[1]))
+    print('%i jobs of %1.1fh each will be run/send to %s'%(start_idx.shape[0],job_dur_req,platform.uname()[1]))
 
     job_input = []
     for iter_job in np.arange(0,start_idx.shape[0],1):

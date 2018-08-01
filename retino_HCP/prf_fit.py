@@ -55,7 +55,7 @@ with open('settings.json') as f:
 if 'lisa' in platform.uname()[1]:
     N_PROCS = 16
 elif 'aeneas' in platform.uname()[1]:
-    N_PROCS = 32
+    N_PROCS = 31
 elif 'local' in platform.uname()[1]:
     N_PROCS = 8
 else:
