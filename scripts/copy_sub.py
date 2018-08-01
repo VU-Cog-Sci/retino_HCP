@@ -29,8 +29,8 @@ subs = ['192641','105923','111312','926862','182739','167440','789373','690152',
 files_to_trans = [	'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries_L.func_bla_psc_av.gii',\
 					'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries_R.func_bla_psc_av.gii'	]
 
-database_dir = '/home/shared/2018/visual/HCP7TFIXED'
-target_dir = '/home/shared/2018/visual/nprf_hcp'
+database_dir = '/home/shared/2018/visual/nprf_hcp'
+target_dir = 'szinte@lisa.surfsara.nl:/home/szinte/data/nprf_hcp'
 
 copy_cmd_beg = 'rsync -a --no-g --no-p -vzhe ssh --progress'
 
@@ -45,4 +45,4 @@ for sub in subs:
 			pass
 		
 		copy_cmd = '%s %s %s'%(copy_cmd_beg,from_file,to_file)
-		print(copy_cmd)
+		os.system(copy_cmd)
