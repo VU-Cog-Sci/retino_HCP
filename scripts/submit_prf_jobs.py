@@ -92,8 +92,8 @@ for subject in subjects:
     total_time = data_size[1]/fit_per_hour
     job_vox = np.ceil(job_dur_req*fit_per_hour)
 
-    start_idx =  np.arange(0,data_size[1],fit_per_hour)
-    end_idx = start_idx+fit_per_hour
+    start_idx =  np.arange(0,data_size[1],job_vox)
+    end_idx = start_idx+job_vox
     end_idx[-1] = data_size[1]
 
     print('%i jobs of %1.1fh each will be run/send to %s'%(start_idx.shape[0],job_dur_req,platform.uname()[1]))
