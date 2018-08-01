@@ -54,7 +54,7 @@ elif 'aeneas' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','aeneas_jobscript_template.sh')
     base_dir = analysis_info['aeneas_base_folder'] 
     sub_command = 'sh '
-    fit_per_hour = 200.0
+    fit_per_hour = 300.0
     print('analysis running on aeneas')
 elif 'local' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','local_jobscript_template.sh')
@@ -69,7 +69,7 @@ else:
     fit_per_hour = 500.0
     print('analysis running on cartesius')
 
-fit_script = 'retino_HCP.prf_fit'
+fit_script = 'retino_HCP/prf_fit.py'
 
 # Create job folders
 try:
@@ -142,7 +142,11 @@ for subject in subjects:
             os.system('qsub ' + js_name)
         elif 'aeneas' in platform.uname()[1]:
             os.system('sh ' + js_name)
+
         elif 'local' in platform.uname()[1]:            
             os.system('sh ' + js_name)
         else:
             os.system('sbatch ' + js_name)
+
+        # Submit jobs
+        print(js_name + ' done')
