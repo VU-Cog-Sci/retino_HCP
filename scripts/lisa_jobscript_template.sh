@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -lwalltime=---job_dur---
-#PBS -lnodes=2
+#PBS -lnodes=1
 
 source activate i36
 cd $HOME/projects/retino_HCP/

@@ -18,8 +18,8 @@ cd /Users/martin/Dropbox/GitHub/retino_HCP/
 or
 cd /home/szinte/projects/retino_HCP/
 
-python scripts/submit_prf_jobs.py 536647 L 5
-python scripts/submit_prf_jobs.py 536647 R 5
+python scripts/submit_prf_jobs.py 536647 L 4
+python scripts/submit_prf_jobs.py 536647 R 4
 -----------------------------------------------------------------------------------------
 """
 
@@ -49,7 +49,7 @@ if 'lisa' in platform.uname()[1]:
     jobscript_template_file = os.path.join(os.getcwd(),'scripts','lisa_jobscript_template.sh')
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     sub_command = 'qsub '
-    fit_per_hour = 500.0
+    fit_per_hour = 200.0
     print('analysis running on lisa')
 elif 'aeneas' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','aeneas_jobscript_template.sh')
@@ -141,6 +141,7 @@ for subject in subjects:
         print('submitting ' + js_name + ' to queue')
 
         if 'lisa' in platform.uname()[1]:
+            os.chdir(os.path.join(base_dir,'pp','log_outputs'))
             os.system('qsub ' + js_name)
         elif 'aeneas' in platform.uname()[1]:
             os.system('sh ' + js_name)
