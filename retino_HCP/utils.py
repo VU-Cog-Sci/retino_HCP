@@ -381,8 +381,6 @@ def set_pycortex_config_file(project_folder):
 
                 fileOut.write(newline)
 
-    import ipdb
-    ipdb.set_trace()
     
     # Renames the original config file als '_old' and the newly created one to the original name
     os.rename(pycortex_config_file, pycortex_config_file[:-4] + '_old.cfg')

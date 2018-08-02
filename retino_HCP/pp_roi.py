@@ -7,15 +7,16 @@ Region of interests pre-processing
 Compute pRF parameters and plot on pycortex overlay to determine ROI
 -----------------------------------------------------------------------------------------
 Input(s):
-sys.argv[1]: subject name (e.g. 'sub-001')
-sys.argv[2]: gaze condition (e.g. 'gazeRight')
+sys.argv[1]: subject number
+sys.argv[2]: voxels per fit (e.g 400)
 -----------------------------------------------------------------------------------------
 Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-cd /home/szinte/projects/pRF_analysis/
-python pp_roi.py 'sub-004'
+source activate i27
+cd /home/szinte/projects/retino_HCP
+python retino_HCP/pp_roi.py 192641 400
 -----------------------------------------------------------------------------------------
 """
 
@@ -42,9 +43,18 @@ from utils import set_pycortex_config_file
 # from pRF_gazeMod.utils.utils import combine_cv_prf_fit_results_all_runs
 # from pRF_gazeMod.utils.prf import convert_fit_results,draw_cortex_volume
 
+# Get inputs
+subject = sys.argv[1]
+job_vox = float(sys.argv[2])
+fit_val = 7
+vox_num = 32492
+base_file_name = 'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries'
 # Get clock to rename old overlay.svg file
 import datetime
 now = datetime.datetime.now()
+
+## Check for python version:
+sys.exit('Drawing Flatmaps only works with Python 2.x. The current environment seems to have a higher version. Aborting.') if sys.version_info[0] > 2 else None
 
 # Define analysis parameters
 with open('settings.json') as f:
@@ -61,43 +71,74 @@ elif 'local' in platform.uname()[1]:
 pycortex_folder     =   os.path.join(base_dir,'pp','cortex')
 set_pycortex_config_file(project_folder     =   pycortex_folder)
 
-
 # Check if all slices are present. If not, the script will abort.
-# ---------------------------------------------------------------
-# determine iter job for left hemi
+start_idx =  np.arange(0,vox_num,job_vox)
+end_idx = start_idx+job_vox
+end_idx[-1] = vox_num
+num_miss_part = 0
+fit_files_L = []
+fit_files_R = []
+for hemi in ['L','R']:
+    for iter_job in np.arange(0,start_idx.shape[0],1):
+        fit_file = os.path.join(base_dir,'pp',subject,'prf', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+        if os.path.isfile(fit_file):
+            if os.path.getsize(fit_file) == 0:
+                num_miss_part += 1 
+            else:
+                exec('fit_files_{hemi}.append(fit_file)'.format(hemi = hemi))
+        else:
+            num_miss_part += 1
+
+if num_miss_part != 0:
+    # sys.exit('%i missing files, analysis stopped'%num_miss_part)
+    print('%i missing files, partial analysis'%num_miss_part)
+
+# Post-fit pRF analysis
+# ---------------------
+
+# combine fit files and save
+# left hemi
+data_L = []
+data_L = np.zeros((fit_val,vox_num))
+for fit_filename_L in fit_files_L:
+    data_fit_L = []
+    data_fit_file_L = nb.load(fit_filename_L)
+    data_fit_L.append(np.array([data_fit_file_L.darrays[i].data for i in range(len(data_fit_file_L.darrays))]))
+    data_fit_L = np.vstack(data_fit_L)
+    data_L = data_L + data_fit_L
+
+darrays_L = [nb.gifti.gifti.GiftiDataArray(d) for d in data_L]
+gii_out_L = nb.gifti.gifti.GiftiImage(  header = data_fit_file_L.header, 
+                                        extra = data_fit_file_L.extra,
+                                        darrays = darrays_L)
+nb.save(gii_out_L, os.path.join(base_dir,'pp',subject,'prf','%s_L.func_bla_psc_est.gii'%(base_file_name)))
+
+# right hemi
+data_R = []
+data_R = np.zeros((fit_val,vox_num))
+for fit_filename_R in fit_files_R:
+    data_fit_R = []
+    data_fit_file_R = nb.load(fit_filename_R)
+    data_fit_R.append(np.array([data_fit_file_R.darrays[i].data for i in range(len(data_fit_file_R.darrays))]))
+    data_fit_R = np.vstack(data_fit_R)
+    data_R = data_R + data_fit_R
+
+darrays_R = [nb.gifti.gifti.GiftiDataArray(d) for d in data_L]
+gii_out_R = nb.gifti.gifti.GiftiImage(  header = data_fit_file_R.header, 
+                                        extra = data_fit_file_R.extra,
+                                        darrays = darrays_R)
+
+nb.save(gii_out_R, os.path.join(base_dir,'pp',subject,'prf','%s_R.func_bla_psc_est.gii'%(base_file_name)))
+
+# compute pRF measures
 ipdb.set_trace()
-subject = '536647'
-job_vox_L = 240.0
-start_idx =  np.arange(0,data_size[1],job_vox_L)
-end_idx = start_idx+job_vox_L
-for iter_job in np.arange(0,start_idx.shape[0],1):
-    opfn = os.path.join(base_dir,'pp',subject,'prf', '*_est_%s_to_%s.gii' %(str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-    if os.path.isfile(opfn):
-            if os.path.getsize(opfn) != 0:
-                print('missing')
 
+# compute pRF measures
+convert_fit_results(prf_filenames   =   prf_filenames,                      # file path to pRF analysis image
+                    output_dir      =   deriv_dir,                          # output derivative folder
+                    stim_radius     =   analysis_info['stim_radius'],       # stimulus radius
+                    typeData        =   'all')                              # type of data to analyse to specify output file name
 
-project_dir                             =   analysis_info['aeneas_project_directory']
-mask_data                               =   nb.load(os.path.join(project_dir, 'pp', sub_id, 'masks',        # get the cortical mask
-                                                    'cortex_cortical.nii.gz')).get_data()
-
-slices                                  =   np.arange(mask_data.shape[2])[mask_data.mean(axis=(0,1))>0]     # get only slice with voxels
-
-for gaze_condition in gaze_conditions:
-
-    base_file_names                 =   sorted(glob.glob(os.path.join(project_dir,'pp',sub_id, 'av_' + gaze_condition, 'loo', '*.nii.gz')))
-    base_file_names                 =   [file_name.split('/')[-1] for file_name in base_file_names]
-
-    for base_file_name in base_file_names:
-        for slice_nr in slices:
-            opfn                    =   os.path.join(project_dir,'pp',sub_id, 'cv_' + gaze_condition, 'prf', base_file_name[:-7] + '_est_{0}.nii.gz'.format(slice_nr))
-
-            if os.path.isfile(opfn) == False:
-                print(opfn)
-                sys.exit('Condition: {gaze_condition}, slice {slice_nr} does not exist, can\'t combine individual slices. aborting.'.format(slice_nr=slice_nr, gaze_condition=gaze_condition))                      # quit code if data exist
-
-## Check for python version:
-sys.exit('Drawing Flatmaps only works with Python 2.x. The current environment seems to have a higher version. Aborting.') if sys.version_info[0] > 2 else None
 
 # Renaming .svg file before creating a new one below
 # --------------------------------------------------
@@ -106,39 +147,6 @@ if analysis_info['keep_svg'] == 0:
         overlays_file = sorted(glob.glob(os.path.join(analysis_info['FS_subject_dir'], 'cortex', 'db', sub_id,'overlays.svg')))[0]          # "/home/shared/2017/visual/pRF_gazeMod/derivatives/freesurfer/"
         os.rename(overlays_file, overlays_file[:-4] + '_' + now.strftime("%Y_%m_%d_%H_%M") + '.svg')
     except:pass
-
-
-# Post-fit pRF analysis
-# ---------------------
-for gaze_condition in gaze_conditions:
-
-    # define folders
-    base_dir                        =   os.path.join(analysis_info['aeneas_project_directory'], 'pp',\
-                                                        sub_id,'av_%s'%gaze_condition)                      # avg analysis folder
-    fit_dir                         =   os.path.join(analysis_info['aeneas_project_directory'], 'pp',\
-                                                        sub_id,'cv_%s'%gaze_condition, 'prf')               # cv analysis folder
-    deriv_dir                       =   os.path.join(analysis_info['aeneas_project_directory'],\
-                                                        'pp', sub_id, 'deriv_%s'%gaze_condition)            # new derivatives folder
-    try: os.makedirs(deriv_dir) 
-    except: pass                                                                                            # folder where pRF summary analysis will be stored
-
-    # # combine files
-    # output_files                    =   combine_cv_prf_fit_results_all_runs(
-    #                                                 basedir         =   base_dir,                           # pp analysis folder
-    #                                                 fit_dir         =   fit_dir,                            # pRF analysis folders
-    #                                                 avg_folder      =   'loo')                              # leave-one-out or all folder
-
-    # prf_filenames                   =   sorted(glob.glob(os.path.join(fit_dir,'*all.nii.gz')))              # define combine analysis file name
-
-    # # compute pRF measures
-    # convert_fit_results(                            prf_filenames   =   prf_filenames,                      # file path to pRF analysis image
-    #                                                 output_dir      =   deriv_dir,                          # output derivative folder
-    #                                                 stim_radius     =   analysis_info['stim_radius'],       # stimulus radius
-    #                                                 typeData        =   'all')                              # type of data to analyse to specify output file name
-
-    # average across conditions
-    print('making average across conditions')
-
 
 
 # Calculate and save x gain ratio and amplitude gain ratio

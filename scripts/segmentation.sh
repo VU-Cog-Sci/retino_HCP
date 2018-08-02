@@ -1,9 +1,6 @@
 # 1. open freeview
 
-# sub-002/sub-003/sub-004 from laptop
-export sub_path=/Users/martin/disks/ae_S/2017/visual/pRF_gazeMod/derivatives/freesurfer/sub-004
-#export sub_path=/Users/martin/disks/ae_S/2017/visual/pRF_gazeMod/derivatives/freesurfer/sub-003
-#export sub_path=/Users/martin/disks/ae_S/2017/visual/pRF_gazeMod/derivatives/freesurfer/sub-004
+export sub_path=/Users/martin/disks/ae_S/2018/visual/nprf_hcp/pp/freesurfer/fsaverage
 cd $sub_path
 freeview -v mri/T1.mgz \
 mri/wm.mgz:visible=0 \
@@ -43,7 +40,7 @@ tksurfer sub-003 rh inflated -curv -annotation aparc.a2009s
 # run on aeaneas the flattening function
 # cd to surface folder
 tmux
-cd /home/shared/2017/visual/pRF_gazeMod/derivatives/freesurfer/sub-003/surf/
+cd /home/shared/2018/visual/nprf_hcp/pp/freesurfer/fsaverage/surf/
 mris_flatten lh.full.patch.3d lh.full.flat.patch.3d
 mris_flatten rh.full.patch.3d rh.full.flat.patch.3d
 
