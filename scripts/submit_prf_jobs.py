@@ -8,7 +8,8 @@ create jobscript to run in a cluster (LISA or CARTESIUS) or server (AENEAS)
 Input(s):
 sys.argv[1]: subject name (e.g. 'sub-001')
 sys.argv[2]: subject hemisphere (e.g. 'L')
-sys.argv[3]: job duration requested in hours (1)
+sys.argv[3]: voxel per jobs (used 400 on lisa)
+sys.argv[3]: job duration requested in hours (used 10h on lisa)
 -----------------------------------------------------------------------------------------
 Output(s):
 .sh file to execute in server
@@ -21,10 +22,13 @@ cd /home/szinte/projects/retino_HCP/
 python scripts/submit_prf_jobs.py 536647 L 1 => submit missing files to aeneas
 
 best sub 1: 192641 launched on lisa 10:15 2/08/18
-python scripts/submit_prf_jobs.py 192641 L 5 => 82 jobs of 400 vox per jobs
-python scripts/submit_prf_jobs.py 192641 R 5 => 82 jobs of 400 vox per jobs
+python scripts/submit_prf_jobs.py 192641 L 5 => 82 jobs of 400 vox per jobs (19 missing)
+python scripts/submit_prf_jobs.py 192641 R 5 => 82 jobs of 400 vox per jobs (16 missing)
 
 
+best sub 1: 192641 launched on lisa 17:30 2/08/18
+python scripts/submit_prf_jobs.py 192641 L 400 10
+python scripts/submit_prf_jobs.py 192641 R 400 10
 -----------------------------------------------------------------------------------------
 """
 
@@ -42,7 +46,8 @@ import datetime
 # Get subject number and hemisphere to analyse
 subjects = [sys.argv[1]]
 hemi = [sys.argv[2]]
-job_dur_req = float(sys.argv[3])
+job_vox = float(sys.argv[3])
+job_dur_req = float(sys.argv[4])
 
 # Load the analysis parameters from json file
 with open('settings.json') as f:
@@ -54,25 +59,21 @@ if 'lisa' in platform.uname()[1]:
     jobscript_template_file = os.path.join(os.getcwd(),'scripts','lisa_jobscript_template.sh')
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     sub_command = 'qsub '
-    fit_per_hour = 80.0
     print('analysis running on lisa')
 elif 'aeneas' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','aeneas_jobscript_template.sh')
     base_dir = analysis_info['aeneas_base_folder'] 
     sub_command = 'sh '
-    fit_per_hour = 240.0
     print('analysis running on aeneas')
 elif 'local' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','local_jobscript_template.sh')
     base_dir = analysis_info['local_base_folder'] 
     sub_command = 'sh '
-    fit_per_hour = 20.0
     print('analysis running on local')
 else:
     jobscript_template_file = os.path.join(os.getcwd(),'scripts','cartesius_jobscript_template.sh')
     base_dir = analysis_info['cartesius_cluster_base_folder'] 
     sub_command = 'sbatch '
-    fit_per_hour = 500.0
     print('analysis running on cartesius')
 
 fit_script = 'retino_HCP/prf_fit.py'
@@ -94,9 +95,6 @@ for subject in subjects:
     data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
     data = np.vstack(data)
     data_size = data.shape
-
-    total_time = data_size[1]/fit_per_hour
-    job_vox = np.ceil(job_dur_req*fit_per_hour)
 
     start_idx =  np.arange(0,data_size[1],job_vox)
     end_idx = start_idx+job_vox
