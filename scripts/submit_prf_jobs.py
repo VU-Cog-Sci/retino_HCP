@@ -3,7 +3,7 @@
 submit_prf_jobs
 -----------------------------------------------------------------------------------------
 Goal of the script:
-create jobscript to run in a cluster (LISA or CARTESIUS) or server
+create jobscript to run in a cluster (LISA or CARTESIUS) or server (AENEAS)
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[1]: subject name (e.g. 'sub-001')
@@ -18,8 +18,11 @@ cd /Users/martin/Dropbox/GitHub/retino_HCP/
 or
 cd /home/szinte/projects/retino_HCP/
 
-python scripts/submit_prf_jobs.py 536647 L 4
-python scripts/submit_prf_jobs.py 536647 R 4
+best sub 1: 192641 launched on lisa 10:15 2/08/18
+python scripts/submit_prf_jobs.py 192641 L 5 => 82 jobs of 400 vox per jobs
+python scripts/submit_prf_jobs.py 192641 R 5 => 82 jobs of 400 vox per jobs
+
+
 -----------------------------------------------------------------------------------------
 """
 
@@ -49,7 +52,7 @@ if 'lisa' in platform.uname()[1]:
     jobscript_template_file = os.path.join(os.getcwd(),'scripts','lisa_jobscript_template.sh')
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     sub_command = 'qsub '
-    fit_per_hour = 200.0
+    fit_per_hour = 80.0
     print('analysis running on lisa')
 elif 'aeneas' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','aeneas_jobscript_template.sh')
@@ -143,9 +146,10 @@ for subject in subjects:
         if 'lisa' in platform.uname()[1]:
             os.chdir(os.path.join(base_dir,'pp','log_outputs'))
             os.system('qsub ' + js_name)
+            
         elif 'aeneas' in platform.uname()[1]:
             os.system('sh ' + js_name)
-        elif 'local' in platform.uname()[1]:            
+        elif 'local' in platform.uname()[1]:
             os.system('sh ' + js_name)
         else:
             os.system('sbatch ' + js_name)

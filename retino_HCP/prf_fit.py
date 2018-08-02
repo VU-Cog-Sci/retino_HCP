@@ -129,7 +129,7 @@ bundle = utils.multiprocess_bundle( Fit = css.CompressiveSpatialSummationFit,
                                     verbose = 1, 
                                     Ns = 12)
 # Run fitting
-pool = multiprocessing.Pool(N_PROCS)
+pool = multiprocessing.Pool(processes = N_PROCS)
 output = pool.map(  func = utils.parallel_fit, 
                     iterable = bundle)
 
