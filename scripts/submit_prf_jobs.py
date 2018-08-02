@@ -18,6 +18,8 @@ cd /Users/martin/Dropbox/GitHub/retino_HCP/
 or
 cd /home/szinte/projects/retino_HCP/
 
+python scripts/submit_prf_jobs.py 536647 L 1 => submit missing files to aeneas
+
 best sub 1: 192641 launched on lisa 10:15 2/08/18
 python scripts/submit_prf_jobs.py 192641 L 5 => 82 jobs of 400 vox per jobs
 python scripts/submit_prf_jobs.py 192641 R 5 => 82 jobs of 400 vox per jobs
@@ -58,7 +60,7 @@ elif 'aeneas' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','aeneas_jobscript_template.sh')
     base_dir = analysis_info['aeneas_base_folder'] 
     sub_command = 'sh '
-    fit_per_hour = 300.0
+    fit_per_hour = 240.0
     print('analysis running on aeneas')
 elif 'local' in platform.uname()[1]:
     jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','local_jobscript_template.sh')
@@ -146,10 +148,10 @@ for subject in subjects:
         if 'lisa' in platform.uname()[1]:
             os.chdir(os.path.join(base_dir,'pp','log_outputs'))
             os.system('qsub ' + js_name)
-            
         elif 'aeneas' in platform.uname()[1]:
             os.system('sh ' + js_name)
         elif 'local' in platform.uname()[1]:
+            
             os.system('sh ' + js_name)
         else:
             os.system('sbatch ' + js_name)

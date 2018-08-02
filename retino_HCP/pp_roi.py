@@ -20,12 +20,10 @@ python pp_roi.py 'sub-004'
 """
 
 # Stop warnings
-# -------------
 import warnings
 warnings.filterwarnings("ignore")
 
 # General imports
-# ---------------
 import os
 import sys
 import json
@@ -33,37 +31,50 @@ import glob
 import numpy as np
 import matplotlib.pyplot as pl
 import ipdb
+import platform
 
 # MRI imports
-# -----------
 import nibabel as nb
 import cortex
 
 # Function import
-# ---------------
-from pRF_gazeMod.utils.utils import combine_cv_prf_fit_results_all_runs
-from pRF_gazeMod.utils.prf import convert_fit_results,draw_cortex_volume
+from utils import set_pycortex_config_file
+# from pRF_gazeMod.utils.utils import combine_cv_prf_fit_results_all_runs
+# from pRF_gazeMod.utils.prf import convert_fit_results,draw_cortex_volume
 
 # Get clock to rename old overlay.svg file
 import datetime
 now = datetime.datetime.now()
 
 # Define analysis parameters
-# --------------------------
-with open('analysis_settings.json') as f:                                                                   # get main analysis settings
-    json_s                          =   f.read()
-    analysis_info                   =   json.loads(json_s)
+with open('settings.json') as f:
+    json_s = f.read()
+    analysis_info = json.loads(json_s)
 
-sub_id = str(sys.argv[1])
-xfmname = 'fmriprep'
+# Define cluster/server specific parameters
+if 'aeneas' in platform.uname()[1]:
+    base_dir = analysis_info['aeneas_base_folder'] 
+elif 'local' in platform.uname()[1]:
+    base_dir = analysis_info['local_base_folder'] 
 
 # change cortex database folder
-pycortex_folder     =   os.path.join(analysis_info['FS_subject_dir'], 'cortex')
+pycortex_folder     =   os.path.join(base_dir,'pp','cortex')
 set_pycortex_config_file(project_folder     =   pycortex_folder)
 
 
 # Check if all slices are present. If not, the script will abort.
-# --------------------------------------------------------------------------
+# ---------------------------------------------------------------
+# determine iter job for left hemi
+ipdb.set_trace()
+subject = '536647'
+job_vox_L = 240.0
+start_idx =  np.arange(0,data_size[1],job_vox_L)
+end_idx = start_idx+job_vox_L
+for iter_job in np.arange(0,start_idx.shape[0],1):
+    opfn = os.path.join(base_dir,'pp',subject,'prf', '*_est_%s_to_%s.gii' %(str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+    if os.path.isfile(opfn):
+            if os.path.getsize(opfn) != 0:
+                print('missing')
 
 
 project_dir                             =   analysis_info['aeneas_project_directory']
