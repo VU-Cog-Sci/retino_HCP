@@ -53,7 +53,7 @@ with open('settings.json') as f:
 
 # Define cluster/server specific parameters
 if 'lisa' in platform.uname()[1]:
-    N_PROCS = 16
+    N_PROCS = 4
 elif 'aeneas' in platform.uname()[1]:
     N_PROCS = 31
 elif 'local' in platform.uname()[1]:

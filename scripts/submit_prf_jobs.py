@@ -41,7 +41,6 @@ import sys
 import nibabel as nb
 import platform
 import ipdb
-import datetime
 
 # Get subject number and hemisphere to analyse
 subjects = [sys.argv[1]]
@@ -121,7 +120,7 @@ for subject in subjects:
         jobscript = open(jobscript_template_file)
         working_string = jobscript.read()
         jobscript.close()
-        job_dur = str(datetime.timedelta(hours=job_dur_req))
+        job_dur = '%i:00:00'%job_dur_req
         
         re_dict = { '---job_dur---':job_dur,
                     '---fit_file---':fit_script,
