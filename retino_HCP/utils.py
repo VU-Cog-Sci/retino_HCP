@@ -386,3 +386,125 @@ def set_pycortex_config_file(project_folder):
     os.rename(pycortex_config_file, pycortex_config_file[:-4] + '_old.cfg')
     os.rename(new_pycortex_config_file, pycortex_config_file)
     return None
+
+def convert_fit_results(prf_filename,
+                        output_dir,
+                        stim_radius     =   3.0):
+    """
+    Convert pRF fitting value in different parameters for following analysis
+   
+    Parameters
+    ----------
+    prf_filename: absolute paths to prf result files.
+    output_dir: absolute path to directory into which to put the resulting files.
+    stim_radius: stimulus radius in deg
+
+    Returns
+    -------
+    None
+    """
+
+    # Imports
+    # -------
+    # General imports
+    import os
+    import nibabel as nb
+    import glob
+    import numpy as np
+    import ipdb
+
+    # Popeye imports
+    from popeye.spinach import generate_og_receptive_fields
+
+    try:
+        os.makedirs(os.path.join(output_dir,'all'))
+        os.makedirs(os.path.join(output_dir,'pos'))
+        os.makedirs(os.path.join(output_dir,'neg'))
+    except:
+        pass
+
+    # Get data details
+    # ----------------
+    prf_data = []
+    prf_data_load = nb.load(prf_filename[0])
+    prf_data.append(np.array([prf_data_load.darrays[i].data for i in range(len(prf_data_load.darrays))]))
+    prf_data = np.vstack(prf_data)    
+    extra = prf_data_load.extra
+    hdr = prf_data_load.header
+    
+    
+
+    # Create derived measures from prfs
+    # ---------------------------------
+    print('\nextracting pRF parameters...')
+
+    # pRF sign
+    prf_sign_all = np.sign((prf_data[4,:]))
+    pos_mask = prf_sign_all > 0.0
+    neg_mask = prf_sign_all < 0.0
+    all_mask = pos_mask | neg_mask
+    
+    # r-square
+    prf_rsq_all = prf_data[6,:]
+
+    # pRF eccentricity
+    prf_ecc_all = np.nan_to_num(np.sqrt(prf_data[0,:]**2 + prf_data[1,:]**2))
+
+    # pRF polar angle
+    complex_polar = prf_data[0,:] + 1j * prf_data[1,:]
+    normed_polar = complex_polar / np.abs(complex_polar)
+    prf_polar_real_all = np.real(normed_polar)
+    prf_polar_imag_all = np.imag(normed_polar)
+    
+    # pRF non-linearity
+    prf_non_lin_all = prf_data[3,:]
+
+    # pRF size
+    prf_size_all = prf_data[2,:].astype(np.float64)
+    prf_size_all[prf_size_all<1e-4] = 1e-4
+
+    # pRF amplitude
+    prf_amp_all = prf_data[4,:]
+
+    # pRF baseline
+    prf_baseline_all = prf_data[5,:]
+
+
+    # pRF stim ratio or coverage
+    deg_x, deg_y = np.meshgrid(np.linspace(-30, 30, 40), np.linspace(-30, 30, 40))         # define prfs in visual space
+    
+
+    # flat_prf_pars = prf_mean.reshape((-1, prf_mean.shape[-1])).astype(np.float64)
+    
+    rfs = generate_og_receptive_fields( prf_data[0,:],
+                                        prf_data[1,:],
+                                        prf_size_all,
+                                        np.ones(np.prod(prf_data[0,:].shape[0])),
+                                        deg_x,
+                                        deg_y)
+    # see the definition of generate_og_receptive_fields input values as this code return only zeros at the moment
+    
+    ipdb.set_trace()
+
+    css_rfs                         =   rfs ** flat_prf_pars[..., 3]                                            # nonlinear, exponential scaling of the prfs
+    total_prf_content               =   css_rfs.reshape((-1, flat_prf_pars.shape[0])).sum(axis=0)               # total vs "inside the stimulus region" volume of the prf
+    stim_vignet                     =   np.sqrt(deg_x ** 2 + deg_y**2) < stim_radius                            # stim coordinates
+    
+    prf_stim_ratio_all              =   css_rfs[stim_vignet, :].sum(axis=0) / total_prf_content                 # compute in stim ratio
+    prf_stim_ratio_all              =   prf_stim_ratio_all.reshape(prf_size_all.shape)                          # reshape the data to original
+
+    # Saving
+    # ------
+    for output_type in ['prf_sign','prf_mean','prf_cv_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_stim_ratio']:
+        for mask_dir in ['all','pos','neg']:
+
+
+            print('writing: %s'%(os.path.join(output_dir,"{mask_dir}","{typeData}_{output_type}_{mask_dir}.nii.gz").format(typeData = typeData, mask_dir = mask_dir, output_type = output_type)))
+            exec('{output_type}_{mask_dir} = np.copy({output_type}_all)'.format(mask_dir = mask_dir, output_type = output_type))
+            exec('{output_type}_{mask_dir}[~{mask_dir}_mask] = np.nan'.format(mask_dir = mask_dir, output_type = output_type))
+
+            exec('out_img = nb.Nifti1Image(dataobj = {output_type}_{mask_dir}, affine = aff, header = hdr)'.format(mask_dir = mask_dir, output_type = output_type))
+            exec('out_img.to_filename(os.path.join(output_dir,"{mask_dir}","{typeData}_{output_type}_{mask_dir}.nii.gz"))'.format(typeData = typeData, mask_dir = mask_dir, output_type = output_type))
+             
+    return None
+

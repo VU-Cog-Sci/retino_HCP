@@ -39,9 +39,11 @@ import nibabel as nb
 import cortex
 
 # Function import
-from utils import set_pycortex_config_file
+from utils import set_pycortex_config_file, convert_fit_results
+
 # from pRF_gazeMod.utils.utils import combine_cv_prf_fit_results_all_runs
 # from pRF_gazeMod.utils.prf import convert_fit_results,draw_cortex_volume
+
 
 # Get inputs
 subject = sys.argv[1]
@@ -130,14 +132,17 @@ gii_out_R = nb.gifti.gifti.GiftiImage(  header = data_fit_file_R.header,
 
 nb.save(gii_out_R, os.path.join(base_dir,'pp',subject,'prf','%s_R.func_bla_psc_est.gii'%(base_file_name)))
 
-# compute pRF measures
-ipdb.set_trace()
+
 
 # compute pRF measures
-convert_fit_results(prf_filenames   =   prf_filenames,                      # file path to pRF analysis image
-                    output_dir      =   deriv_dir,                          # output derivative folder
-                    stim_radius     =   analysis_info['stim_radius'],       # stimulus radius
-                    typeData        =   'all')                              # type of data to analyse to specify output file name
+
+deriv_dir = os.path.join(base_dir,'pp',subject,'deriv')
+
+for hemi in ['L','R']:
+    prf_filename = sorted(glob.glob(os.path.join(base_dir,'pp',subject,'prf','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
+    convert_fit_results(prf_filename = prf_filename,
+                        output_dir = deriv_dir,
+                        stim_radius = analysis_info['stim_radius'])
 
 
 # Renaming .svg file before creating a new one below

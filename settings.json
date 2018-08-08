@@ -6,5 +6,6 @@
     "aeneas_base_folder": "/home/shared/2018/visual/nprf_hcp",
     "cartesius_cluster_base_folder": "/projects/0/pqsh283/nprf_hcp",
     "lisa_cluster_base_folder": "/home/szinte/data/nprf_hcp",
-    "local_base_folder":"/Users/martin/disks/lisa_H/data/nprf_hcp"
+    "local_base_folder":"/Users/martin/disks/lisa_H/data/nprf_hcp",
+    "stim_radius": 8.0
 }
