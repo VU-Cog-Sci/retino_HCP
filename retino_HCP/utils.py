@@ -389,7 +389,8 @@ def set_pycortex_config_file(project_folder):
 
 def convert_fit_results(prf_filename,
                         output_dir,
-                        stim_radius     =   3.0):
+                        stim_radius,
+                        hemi):
     """
     Convert pRF fitting value in different parameters for following analysis
    
@@ -398,9 +399,29 @@ def convert_fit_results(prf_filename,
     prf_filename: absolute paths to prf result files.
     output_dir: absolute path to directory into which to put the resulting files.
     stim_radius: stimulus radius in deg
+    hemi: brain hemisphere
 
     Returns
     -------
+    prf_deriv_L_all and  prf_deriv_R_all: derivative of pRF analysis for all pRF voxels
+    prf_deriv_L_neg and  prf_deriv_R_neg : derivative of pRF analysis for all negative pRF voxels
+    prf_deriv_L_pos and  prf_deriv_R_pos : derivative of pRF analysis for all positive pRF voxels
+
+    stucture:
+    columns: 1->32492
+    row00 : sign
+    row01 : R2
+    row02 : eccentricity in deg
+    row03 : polar angle real component in deg
+    row04 : polar angle imaginary component in deg
+    row05 : size in deg
+    row06 : non-linerity
+    row07 : amplitude
+    row08 : baseline
+    row09 : coverage
+    
+    ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov']
+
     None
     """
 
@@ -429,13 +450,12 @@ def convert_fit_results(prf_filename,
     prf_data_load = nb.load(prf_filename[0])
     prf_data.append(np.array([prf_data_load.darrays[i].data for i in range(len(prf_data_load.darrays))]))
     prf_data = np.vstack(prf_data)    
-    extra = prf_data_load.extra
+    ext = prf_data_load.extra
     hdr = prf_data_load.header
     
-    
 
-    # Create derived measures from prfs
-    # ---------------------------------
+    # Compute derived measures from prfs
+    # ----------------------------------
     print('\nextracting pRF parameters...')
 
     # pRF sign
@@ -456,12 +476,13 @@ def convert_fit_results(prf_filename,
     prf_polar_real_all = np.real(normed_polar)
     prf_polar_imag_all = np.imag(normed_polar)
     
-    # pRF non-linearity
-    prf_non_lin_all = prf_data[3,:]
-
     # pRF size
     prf_size_all = prf_data[2,:].astype(np.float64)
     prf_size_all[prf_size_all<1e-4] = 1e-4
+
+    # pRF non-linearity
+    prf_non_lin_all = prf_data[3,:]
+
 
     # pRF amplitude
     prf_amp_all = prf_data[4,:]
@@ -470,11 +491,8 @@ def convert_fit_results(prf_filename,
     prf_baseline_all = prf_data[5,:]
 
 
-    # pRF stim ratio or coverage
-    deg_x, deg_y = np.meshgrid(np.linspace(-30, 30, 40), np.linspace(-30, 30, 40))         # define prfs in visual space
-    
-
-    # flat_prf_pars = prf_mean.reshape((-1, prf_mean.shape[-1])).astype(np.float64)
+    # pRF coverage
+    deg_x, deg_y = np.meshgrid(np.linspace(-30, 30, 121), np.linspace(-30, 30, 121))         # define prfs in visual space
     
     rfs = generate_og_receptive_fields( prf_data[0,:],
                                         prf_data[1,:],
@@ -482,29 +500,28 @@ def convert_fit_results(prf_filename,
                                         np.ones(np.prod(prf_data[0,:].shape[0])),
                                         deg_x,
                                         deg_y)
-    # see the definition of generate_og_receptive_fields input values as this code return only zeros at the moment
     
-    ipdb.set_trace()
+    css_rfs = rfs ** prf_data[3,:]
+    total_prf_content = css_rfs.reshape((-1, prf_data.shape[1])).sum(axis=0)
+    stim_vignet = np.sqrt(deg_x ** 2 + deg_y**2) < stim_radius    
+    prf_cov_all = css_rfs[stim_vignet, :].sum(axis=0) / total_prf_content
 
-    css_rfs                         =   rfs ** flat_prf_pars[..., 3]                                            # nonlinear, exponential scaling of the prfs
-    total_prf_content               =   css_rfs.reshape((-1, flat_prf_pars.shape[0])).sum(axis=0)               # total vs "inside the stimulus region" volume of the prf
-    stim_vignet                     =   np.sqrt(deg_x ** 2 + deg_y**2) < stim_radius                            # stim coordinates
-    
-    prf_stim_ratio_all              =   css_rfs[stim_vignet, :].sum(axis=0) / total_prf_content                 # compute in stim ratio
-    prf_stim_ratio_all              =   prf_stim_ratio_all.reshape(prf_size_all.shape)                          # reshape the data to original
+
 
     # Saving
     # ------
-    for output_type in ['prf_sign','prf_mean','prf_cv_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_stim_ratio']:
-        for mask_dir in ['all','pos','neg']:
-
-
-            print('writing: %s'%(os.path.join(output_dir,"{mask_dir}","{typeData}_{output_type}_{mask_dir}.nii.gz").format(typeData = typeData, mask_dir = mask_dir, output_type = output_type)))
+    for mask_dir in ['all','pos','neg']:
+        print('saving: %s'%('os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii")'.format(hemi = hemi, mask_dir = mask_dir)))
+        for output_type in ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov']:
             exec('{output_type}_{mask_dir} = np.copy({output_type}_all)'.format(mask_dir = mask_dir, output_type = output_type))
             exec('{output_type}_{mask_dir}[~{mask_dir}_mask] = np.nan'.format(mask_dir = mask_dir, output_type = output_type))
-
-            exec('out_img = nb.Nifti1Image(dataobj = {output_type}_{mask_dir}, affine = aff, header = hdr)'.format(mask_dir = mask_dir, output_type = output_type))
-            exec('out_img.to_filename(os.path.join(output_dir,"{mask_dir}","{typeData}_{output_type}_{mask_dir}.nii.gz"))'.format(typeData = typeData, mask_dir = mask_dir, output_type = output_type))
-             
+        
+        exec('prf_deriv_{mask_dir} = np.row_stack((prf_sign_{mask_dir},prf_rsq_{mask_dir},prf_ecc_{mask_dir},prf_polar_real_{mask_dir},\
+                prf_polar_imag_all,prf_size_all,prf_non_lin_all,prf_amp_all,prf_baseline_all,prf_cov_all))'.format(mask_dir = mask_dir))
+            
+        exec('darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in prf_deriv_{mask_dir}]'.format(mask_dir = mask_dir))
+        exec('gii_out = nb.gifti.gifti.GiftiImage(header = hdr, extra = ext, darrays = darrays)')
+        exec('nb.save(gii_out,os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii"))'.format(hemi = hemi, mask_dir = mask_dir))
+            
     return None
 
