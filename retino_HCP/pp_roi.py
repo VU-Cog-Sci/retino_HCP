@@ -105,6 +105,54 @@ for hemi in ['L','R']:
     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_hemi)'.format(hemi=hemi))
     exec('nb.save(gii_out_{hemi}, os.path.join(base_dir,"pp",subject,"prf","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
+# convert gii to fs_average
+pkg_dir = '/Users/knapen/projects/retino_HCP/'
+suffix = '' # 'NEGATIVEPRF'
+
+orig = cifti.read('/Users/knapen/Downloads/tfMRI_RETEXP_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries.nii')
+series = orig[1][0]
+bm = orig[1][1]
+
+wbc = """/Applications/workbench/bin_macosx64/wb_command -cifti-separate {cii} \
+COLUMN -volume-all {cii_n}_data_sub.nii \
+-metric CORTEX_LEFT {cii_n}_L.gii \
+-metric CORTEX_RIGHT {cii_n}_R.gii &"""
+
+resample_cmd = """/Applications/workbench/bin_macosx64/wb_command -metric-resample \
+{metric_in} {current_sphere} {new_sphere} \
+ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+
+
+# resample to fsaverage
+cs = pkg_dir + 'data/surfaces/resample_fsaverage/fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'
+ns = pkg_dir + 'data/surfaces/resample_fsaverage/fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'
+ca = pkg_dir + 'data/surfaces/resample_fsaverage/fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'
+na = pkg_dir + 'data/surfaces/resample_fsaverage/fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'
+
+for sj in range(allresults.shape[1]-1,allresults.shape[1]):
+    for hemi in ('L', 'R'):
+        mi = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_{hemi}.gii'%(suffix,sj)
+        mo = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_fsaverage_{hemi}.gii'%(suffix,sj)
+        this_cmd = resample_cmd.format(metric_in=mi.format(hemi=hemi), 
+                                   current_sphere=cs.format(hemi=hemi), 
+                                   new_sphere=ns.format(hemi=hemi), 
+                                   metric_out=mo.format(hemi=hemi), 
+                                   current_area=ca.format(hemi=hemi), 
+                                   new_area=na.format(hemi=hemi))
+        os.system(this_cmd)    
+
+for sj in range(allresults.shape[1]-1,allresults.shape[1]):
+    for hemi in ('L', 'R'):
+        mi = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_{hemi}.gii'%(suffix,sj)
+        mo = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_fsaverage_{hemi}.gii'%(suffix,sj)
+        this_cmd = resample_cmd.format(metric_in=mi.format(hemi=hemi), 
+                                   current_sphere=cs.format(hemi=hemi), 
+                                   new_sphere=ns.format(hemi=hemi), 
+                                   metric_out=mo.format(hemi=hemi), 
+                                   current_area=ca.format(hemi=hemi), 
+                                   new_area=na.format(hemi=hemi))
+        os.system(this_cmd)    
+
 # Compute derived measures from prfs
 deriv_dir = os.path.join(base_dir,'pp',subject,'deriv')
 for hemi in ['L','R']:
