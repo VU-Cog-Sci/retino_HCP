@@ -63,8 +63,10 @@ with open('settings.json') as f:
 # Define cluster/server specific parameters
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
+    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
+    main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 
 # Check if all slices are present. If not, the script will abort.
 start_idx =  np.arange(0,vox_num,job_vox)
@@ -89,11 +91,13 @@ if num_miss_part != 0:
     print('%i missing files, partial analysis'%num_miss_part)
 
 
+
 # combine fit files
 for hemi in ['L','R']:
     data_hemi = []
     data_hemi = np.zeros((fit_val,vox_num))
     exec('fit_files_hemi = fit_files_{hemi}'.format(hemi=hemi))
+    
     for fit_filename_hemi in fit_files_hemi:
         data_fit_hemi = []
         data_fit_file_hemi = nb.load(fit_filename_hemi)
@@ -105,62 +109,69 @@ for hemi in ['L','R']:
     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_hemi)'.format(hemi=hemi))
     exec('nb.save(gii_out_{hemi}, os.path.join(base_dir,"pp",subject,"prf","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
-# convert gii to fs_average
-pkg_dir = '/Users/knapen/projects/retino_HCP/'
-suffix = '' # 'NEGATIVEPRF'
-
-orig = cifti.read('/Users/knapen/Downloads/tfMRI_RETEXP_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries.nii')
-series = orig[1][0]
-bm = orig[1][1]
-
-wbc = """/Applications/workbench/bin_macosx64/wb_command -cifti-separate {cii} \
-COLUMN -volume-all {cii_n}_data_sub.nii \
--metric CORTEX_LEFT {cii_n}_L.gii \
--metric CORTEX_RIGHT {cii_n}_R.gii &"""
-
-resample_cmd = """/Applications/workbench/bin_macosx64/wb_command -metric-resample \
-{metric_in} {current_sphere} {new_sphere} \
-ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
-
-
-# resample to fsaverage
-cs = pkg_dir + 'data/surfaces/resample_fsaverage/fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'
-ns = pkg_dir + 'data/surfaces/resample_fsaverage/fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'
-ca = pkg_dir + 'data/surfaces/resample_fsaverage/fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'
-na = pkg_dir + 'data/surfaces/resample_fsaverage/fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'
-
-for sj in range(allresults.shape[1]-1,allresults.shape[1]):
-    for hemi in ('L', 'R'):
-        mi = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_{hemi}.gii'%(suffix,sj)
-        mo = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_fsaverage_{hemi}.gii'%(suffix,sj)
-        this_cmd = resample_cmd.format(metric_in=mi.format(hemi=hemi), 
-                                   current_sphere=cs.format(hemi=hemi), 
-                                   new_sphere=ns.format(hemi=hemi), 
-                                   metric_out=mo.format(hemi=hemi), 
-                                   current_area=ca.format(hemi=hemi), 
-                                   new_area=na.format(hemi=hemi))
-        os.system(this_cmd)    
-
-for sj in range(allresults.shape[1]-1,allresults.shape[1]):
-    for hemi in ('L', 'R'):
-        mi = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_{hemi}.gii'%(suffix,sj)
-        mo = '/Users/knapen/Downloads/hcp/prfresults_%s_%03d.dscalar_fsaverage_{hemi}.gii'%(suffix,sj)
-        this_cmd = resample_cmd.format(metric_in=mi.format(hemi=hemi), 
-                                   current_sphere=cs.format(hemi=hemi), 
-                                   new_sphere=ns.format(hemi=hemi), 
-                                   metric_out=mo.format(hemi=hemi), 
-                                   current_area=ca.format(hemi=hemi), 
-                                   new_area=na.format(hemi=hemi))
-        os.system(this_cmd)    
 
 # Compute derived measures from prfs
 deriv_dir = os.path.join(base_dir,'pp',subject,'deriv')
+# for hemi in ['L','R']:
+#     prf_filename = sorted(glob.glob(os.path.join(base_dir,'pp',subject,'prf','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
+#     convert_fit_results(prf_filename = prf_filename,
+#                         output_dir = deriv_dir,
+#                         stim_radius = analysis_info['stim_radius'],
+#                         hemi = hemi)
+
+# # resample gii to fs_average
+resample_dir = 'surfaces/resample_fsaverage'
+resample_cmd = """{main_cmd} {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+
+print('converting derivative files to fsaverage')
 for hemi in ['L','R']:
-    prf_filename = sorted(glob.glob(os.path.join(base_dir,'pp',subject,'prf','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
-    convert_fit_results(prf_filename = prf_filename,
-                        output_dir = deriv_dir,
-                        stim_radius = analysis_info['stim_radius'],
-                        hemi = hemi)
+
+    current_sphere  =   os.path.join(base_dir,resample_dir,'fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
+    new_sphere      =   os.path.join(base_dir,resample_dir,'fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
+    current_area    =   os.path.join(base_dir,resample_dir,'fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
+    new_area        =   os.path.join(base_dir,resample_dir,'fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
+
+    for mask_dir in ['all','pos','neg']:
+        
+        metric_in       =   os.path.join(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_out      =   os.path.join(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
+
+        # ipdb.set_trace()
+        this_cmd = resample_cmd.format( main_cmd = main_cmd,
+                                        metric_in = metric_in, 
+                                        current_sphere = current_sphere, 
+                                        new_sphere = new_sphere, 
+                                        metric_out = metric_out, 
+                                        current_area = current_area, 
+                                        new_area = new_area)
+
+        os.system(this_cmd)
+
+# get atlas for different region of interest
+label_to_roi_cmd = """/Applications/workbench/bin_macosx64/wb_command -cifti-label-to-roi"""
+
+for roi in analysis_info['rois']:
+    print(roi)
+    ipdb.set_trace()
+
+    /Applications/workbench/bin_macosx64/wb_command \
+    -cifti-label-to-roi Conte69.parcellations_VGD11b.32k_fs_LR.dlabel.nii \
+    Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii -name ${name}
+
+# do
+#     /Applications/workbench/bin_macosx64/wb_command \
+#     -cifti-label-to-roi Conte69.parcellations_VGD11b.32k_fs_LR.dlabel.nii \
+#     Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii -name ${name}
+#     /Applications/workbench/bin_macosx64/wb_command -cifti-separate Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii COLUMN \
+#      -metric CORTEX_LEFT Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dlabel.L.gii \
+#     -metric CORTEX_RIGHT Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dlabel.R.gii
+# done
+
+
+# save data in hdf5files
+
+
+
 
 # Change cortex database folder and rename svg file
 sys.exit('Drawing Flatmaps only works with Python 2.x. The current environment seems to have a higher version. Aborting.') if sys.version_info[0] > 2 else None
@@ -174,7 +185,8 @@ if analysis_info['keep_svg'] == 0:
         os.rename(overlays_file, overlays_file[:-4] + '_' + now.strftime("%Y_%m_%d_%H_%M") + '.svg')
     except:pass
 
-# get atlas for different region of interest
+
+
 # plot basic pRF analysis -post_pp_roi
 
 # Create ROI overlay
