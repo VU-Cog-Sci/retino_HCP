@@ -90,8 +90,6 @@ if num_miss_part != 0:
     # sys.exit('%i missing files, analysis stopped'%num_miss_part)
     print('%i missing files, partial analysis'%num_miss_part)
 
-
-
 # combine fit files
 for hemi in ['L','R']:
     data_hemi = []
@@ -112,12 +110,12 @@ for hemi in ['L','R']:
 
 # Compute derived measures from prfs
 deriv_dir = os.path.join(base_dir,'pp',subject,'deriv')
-# for hemi in ['L','R']:
-#     prf_filename = sorted(glob.glob(os.path.join(base_dir,'pp',subject,'prf','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
-#     convert_fit_results(prf_filename = prf_filename,
-#                         output_dir = deriv_dir,
-#                         stim_radius = analysis_info['stim_radius'],
-#                         hemi = hemi)
+for hemi in ['L','R']:
+    prf_filename = sorted(glob.glob(os.path.join(base_dir,'pp',subject,'prf','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
+    convert_fit_results(prf_filename = prf_filename,
+                        output_dir = deriv_dir,
+                        stim_radius = analysis_info['stim_radius'],
+                        hemi = hemi)
 
 # # resample gii to fs_average
 resample_dir = 'surfaces/resample_fsaverage'
@@ -146,26 +144,28 @@ for hemi in ['L','R']:
                                         new_area = new_area)
 
         os.system(this_cmd)
+        ipdb.set_trace()
 
-# get atlas for different region of interest
-label_to_roi_cmd = """/Applications/workbench/bin_macosx64/wb_command -cifti-label-to-roi"""
 
-for roi in analysis_info['rois']:
-    print(roi)
-    ipdb.set_trace()
+# # get atlas for different region of interest
+# label_to_roi_cmd = """/Applications/workbench/bin_macosx64/wb_command -cifti-label-to-roi"""
 
-    /Applications/workbench/bin_macosx64/wb_command \
-    -cifti-label-to-roi Conte69.parcellations_VGD11b.32k_fs_LR.dlabel.nii \
-    Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii -name ${name}
+# for roi in analysis_info['rois']:
+#     print(roi)
+#     ipdb.set_trace()
 
-# do
 #     /Applications/workbench/bin_macosx64/wb_command \
 #     -cifti-label-to-roi Conte69.parcellations_VGD11b.32k_fs_LR.dlabel.nii \
 #     Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii -name ${name}
-#     /Applications/workbench/bin_macosx64/wb_command -cifti-separate Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii COLUMN \
-#      -metric CORTEX_LEFT Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dlabel.L.gii \
-#     -metric CORTEX_RIGHT Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dlabel.R.gii
-# done
+
+# # do
+# #     /Applications/workbench/bin_macosx64/wb_command \
+# #     -cifti-label-to-roi Conte69.parcellations_VGD11b.32k_fs_LR.dlabel.nii \
+# #     Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii -name ${name}
+# #     /Applications/workbench/bin_macosx64/wb_command -cifti-separate Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dscalar.nii COLUMN \
+# #      -metric CORTEX_LEFT Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dlabel.L.gii \
+# #     -metric CORTEX_RIGHT Conte69.parcellations_VGD11b.32k_fs_LR.${name}.dlabel.R.gii
+# # done
 
 
 # save data in hdf5files
