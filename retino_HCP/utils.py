@@ -456,8 +456,6 @@ def convert_fit_results(prf_filename,
 
     # Compute derived measures from prfs
     # ----------------------------------
-    print('\nextracting pRF parameters...')
-
     # pRF sign
     prf_sign_all = np.sign((prf_data[4,:]))
     pos_mask = prf_sign_all > 0.0
@@ -525,4 +523,71 @@ def convert_fit_results(prf_filename,
         exec('nb.save(gii_out,os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii"))'.format(hemi = hemi, mask_dir = mask_dir))
             
     return None
+
+def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias):
+    """masks data in in_file with mask in mask_file,
+    to be stored in an hdf5 file
+
+    Takes a list of 3D or 4D fMRI nifti-files and masks the
+    data with all masks in the list of nifti-files mask_files.
+    These files are assumed to represent the same space, i.e.
+    that of the functional acquisitions. 
+    These are saved in hdf5_file, in the folder folder_alias.
+
+    Parameters
+    ----------
+    in_files : list
+        list of absolute path to functional nifti-files.
+        all nifti files are assumed to have the same ndim
+    mask_file : list
+        list of absolute path to mask nifti-files.
+        mask_files are assumed to be 3D
+    hdf5_file : str
+        absolute path to hdf5 file.
+        folder_alias : str
+                name of the to-be-created folder in the hdf5 file.
+
+    Returns
+    -------
+    hdf5_file : str
+        absolute path to hdf5 file.
+    """
+
+    import nibabel as nb
+    import os.path as op
+    import numpy as np
+    import h5py
+    import ipdb
+    deb = ipdb.set_trace
+
+    success = True
+
+    
+    
+     
+    gii_in_data = nb.load(in_file)
+    data_mat = np.array([gii_in_data.darrays[i].data for i in range(len(gii_in_data.darrays))])
+    data_name = op.split(in_file)[-1].split('.gii')[0]
+    
+
+    gii_in_mask = nb.load(mask_file)
+    mask_mat = np.array([gii_in_mask.darrays[i].data for i in range(len(gii_in_mask.darrays))])
+    mask_mat = mask_mat[0,:]
+    mask_name = op.split(mask_file)[-1].split('.')[3]
+
+    roi_data = data_mat[:, mask_mat==1]
+
+    try:
+        h5file = h5py.File(hdf5_file, "r+")
+    except OSError:
+        h5file = h5py.File(hdf5_file, "a")
+    
+    g_hemi = h5file.create_group(folder_alias)
+    
+    
+    dset = g_hemi.create_dataset(data_name,data = roi_data,dtype='float32')
+
+
+    return None
+
 
