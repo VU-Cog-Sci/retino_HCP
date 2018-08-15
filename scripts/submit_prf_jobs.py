@@ -1,52 +1,154 @@
+"""
+-----------------------------------------------------------------------------------------
+submit_prf_jobs
+-----------------------------------------------------------------------------------------
+Goal of the script:
+create jobscript to run in a cluster (LISA or CARTESIUS) or server (AENEAS)
+-----------------------------------------------------------------------------------------
+Input(s):
+sys.argv[1]: subject name (e.g. 'sub-001')
+sys.argv[2]: subject hemisphere (e.g. 'L')
+sys.argv[3]: voxel per jobs (used 400 on lisa)
+sys.argv[3]: job duration requested in hours (used 10h on lisa)
+-----------------------------------------------------------------------------------------
+Output(s):
+.sh file to execute in server
+-----------------------------------------------------------------------------------------
+Exemple:
+cd /Users/martin/Dropbox/GitHub/retino_HCP/ 
+or
+cd /home/szinte/projects/retino_HCP/
+
+python scripts/submit_prf_jobs.py 536647 L 1 => submit missing files to aeneas
+
+best sub 1: 192641 launched on lisa 10:15 2/08/18
+python scripts/submit_prf_jobs.py 192641 L 5 => 82 jobs of 400 vox per jobs (19 missing)
+python scripts/submit_prf_jobs.py 192641 R 5 => 82 jobs of 400 vox per jobs (16 missing)
+
+
+best sub 1: 192641 launched on lisa 17:30 2/08/18
+python scripts/submit_prf_jobs.py 192641 L 400 10
+python scripts/submit_prf_jobs.py 192641 R 400 10
+-----------------------------------------------------------------------------------------
+"""
+
+# General imports
 import numpy as np
-from IPython import embed as shell
-import re
 import os
 import glob
 import json
 import sys
 import nibabel as nb
 import platform
+import ipdb
 
-with open('../settings.json') as f:
+# Get subject number and hemisphere to analyse
+subjects = [sys.argv[1]]
+hemi = [sys.argv[2]]
+job_vox = float(sys.argv[3])
+job_dur_req = float(sys.argv[4])
+
+# Load the analysis parameters from json file
+with open('settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
+# Define server or cluster settings
 if 'lisa' in platform.uname()[1]:
-    jobscript_template_file = os.path.join(os.getcwd(), 'lisa_jobscript_template.sh')
+    jobscript_template_file = os.path.join(os.getcwd(),'scripts','lisa_jobscript_template.sh')
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     sub_command = 'qsub '
-    print('on lisa')
+    print('analysis running on lisa')
+elif 'aeneas' in platform.uname()[1]:
+    jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','aeneas_jobscript_template.sh')
+    base_dir = analysis_info['aeneas_base_folder'] 
+    sub_command = 'sh '
+    print('analysis running on aeneas')
+elif 'local' in platform.uname()[1]:
+    jobscript_template_file     =   os.path.join(os.getcwd(),'scripts','local_jobscript_template.sh')
+    base_dir = analysis_info['local_base_folder'] 
+    sub_command = 'sh '
+    print('analysis running on local')
 else:
-    jobscript_template_file = os.path.join(os.getcwd(), 'cartesius_jobscript_template.sh')
+    jobscript_template_file = os.path.join(os.getcwd(),'scripts','cartesius_jobscript_template.sh')
     base_dir = analysis_info['cartesius_cluster_base_folder'] 
     sub_command = 'sbatch '
-    print('on cartesius')
+    print('analysis running on cartesius')
 
-# only run the last, mean subject.
-subject_directories = [sorted([os.path.split(fn)[1] for fn in glob.glob(os.path.join(base_dir, '*')) if os.path.isdir(fn)])[-1]]
+fit_script = 'retino_HCP/prf_fit.py'
 
+# Create job folders
+try:
+    os.makedirs(os.path.join(base_dir, 'pp', 'jobs'))
+except:
+    pass
 
-for sd in subject_directories:
-    for hemi in ["L","R"]: # gifti files are separated into different hemis
+data = []
+for subject in subjects:
+    
+    # Determine data to analyse
+    data_file  =  sorted(glob.glob(os.path.join(base_dir,subject,'*RETBAR1_7T*%s.func_bla_psc_av.gii'% hemi[0])))
 
+    # Cut it in small pieces of voxels
+    data_file_load = nb.load(data_file[0])
+    data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
+    data = np.vstack(data)
+    data_size = data.shape
+
+    start_idx =  np.arange(0,data_size[1],job_vox)
+    end_idx = start_idx+job_vox
+    end_idx[-1] = data_size[1]
+
+    print('%i jobs of %1.1fh each will be run/send to %s'%(start_idx.shape[0],job_dur_req,platform.uname()[1]))
+
+    job_input = []
+    for iter_job in np.arange(0,start_idx.shape[0],1):
+        job_input = data[:,int(start_idx[iter_job]):int(end_idx[iter_job])]
+
+        print('input data vox num: %i to %i'%(int(start_idx[iter_job]),int(end_idx[iter_job])))
+
+        # Define output file
+        base_file_name = os.path.split(data_file[0])[-1][:-7]
+        opfn = os.path.join(base_dir,'pp',subject,'prf',base_file_name + '_est_%s_to_%s.gii' %(str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+
+        if os.path.isfile(opfn):
+            if os.path.getsize(opfn) != 0:
+                print('output file %s already exists and is non-empty. aborting analysis of voxels %s to %s'%(opfn,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+                continue
+
+        # create job shell
         jobscript = open(jobscript_template_file)
         working_string = jobscript.read()
         jobscript.close()
+        job_dur = '%i:00:00'%job_dur_req
+        
+        re_dict = { '---job_dur---':job_dur,
+                    '---fit_file---':fit_script,
+                    '---subject---':subject,
+                    '---start_idx---':str(int(start_idx[iter_job])),
+                    '---end_idx---':str(int(end_idx[iter_job])),
+                    '---data_file---':data_file[0],
+                    '---base_dir---':base_dir}
 
-        RE_dict = {
-            '---SUBJECT---':                sd,
-            '---HEMI---':                   hemi,
-        }
+        for e in re_dict.keys():
+            working_string  =   working_string.replace(e, re_dict[e])
 
-        for e in RE_dict.keys():
-            working_string = working_string.replace(e, RE_dict[e])
+        js_name =  os.path.join(base_dir, 'pp', 'jobs', '%s_%s_vox_%s_to_%s.sh'%(subject,hemi[0],str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
 
-        js_name = os.path.expanduser(os.path.join('~', 'jobs', '{sd}_{hemi}.sh'.format(sd=sd, hemi=hemi)))
         of = open(js_name, 'w')
         of.write(working_string)
         of.close()
 
+        # Submit jobs
         print('submitting ' + js_name + ' to queue')
-        print(working_string)
-        os.system(sub_command + js_name)
+
+        if 'lisa' in platform.uname()[1]:
+            os.chdir(os.path.join(base_dir,'pp','log_outputs'))
+            os.system('qsub ' + js_name)
+        elif 'aeneas' in platform.uname()[1]:
+            os.system('sh ' + js_name)
+        elif 'local' in platform.uname()[1]:
+            
+            os.system('sh ' + js_name)
+        else:
+            os.system('sbatch ' + js_name)
