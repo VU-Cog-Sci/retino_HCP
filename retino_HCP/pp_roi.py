@@ -54,9 +54,6 @@ job_vox = float(sys.argv[2])
 fit_val = 7
 vox_num = 32492
 base_file_name = 'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries'
-# Get clock to rename old overlay.svg file
-import datetime
-now = datetime.datetime.now()
 
 # Define analysis parameters
 # --------------------------
@@ -74,133 +71,133 @@ elif 'local' in platform.uname()[1]:
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 deriv_dir = opj(base_dir,'pp',subject,'deriv')
 
-# # Check if all slices are present. If not, the script will abort.
-# # ---------------------------------------------------------------
-# start_idx =  np.arange(0,vox_num,job_vox)
-# end_idx = start_idx+job_vox
-# end_idx[-1] = vox_num
-# num_miss_part = 0
-# fit_files_L = []
-# fit_files_R = []
-# for hemi in ['L','R']:
-#     for iter_job in np.arange(0,start_idx.shape[0],1):
-#         fit_file = opj(base_dir,'pp',subject,'prf', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-#         if os.path.isfile(fit_file):
-#             if os.path.getsize(fit_file) == 0:
-#                 num_miss_part += 1 
-#             else:
-#                 exec('fit_files_{hemi}.append(fit_file)'.format(hemi = hemi))
-#         else:
-#             num_miss_part += 1
+# Check if all slices are present. If not, the script will abort.
+# ---------------------------------------------------------------
+start_idx =  np.arange(0,vox_num,job_vox)
+end_idx = start_idx+job_vox
+end_idx[-1] = vox_num
+num_miss_part = 0
+fit_files_L = []
+fit_files_R = []
+for hemi in ['L','R']:
+    for iter_job in np.arange(0,start_idx.shape[0],1):
+        fit_file = opj(base_dir,'pp',subject,'prf', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+        if os.path.isfile(fit_file):
+            if os.path.getsize(fit_file) == 0:
+                num_miss_part += 1 
+            else:
+                exec('fit_files_{hemi}.append(fit_file)'.format(hemi = hemi))
+        else:
+            num_miss_part += 1
 
-# if num_miss_part != 0:
-#     # sys.exit('%i missing files, analysis stopped'%num_miss_part)
-#     print('%i missing files, partial analysis'%num_miss_part)
+if num_miss_part != 0:
+    # sys.exit('%i missing files, analysis stopped'%num_miss_part)
+    print('%i missing files, partial analysis'%num_miss_part)
 
-# # Combine fit files
-# # -----------------
-# print('comining fit files')
-# for hemi in ['L','R']:
-#     data_hemi = []
-#     data_hemi = np.zeros((fit_val,vox_num))
-#     exec('fit_files_hemi = fit_files_{hemi}'.format(hemi=hemi))
+# Combine fit files
+# -----------------
+print('combining fit files')
+for hemi in ['L','R']:
+    data_hemi = []
+    data_hemi = np.zeros((fit_val,vox_num))
+    exec('fit_files_hemi = fit_files_{hemi}'.format(hemi=hemi))
     
-#     for fit_filename_hemi in fit_files_hemi:
-#         data_fit_hemi = []
-#         data_fit_file_hemi = nb.load(fit_filename_hemi)
-#         data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
-#         data_fit_hemi = np.vstack(data_fit_hemi)
-#         data_hemi = data_hemi + data_fit_hemi
+    for fit_filename_hemi in fit_files_hemi:
+        data_fit_hemi = []
+        data_fit_file_hemi = nb.load(fit_filename_hemi)
+        data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
+        data_fit_hemi = np.vstack(data_fit_hemi)
+        data_hemi = data_hemi + data_fit_hemi
 
-#     darrays_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
-#     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_hemi)'.format(hemi=hemi))
-#     exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp",subject,"prf","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
+    darrays_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
+    exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_hemi)'.format(hemi=hemi))
+    exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp",subject,"prf","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
-# # Compute derived measures from prfs
-# # ----------------------------------
-# print('extracting pRF derivatives')
-# for hemi in ['L','R']:
-#     prf_filename = sorted(glob.glob(opj(base_dir,'pp',subject,'prf','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
-#     convert_fit_results(prf_filename = prf_filename,
-#                         output_dir = deriv_dir,
-#                         stim_radius = analysis_info['stim_radius'],
-#                         hemi = hemi)
+# Compute derived measures from prfs
+# ----------------------------------
+print('extracting pRF derivatives')
+for hemi in ['L','R']:
+    prf_filename = sorted(glob.glob(opj(base_dir,'pp',subject,'prf','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
+    convert_fit_results(prf_filename = prf_filename,
+                        output_dir = deriv_dir,
+                        stim_radius = analysis_info['stim_radius'],
+                        hemi = hemi)
 
-# # get atlas for different region of interest
-# print('creating roi masks')
-# label_to_roi_cmd = """{main_cmd} -cifti-label-to-roi {label_in} {scalar_out} -name {label_name}"""
-# cifti_separate_cmd = """{main_cmd} -cifti-separate {cifti_in} COLUMN -metric CORTEX_LEFT {label_out_L} -metric CORTEX_RIGHT {label_out_R}"""
+# get atlas for different region of interest
+print('creating roi masks')
+label_to_roi_cmd = """{main_cmd} -cifti-label-to-roi {label_in} {scalar_out} -name {label_name}"""
+cifti_separate_cmd = """{main_cmd} -cifti-separate {cifti_in} COLUMN -metric CORTEX_LEFT {label_out_L} -metric CORTEX_RIGHT {label_out_R}"""
 
-# for roi in analysis_info['rois']:
+for roi in analysis_info['rois']:
     
-#     label_in = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.dlabel.nii')
-#     scalar_out = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.{label_name}.dscalar.nii'.format(label_name = roi))
+    label_in = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.dlabel.nii')
+    scalar_out = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.{label_name}.dscalar.nii'.format(label_name = roi))
 
-#     os.system(label_to_roi_cmd.format(  main_cmd = main_cmd,
-#                                         label_in = label_in, 
-#                                         scalar_out = scalar_out, 
-#                                         label_name = roi))
+    os.system(label_to_roi_cmd.format(  main_cmd = main_cmd,
+                                        label_in = label_in, 
+                                        scalar_out = scalar_out, 
+                                        label_name = roi))
 
-#     cifti_in = scalar_out
-#     label_out_L = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.{label_name}.dlabel.L.func.gii'.format(label_name = roi))
-#     label_out_R = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.{label_name}.dlabel.R.func.gii'.format(label_name = roi))
+    cifti_in = scalar_out
+    label_out_L = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.{label_name}.dlabel.L.func.gii'.format(label_name = roi))
+    label_out_R = opj(base_dir,'surfaces/atlas','Conte69.parcellations_VGD11b.32k_fs_LR.{label_name}.dlabel.R.func.gii'.format(label_name = roi))
     
-#     os.system(cifti_separate_cmd.format(main_cmd = main_cmd,
-#                                         cifti_in = cifti_in, 
-#                                         label_out_L = label_out_L, 
-#                                         label_out_R = label_out_R))
+    os.system(cifti_separate_cmd.format(main_cmd = main_cmd,
+                                        cifti_in = cifti_in, 
+                                        label_out_L = label_out_L, 
+                                        label_out_R = label_out_R))
 
-# # Save ROIS data in hdf5
-# # ----------------------
-# print('creating h5 files')
-# for roi in analysis_info['rois']:
+# Save ROIS data in hdf5
+# ----------------------
+print('creating h5 files')
+for roi in analysis_info['rois']:
     
-#     h5_dir = opj(base_dir,'pp',subject,'h5')
-#     try: os.makedirs(h5_dir)
-#     except OSError: pass
-#     h5_file = opj(h5_dir,'{roi}.h5'.format(roi = analysis_info['rois'][roi]))
-#     try: os.system('rm '+ h5_file)
-#     except: pass
+    h5_dir = opj(base_dir,'pp',subject,'h5')
+    try: os.makedirs(h5_dir)
+    except OSError: pass
+    h5_file = opj(h5_dir,'{roi}.h5'.format(roi = analysis_info['rois'][roi]))
+    try: os.system('rm '+ h5_file)
+    except: pass
 
-#     for hemi in ['L','R']:
+    for hemi in ['L','R']:
         
-#         mask_file = glob.glob(opj(base_dir,'surfaces/atlas','*{roi}.dlabel.{hemi}.func.gii'.format(roi = roi, hemi = hemi)))
-#         mask_file = mask_file[0]
+        mask_file = glob.glob(opj(base_dir,'surfaces/atlas','*{roi}.dlabel.{hemi}.func.gii'.format(roi = roi, hemi = hemi)))
+        mask_file = mask_file[0]
         
-#         for mask_dir in ['all','pos','neg']:
+        for mask_dir in ['all','pos','neg']:
             
-#             in_file = opj(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
-#             folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
+            in_file = opj(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+            folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
             
-#             mask_gii_2_hdf5(in_file = in_file,
-#                             mask_file = mask_file,
-#                             hdf5_file = h5_file,
-#                             folder_alias = folder_alias)
+            mask_gii_2_hdf5(in_file = in_file,
+                            mask_file = mask_file,
+                            hdf5_file = h5_file,
+                            folder_alias = folder_alias)
 
-# # Resample gii to fsaverage
-# # -------------------------
-# print('converting derivative files to fsaverage')
-# resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
-# for hemi in ['L','R']:
+# Resample gii to fsaverage
+# -------------------------
+print('converting derivative files to fsaverage')
+resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+for hemi in ['L','R']:
 
-#     current_sphere = opj(base_dir,'surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
-#     new_sphere = opj(base_dir,'surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-#     current_area = opj(base_dir,'surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
-#     new_area = opj(base_dir,'surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
+    current_sphere = opj(base_dir,'surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
+    new_sphere = opj(base_dir,'surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
+    current_area = opj(base_dir,'surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
+    new_area = opj(base_dir,'surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
 
-#     for mask_dir in ['all','pos','neg']:
+    for mask_dir in ['all','pos','neg']:
         
-#         metric_in = opj(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
-#         metric_out = opj(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_in = opj(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_out = opj(base_dir,'pp',subject,deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
 
-#         # ipdb.set_trace()
-#         os.system(resample_cmd.format(  main_cmd = main_cmd,
-#                                         metric_in = metric_in, 
-#                                         current_sphere = current_sphere, 
-#                                         new_sphere = new_sphere, 
-#                                         metric_out = metric_out, 
-#                                         current_area = current_area, 
-#                                         new_area = new_area))
+        # ipdb.set_trace()
+        os.system(resample_cmd.format(  main_cmd = main_cmd,
+                                        metric_in = metric_in, 
+                                        current_sphere = current_sphere, 
+                                        new_sphere = new_sphere, 
+                                        metric_out = metric_out, 
+                                        current_area = current_area, 
+                                        new_area = new_area))
 
 # Change cortex database folder
 # -----------------------------
@@ -291,10 +288,7 @@ for mask_dir in ['all','pos','neg']:
     param_cov = {'data': cov_data.T, 'cmap': cmap_pos, 'alpha': alpha.T,'vmin': 0, 'vmax': 1, 'cbar': 'discrete'}
     vertex_names.append('cov')
 
-    # Draw figures and create dataset
-    # dataset_name = 'dataset_{mask_dir}.hdf'.format(mask_dir = mask_dir)
-    # dataset_webgl = cortex.Dataset()
-
+    # Draw figures
     for vertex_name in vertex_names:
         roi_name = '{vertex_name}_{mask_dir}'.format(vertex_name = vertex_name, mask_dir = mask_dir)
     
@@ -304,15 +298,6 @@ for mask_dir in ['all','pos','neg']:
         exec('param_{vertex_name}.update(roi_param)'.format(vertex_name = vertex_name))
         exec('vertex_rgb = draw_cortex_vertex(**param_{vertex_name})'.format(vertex_name=vertex_name))
         exec('pl.savefig(opj(fig_roi_dir_{mask_dir}, "{vertex_name}_{mask_dir}.pdf"),facecolor="w")'.format(mask_dir=mask_dir,vertex_name = vertex_name))
-        # dataset_webgl.append(**{vertex_name:vertex_rgb})
-
-    # print('saving dataset: {dataset_name}'.format(dataset_name = dataset_name))
-    # exec('dataset_webgl.save(opj(fig_roi_dir_{mask_dir}, dataset_name))'.format(mask_dir = mask_dir))
+        
 
     pl.close()
-
-# Create derivatives summary figures
-# ----------------------------------
-
-
-

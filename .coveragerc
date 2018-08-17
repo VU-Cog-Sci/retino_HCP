@@ -1,7 +1,0 @@
-[run]
-branch = True
-source = retino_HCP/*
-include = retino_HCP/*
-omit = */setup.py
-[report]
-include = retino_HCP/*

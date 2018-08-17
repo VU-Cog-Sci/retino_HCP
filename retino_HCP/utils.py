@@ -419,8 +419,10 @@ def convert_fit_results(prf_filename,
     row07 : amplitude
     row08 : baseline
     row09 : coverage
+    row10 : x
+    row11 : y
     
-    ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov']
+    ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov','prf_x','prf_y']
 
     None
     """
@@ -504,24 +506,27 @@ def convert_fit_results(prf_filename,
     stim_vignet = np.sqrt(deg_x ** 2 + deg_y**2) < stim_radius    
     prf_cov_all = css_rfs[stim_vignet, :].sum(axis=0) / total_prf_content
 
-
+    # pRF x
+    prf_x_all = prf_data[0,:]
+    prf_y_all = prf_data[1,:]
 
     # Saving
     # ------
     for mask_dir in ['all','pos','neg']:
         print('saving: %s'%('os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii")'.format(hemi = hemi, mask_dir = mask_dir)))
-        for output_type in ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov']:
+        for output_type in ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov','prf_x','prf_y']:
             exec('{output_type}_{mask_dir} = np.copy({output_type}_all)'.format(mask_dir = mask_dir, output_type = output_type))
             exec('{output_type}_{mask_dir}[~{mask_dir}_mask] = np.nan'.format(mask_dir = mask_dir, output_type = output_type))
         
         exec('prf_deriv_{mask_dir} = np.row_stack((prf_sign_{mask_dir},prf_rsq_{mask_dir},prf_ecc_{mask_dir},prf_polar_real_{mask_dir},\
-                prf_polar_imag_all,prf_size_all,prf_non_lin_all,prf_amp_all,prf_baseline_all,prf_cov_all))'.format(mask_dir = mask_dir))
+                prf_polar_imag_{mask_dir},prf_size_{mask_dir},prf_non_lin_{mask_dir},prf_amp_{mask_dir},prf_baseline_{mask_dir},prf_cov_{mask_dir},\
+                prf_x_{mask_dir},prf_y_{mask_dir}))'.format(mask_dir = mask_dir))
         
         exec('prf_deriv_{mask_dir} = prf_deriv_{mask_dir}.astype(np.float32)'.format(mask_dir = mask_dir))
         exec('darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in prf_deriv_{mask_dir}]'.format(mask_dir = mask_dir))
         exec('gii_out = nb.gifti.gifti.GiftiImage(header = hdr, extra = ext, darrays = darrays)')
         exec('nb.save(gii_out,os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii"))'.format(hemi = hemi, mask_dir = mask_dir))
-            
+
     return None
 
 def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias):
@@ -562,13 +567,9 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias):
 
     success = True
 
-    
-    
-     
     gii_in_data = nb.load(in_file)
     data_mat = np.array([gii_in_data.darrays[i].data for i in range(len(gii_in_data.darrays))])
     data_name = op.split(in_file)[-1].split('.gii')[0]
-    
 
     gii_in_mask = nb.load(mask_file)
     mask_mat = np.array([gii_in_mask.darrays[i].data for i in range(len(gii_in_mask.darrays))])
@@ -579,14 +580,11 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias):
 
     try:
         h5file = h5py.File(hdf5_file, "r+")
-    except OSError:
+    except:
         h5file = h5py.File(hdf5_file, "a")
     
-    g_hemi = h5file.create_group(folder_alias)
-    
-    
+    g_hemi = h5file.create_group(folder_alias)    
     dset = g_hemi.create_dataset(data_name,data = roi_data,dtype='float32')
-
 
     return None
 
@@ -719,7 +717,7 @@ def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps 
         axl.yaxis.set_ticks_position('right')
         axl.xaxis.set_ticks_position('none')
         axl.set_xticklabels([])
-        axl.set_yticklabels([0,3,6], size = 'x-large')
+        axl.set_yticklabels(np.linspace(vmin,vmax,3),size = 'x-large')
         axl.set_ylabel('$dva$\t\t', rotation = 0, size = 'x-large')
         axl.yaxis.set_label_coords(box.xmax+30,0.4)
         axl.patch.set_alpha(0.5)
