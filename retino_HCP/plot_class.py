@@ -22,7 +22,6 @@ deb = ipdb.set_trace
 
 from popeye.spinach import generate_og_receptive_fields
 from IPython import embed as shell
-from data_sources import get_data_source_dict
 
 
 class PlotOperator(object):
@@ -41,11 +40,11 @@ class PlotOperator(object):
         return main_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
 
 
-    def get_span(self, dimension, location = 0):
+    def get_span(self, dimension, location = 0,color = 'black'):
         fig_span     =   Span(location            =   location,                                   # create a infinte line span                                           
                               dimension           =   dimension,                                  # define dimension
                               line_alpha          =   0.5,                                        # define alpha of the line
-                              line_color          =   'black',                                    # define color of the line
+                              line_color          =   color,                                    # define color of the line
                               line_width          =   1,                                          # define width of the line
                               line_dash           =   'dashed')                                   # define dash of the line
         return fig_span
@@ -79,13 +78,6 @@ class PlotOperator(object):
                 export_svgs(figures[fig], filename = fName)
 
         return None
-
-
-    def get_colors_data(self, data):
-        
-        colors_data     =   data[:, 2]
-        
-        return colors_data
 
 
     def get_colors(self, data):
@@ -140,134 +132,6 @@ class PlotOperator(object):
         return plot_reg
 
 
-
-
-    def create_histogram(self, main_fig, data_source, orientation, v_a = 'y', colors = True, draw_stim = True, fill_alpha = 0.5):
-
-        # Daniels version that does NOT currently work
-        # Imports
-        import numpy as np
-
-        if orientation == 'horizontal':
-            string_ext  = 'x'
-            opposite_ax = 'y'
-            span        = 'height'
-            hover_mode  = 'vline'
-            orient_ext  = 'h'
-            v_a         =  self.x_source_label
-        elif orientation == 'vertical':
-            string_ext = 'y'
-            opposite_ax = 'x'
-            span        = 'width'
-            hover_mode  = 'hline'
-            orient_ext  = 'v'
-            v_a         = v_a
-        else:
-            print('not a valid orientation given.')
-
-        exec("hist_val, hist_edges = np.histogram(a = data_source[self.{ext}_source_label], bins = self.{orient}_hist_bins, range = self.{ext}_range)".format(ext = string_ext, orient=orient_ext))
-
-        hist_val_norm                 =   hist_val / np.shape(data_source[v_a])
-        hist_val_norm_prct            =   hist_val_norm*100.0                                                   # put value in prctage
-
-        # create hor histogram plot source
-        hist_data_source              =   {     'hist_val':             hist_val,                                 # histogram value
-                                                'hist_val_norm':        hist_val_norm,                            # histogram value normalized
-                                                'hist_val_norm_prct':   hist_val_norm_prct,                       # histogram value normalized in percentage
-                                                'bin_edges_left':       hist_edges[:-1],                          # histogram bin edges starting from left edge
-                                                'bin_edges_right':      hist_edges[1:],                           # histogram bin edges strating from right edge
-                                            }
-
-        fill_color = self.hist_fill_color
-        if colors:
-            data_hist                     =   np.abs((hist_edges[:-1] + hist_edges[1:])/2)
-            colors_val_hist               =   self.get_colors(data = data_hist)
-            hist_data_source.update(          dict(colors = colors_val_hist))
-            fill_color                    =   'colors'
-        hist_source                       =   ColumnDataSource(data = hist_data_source)                             # define ColumnDataSource
-        
-        # define settings
-        if orientation == 'horizontal':
-            hist                          =   figure(                                                                 # create hor. histogram figure
-                                                    plot_width          =   self.p_width,                          # define figure widht
-                                                    plot_height         =   int(self.p_height/4),                  # define figure height
-                                                    x_range             =   main_fig.x_range,                           # define figure x range
-                                                    y_range             =   self.hist_range,                       # define figure y range
-                                                    min_border_bottom   =   self.min_border_small,                 # define bottom border space
-                                                    min_border_top      =   self.min_border_large,                 # define top border space
-                                                    y_axis_location     =   'left',                                     # define location of y axis
-                                                    x_axis_location     =   'below',                                    # define location of x axis
-                                                    title               =   self.main_fig_title,                   # specify title
-                                                    toolbar_location    =   None)                                       # specify toolbar location
-            hist.xaxis.major_label_text_font_size = '0pt'
-        elif orientation == 'vertical':
-            hist                          =   figure(                                                                 # create vertical histogram figure
-                                                    plot_width          =   int(self.p_width/4),                   # define figure width 
-                                                    plot_height         =   self.p_height,                         # define figure height
-                                                    x_range             =   self.hist_range,                       # define figure x range
-                                                    y_range             =   main_fig.y_range,                           # define figure y range
-                                                    min_border_left     =   self.min_border_small,                 # define left border space
-                                                    min_border_right    =   self.min_border_large,                 # define right border space 
-                                                    y_axis_location     =   'left',                                     # define y axis location
-                                                    x_axis_location     =   'below',                                    # define x axis location
-                                                    toolbar_location    =   'right',
-                                                    tools               =   main_fig.tools)
-            hist.yaxis.major_label_text_font_size = '0pt'                                                             # set y axis font size (make it disappear)
-        
-
-        # determining axis ticker based on histogram orientation
-        exec("hist.{ax}axis.ticker = np.arange(self.hist_range[0],self.hist_range[1]+\
-                                                      self.hist_steps,self.hist_steps)".format(ax = opposite_ax))                    # set y axis ticks
-        exec("hist.{ax}axis.ticker = np.arange(self.stim_fig_xlim[0], self.stim_fig_xlim[1], self.{ax}_tick_steps)".format(ax = string_ext)) 
-
-        hist.grid.grid_line_color     =   None                                                                    # set axis grid color  
-        hist.axis.minor_tick_in       =   False                                                                   # set axis minor tick in
-        hist.axis.minor_tick_out      =   False                                                                   # set axis minor tick out
-        hist.axis.major_tick_in       =   False                                                                   # set axis major tick in
-        hist.outline_line_alpha       =   0                                                                       # set contour box alpha
-        hist.background_fill_color    =   self.bg_color                                                      # set background color
-                                                                                                                  # set x axis font size (make it disappear)
-
-        # draw stim
-        if draw_stim:
-            hist_stim                 =   hist.quad(                                                                # create a quad glyph of the stimulus
-                                                bottom              =   self.stim_fig_ylim[0],                      # define bottom value
-                                                left                =   self.left_hist_lim,                                  # define left value
-                                                right               =   self.stim_radius,                           # define right value
-                                                top                 =   self.stim_fig_ylim[1],                      # define top value
-                                                color               =   self.stim_color)                            # define color
-
-        # draw plot
-        hist_plot                     =   hist.quad(                                                                # create a quad glyph of the histogram
-                                                bottom              =   0,                                          # define bottom value
-                                                left                =   'bin_edges_left',                           # define left value
-                                                right               =   'bin_edges_right',                          # define right value
-                                                top                 =   'hist_val_norm',                            # define top value
-                                                source              =   hist_source,                                # define source
-                                                fill_color          =   fill_color,                                 # define color
-                                                line_color          =   'black',                                    # define line color
-                                                fill_alpha          =   fill_alpha,
-                                                line_alpha          =   0.5,
-                                                hover_fill_color    =   'black',                                    # specify hover fill color 
-                                                hover_line_color    =   'black',                                    # specify hover line color
-                                                hover_fill_alpha    =   0.5,                                        # specify hover fill alpha
-                                                hover_line_alpha    =   0.5)                                        # specify hover line alpha
-        # add a span
-        hist.add_layout(self.get_span(span))                                                                             # add infinite span line to figure
-        
-        # add a hover tool
-        hist_tooltips                 =   [   ('Voxels',              'n = @hist_val{0}'),                        # number of voxels
-                                              ('Prop.',               '@hist_val_norm_prct{0.0} %'),              # proportion
-                                              ('Edges',               '(@bin_edges_left{0.0},@bin_edges_right{0.0})')]# edge of distribution
-        hist_hover                    =   HoverTool(                                                              # create hover tool
-                                                tooltips            =   hist_tooltips,                              # specify content
-                                                mode                =   hover_mode,                                 # specify mode
-                                                renderers           =   [hist_plot])                                # specify renderer
-        #import ipdb ; ipdb.set_trace()
-        hist.add_tools(hist_hover)
-        return hist
-
-
     def create_horizontal_histogram(self, data_source, main_fig):
 
         v_a         = self.x_source_label
@@ -291,6 +155,7 @@ class PlotOperator(object):
         
         h_hist_source                   =   ColumnDataSource(data = h_hist_data_source)                             # define ColumnDataSource
         
+
         # define settings
         h_hist                          =   figure(                                                                 # create hor. histogram figure
                                                 plot_width          =   self.p_width,                               # define figure widht
@@ -312,9 +177,6 @@ class PlotOperator(object):
         h_hist.axis.minor_tick_in       =   False                                                                   # set axis minor tick in
         h_hist.axis.minor_tick_out      =   False                                                                   # set axis minor tick out
         h_hist.axis.major_tick_in       =   False                                                                   # set axis major tick in
-        #h_hist.yaxis.ticker             =   np.arange(self.hist_range[0],self.hist_range[1]+
-        #                                             self.hist_steps,self.hist_steps)                    # set y axis ticks
-        #h_hist.xaxis.ticker             =   np.arange(self.stim_fig_xlim[0], self.stim_fig_xlim[1],self.x_tick_steps)    # define x axis ticks
         h_hist.outline_line_alpha       =   0                                                                       # set contour box alpha
         h_hist.background_fill_color    =   self.bg_color                                                      # set background color
         h_hist.xaxis.major_label_text_font_size = '0pt'                                                             # set x axis font size (make it disappear)
@@ -359,7 +221,7 @@ class PlotOperator(object):
         # add a hover tool
         h_hist_tooltips                 = [     ('Voxels',              'n = @hist_val{0}'),                        # number of voxels
                                                 ('Prop.',               '@hist_val_norm_prct{0.0} %'),              # proportion
-                                                ('Edges',               '(@bin_edges_left{0.0},@bin_edges_right{0.0})')]# edge of distribution
+                                                ('Edges',               '(@bin_edges_left{0.00},@bin_edges_right{0.00})')]# edge of distribution
 
         h_hist_hover                    =   HoverTool(                                                              # create hover tool
                                                 tooltips            =   h_hist_tooltips,                            # specify content
@@ -370,6 +232,7 @@ class PlotOperator(object):
 
 
     def create_vertical_histogram(self, data_source, main_fig, colors = False, draw_stim = False):
+        
 
         # compute histogram
         v_hist_val, v_hist_edges        =   np.histogram(a = data_source[self.y_source_label], bins = self.v_hist_bins, range = self.y_range)
@@ -389,6 +252,7 @@ class PlotOperator(object):
             colors_val_hist               =   self.get_colors(data = data_hist)
             v_hist_data_source.update(        dict(colors = colors_val_hist))
             self.hist_fill_color          =   'colors'
+
         v_hist_source                     =   ColumnDataSource(data = v_hist_data_source)                            # define ColumnDataSource
         
 
@@ -405,18 +269,16 @@ class PlotOperator(object):
                                                 toolbar_location    =   'right',
                                                 tools               =   main_fig.tools)
         
+
         # # determining axis ticker based on histogram orientation
         v_hist.xaxis.ticker = np.arange(self.hist_range[0],self.hist_range[1]+self.hist_steps,self.hist_steps)      # set x axis ticks
-        v_hist.yaxis.ticker = np.arange(self.stim_fig_xlim[0], self.stim_fig_xlim[1], self.y_tick_steps)            # set y axis ticks
+        v_hist.yaxis.ticker = np.arange(self.stim_fig_ylim[0], self.stim_fig_ylim[1], self.y_tick_steps)            # set y axis ticks
 
         v_hist.grid.grid_line_color     =   None                                                                    # set both axis grid line color
         v_hist.axis.minor_tick_in       =   False                                                                   # set both axis minor tick in
         v_hist.axis.minor_tick_out      =   False                                                                   # set both axis minor tick out
         v_hist.axis.major_tick_in       =   False                                                                   # set both axis major tick in
         v_hist.yaxis.major_label_text_font_size = '0pt'                                                             # set y axis font size (make it disappear)
-        v_hist.xaxis.ticker             =   np.arange(self.hist_range[0],self.hist_range[1]+
-                                                     self.hist_steps,self.hist_steps)                    # define x axis ticks
-        v_hist.yaxis.ticker             =   np.arange(self.stim_fig_ylim[0], self.stim_fig_ylim[1],self.y_tick_steps)     # define y axis ticks
         v_hist.outline_line_alpha       =   0                                                                       # set box contour alpha
         v_hist.background_fill_color    =   self.bg_color                                                      # define background color
 
@@ -429,6 +291,7 @@ class PlotOperator(object):
                                                 right               =   self.stim_fig_ylim[1],                           # define right value
                                                 color               =   self.stim_color)                       # define color
         
+
         # draw plot
         v_hist_plot                     =   v_hist.quad(                                                            # create quad glyph of the vertical histogram
                                                 left                =   0,                                          # define left value
@@ -436,15 +299,15 @@ class PlotOperator(object):
                                                 top                 =   'bin_edges_right',                          # define top value
                                                 right               =   'hist_val_norm',                            # define right value
                                                 source              =   v_hist_source,                              # define source
-                                                fill_color          =   self.hist_fill_color,                  # define fill color
+                                                fill_color          =   self.hist_fill_color,                       # define fill color
                                                 line_color          =   'black',                                    # define line color
-                                                fill_alpha          =   0.5,                                          # define fill alpha
+                                                fill_alpha          =   0.5,                                        # define fill alpha
                                                 line_alpha          =   0.5,                                        # define fill alpha
                                                 hover_fill_color    =   'black',                                    # specify hover fill color 
                                                 hover_line_color    =   'black',                                    # specify hover line color
                                                 hover_fill_alpha    =   0.5,                                        # specify hover fill alpha
                                                 hover_line_alpha    =   0.5)                                        # specify hover line alpha
-
+        
         ver_center_hist                 =   Span(                                                                   # create vertical infinite span line
                                                 location            =   0,                                          # define location
                                                 dimension           =   'width',                                    # define dimension
@@ -458,7 +321,7 @@ class PlotOperator(object):
         # add a hover tool
         v_hist_tooltips                 = [     ('Voxels',              'n = @hist_val{0}'),                        # number of voxels
                                                 ('Prop.',               '@hist_val_norm_prct{0.0} %'),              # proportion
-                                                ('Edges',               '(@bin_edges_left{0.0},@bin_edges_right{0.0})')] # edge of distribution
+                                                ('Edges',               '(@bin_edges_left{0.00},@bin_edges_right{0.00})')] # edge of distribution
 
         v_hist_hover                    =   HoverTool(                                                              # create hover tool
                                                 tooltips            =   v_hist_tooltips,                            # specify content
@@ -536,6 +399,7 @@ class PlotOperator(object):
         return leg
         
     def initialize_main_fig_attributes(self, main_fig):
+
         main_fig.xaxis.axis_label       =   self.x_label                                                       # define x axis label
         main_fig.yaxis.axis_label       =   self.y_label                                                       # define y axis label
         main_fig.grid.grid_line_color   =   None                                                                    # define color of the grids for both axis
@@ -553,14 +417,11 @@ class PlotOperator(object):
         return main_fig
 
 
-
-
     def initialize_main_fig(self, old_main_fig =[], colors = True, gainRatio = None):
         # Bokeh import
         # ------------
         from bokeh.models import ColumnDataSource
         from bokeh.plotting import figure
-        from data_sources import get_data_source_dict
         import numpy as np
 
         # Main figure
@@ -570,19 +431,16 @@ class PlotOperator(object):
             y_range                     =    self.y_range                                                   # define y range for the first time based on self.params
         else:
             x_range                     =    old_main_fig.x_range                                           # define x range based on first figure to have shared axis
-            y_range                     =    old_main_fig.y_range                                           # define y range based on first figure to have shared axis
+            y_range                     =    self.y_range
+            # y_range                     =    old_main_fig.y_range                                           # define y range based on first figure to have shared axis
         
-        
+        data_source                     =   self.data_source
         if colors:
-            colors_data                 =   self.get_colors_data(data = self.dataMat)                       # get the data that will be used to color the dots
-            self.colors_val             =   self.get_colors(data = colors_data)                             # get the colors
+            color                       =   self.get_colors(data = data_source['colors_ref'])               # get the colors
         else:
-            self.colors_val             =   None
+            color                       =   []
+        data_source.update({'color':color})
 
-        
-        data_source                     =   get_data_source_dict(   data = self.dataMat,                    # get data dictionary
-                                                                    condition = self.condition, 
-                                                                    colors_val = self.colors_val)
         # create the main plot source
         main_source                     =   ColumnDataSource(data = data_source)                            # define ColumnDataSource
         
@@ -592,6 +450,7 @@ class PlotOperator(object):
         self.stim_fig_ylim              =   (self.y_range[0] - 5 * self.y_tick_steps, \
                                                          self.y_range[1] + 5 * self.y_tick_steps)           # define stimuli max axis
         
+
         # figure settings
         main_fig                        =   figure(                                                         # create a figure in bokeh
                                                 plot_width          =   self.p_width,                       # define figure width in pixel
@@ -659,7 +518,7 @@ class PlotOperator(object):
                                                 ('Baseline',            '@baseline{0.00}'),                         # baseline of hover tool
                                                 ('Amplitude',           '@beta{0.00}'),                             # amplitude of hover tool
                                                 ('Non-linarity',        '@non_lin{0.00}'),                          # non-linearity of hover tool
-                                                ('Coverage',            '@cov{0.0} %')]                             # stimulus ratio
+                                                ('Coverage',            '@cov{0.0}')]                               # coverage
         main_fig_hover                  =   HoverTool(                                                              # create hover tool
                                                 tooltips            =   main_fig_tooltips,                          # specify content
                                                 mode                =   'mouse',                                    # specify mode
@@ -704,6 +563,7 @@ class PlotOperator(object):
                                                 top                 =   self.stim_fig_ylim[1],                      # define top value
                                                 color               =   self.stim_color)                            # define color
         # plot data
+        
         plot_data                       =   main_fig.circle(                                                        # create circle of the main plots
                                                 x                   =   'ecc',                                      # define x coord
                                                 y                   =   self.y_source_label,                        # define y coord
@@ -718,31 +578,27 @@ class PlotOperator(object):
                                                 hover_fill_alpha    =   0.5,                                        # specify hover fill alpha
                                                 hover_line_alpha    =   0.5)                                        # specify hover line alpha
 
+        
+
         ### regression line weighted by cv rsq ###
         try:
             plot_reg                        =   self.get_weighted_regression_line(data_source = data_source, main_fig = main_fig)
         except: pass
 
+        h_hist                          =   self.create_horizontal_histogram(data_source = data_source, main_fig = main_fig)
         v_hist                          =   self.create_vertical_histogram(data_source = data_source, main_fig = main_fig, colors = False, draw_stim = False)
+        leg                             =   self.create_legend_figure()
         
-        if self.condition == 'ecc':
-            leg                         =   self.create_legend_figure()
-            hist_col                    =   True 
-        else: 
-            leg                         =   Spacer(width=int(self.p_width/4), height=int(self.p_height/4))
-            hist_col                    =   False
-
-        h_hist                          =   self.create_histogram(data_source = data_source, main_fig = main_fig, 
-                                                                  orientation = 'horizontal', colors = hist_col, draw_stim = True)
         
         # add a hover tool
-        main_fig_tooltips               = [     ('ecc',                 '@ecc{0.00} dva'),                          # cv rsq of hover tool
-                                                ('CV R2',               '@cv_rsq{0.00}'),                           # cv rsq of hover tool
+        main_fig_tooltips               =   [   ('R2',                  '@rsq{0.00}'),                              # rsq of hover tool
+                                                ('[X,Y]',               '[@x{0.0}, @y{0.00}]'),                     # x,y coord of hover tool
+                                                ('Eccentricity',        '@ecc{0.00} dva'),                          # eccentricity of hover tool
                                                 ('Size',                '@sigma{0.00} dva'),                        # size of hover tool
                                                 ('Baseline',            '@baseline{0.00}'),                         # baseline of hover tool
                                                 ('Amplitude',           '@beta{0.00}'),                             # amplitude of hover tool
-                                                ('Stim ratio',          '@stim_ratio{0.0} %'),                       # stimulus ratio
-                                                ('x gain',              '@x_gain{0.0} %')]
+                                                ('Non-linarity',        '@non_lin{0.00}'),                          # non-linearity of hover tool
+                                                ('Coverage',            '@cov{0.0}')]                               # coverage
 
         main_fig_hover                  =   HoverTool(                                                              # create hover tool
                                                 tooltips            =   main_fig_tooltips,                          # specify content
@@ -755,253 +611,17 @@ class PlotOperator(object):
         f                               =   column(                                                                 # define figures coluns
                                                 row(h_hist,   leg),              # define figure first row
                                                 row(main_fig, v_hist))                                              # define figure second row
-        self.ecc_gainRatio_counter      +=  1
+
         
-
+        
         # save figures as .svg files
-        if self.saving_figs and self.condition == 'ecc': 
-            self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = leg)
-        else:
-            self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = None)
+        # if self.saving_figs and self.condition == 'ecc': 
+        #     self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = leg)
+        # else:
+        #     self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = None)
 
-        return (f,main_fig)
-
-
-    def draw_pRFcor(self, params, old_main_fig =[]):
-        """
-        -----------------------------------------------------------------------------------------
-        draw_pRFcor(self.params,old_main_fig =[])
-        -----------------------------------------------------------------------------------------
-        Goal of the script:
-        Create a graph with pRF correlation between GazeRight/GazeLeft conditions
-        -----------------------------------------------------------------------------------------
-        Input(s):
-        self.params: dict containing a set of parameters for the figure
-        old_main_fig: handle to the central figure to conserve same axis property across plots
-        -----------------------------------------------------------------------------------------
-        Output(s):
-        none
-        -----------------------------------------------------------------------------------------
-        """
-        # Main figure
-        # -----------
-        self.condition                  =   'cor'
-        main_fig,main_source,data_source=   self.initialize_main_fig(old_main_fig, colors=False)
-
-        # plot data
-        plot_data                       =   main_fig.circle(                                                        # create circle of the main plots
-                                                x                   =   self.x_source_label,                   # define x coord
-                                                y                   =   self.y_source_label,                   # define y coord
-                                                size                =   10,                                         # define radius
-                                                fill_color          =   self.hist_fill_color,                  # define fill color
-                                                line_color          =   'black',                                    # define fill color
-                                                fill_alpha          =   0.5,                                        # define fill alpha
-                                                line_alpha          =   0.5,                                        # define line alpha
-                                                source              =   main_source,                                # specify data source
-                                                hover_fill_color    =   'black',                                    # specify hover fill color 
-                                                hover_line_color    =   'black',                                    # specify hover line color
-                                                hover_fill_alpha    =   0.5,                                        # specify hover fill alpha
-                                                hover_line_alpha    =   0.5)                                        # specify hover line alpha
-
-        plot_reg                        =   self.get_weighted_regression_line(main_fig = main_fig, 
-                                                                              data_source = data_source, 
-                                                                              non_nan = True, rsq_string = 'cv_rsq_all')
-        # Horizontal histogram
-        h_hist                          =   self.create_histogram(main_fig = main_fig, data_source = data_source,
-                                                                  draw_stim = False, orientation = 'horizontal', colors=False,)
-
-        # Vertical histogram
-        # v_hist                          =   self.create_histogram(main_fig = main_fig, data_source = data_source, 
-        #                                                           orientation = 'vertical', colors = False, draw_stim=False,
-        #                                                           v_a = self.y_source_label, fill_alpha = 1) 
-        v_hist                          =   self.create_vertical_histogram(data_source = data_source, main_fig = main_fig, colors = False, draw_stim = False)
-        # plot unity line
-        x_unity                         =   np.arange(self.stim_fig_xlim[0],self.stim_fig_xlim[1],self.x_tick_steps)
-        y_unity                         =   np.arange(self.stim_fig_ylim[0],self.stim_fig_ylim[1],self.y_tick_steps)
-        plot_unity                      =   main_fig.line(                                                          # draw fitted line on main figure
-                                                x                   =  x_unity,                                     # define x of the line
-                                                y                   =  y_unity,                                     # define y of the line
-                                                line_color          =  '#AAAAAA',                                   # define line color
-                                                line_width          =  1)                                           # define line width
-
-        # plot data
-        plot_data                       =   main_fig.circle(                                                        # create circle of the main plots
-                                                x                   =   self.x_source_label,                   # define x coord
-                                                y                   =   self.y_source_label,                   # define y coord
-                                                size                =   10,                                         # define radius
-                                                fill_color          =   '#AAAAAA',                                  # define fill color
-                                                line_color          =   'black',                                    # define fill color
-                                                fill_alpha          =   0.5,                                        # define fill alpha
-                                                line_alpha          =   0.5,                                        # define line alpha
-                                                source              =   main_source,                                # specify data source
-                                                hover_fill_color    =   'black',                                    # specify hover fill color 
-                                                hover_line_color    =   'black',                                    # specify hover line color
-                                                hover_fill_alpha    =   0.5,                                        # specify hover fill alpha
-                                                hover_line_alpha    =   0.5)                                        # specify hover line alpha
-
-        # up space
-        s = Spacer(width=int(self.p_width/4), height=int(self.p_height/4))
-
-        # add a hover tool
-        hov_gazeLeft                    =   '@%s{0.00}'%self.x_source_label                                    # define text for hover
-        hov_gazeRight                   =   '@%s{0.00}'%self.y_source_label                                    # define text for hover
-        hov_gazeAll                     =   '@%s{0.00}'%self.xy_source_label                                   # define text for hover
-        main_fig_tooltips               =   [   ('Gaze: left',          hov_gazeLeft),                              # value for gaze left
-                                                ('Gaze: right',         hov_gazeRight),                             # value for gaze right
-                                                ('Gaze: all',           hov_gazeAll),                               # value for gaze all
-                                                ('X Gain (%): ',        '@retinal_x_gain{0.00}'),
-                                                ('Retinal Gain Index: ','@retinal_gain_index{0.00}')
-                                            ]
-        main_fig_hover                  =   HoverTool(                                                              # create hover tool
-                                                tooltips            =   main_fig_tooltips,                          # specify content
-                                                mode                =   'mouse',                                    # specify mode
-                                                renderers           =   [plot_data])                                # specify renderer
-        main_fig.add_tools(main_fig_hover)                                                                          # add hover tool to main plot
-
-        # Put figure together
-        # -------------------
-        f                               =   column(                                                                 # define figures coluns
-                                                row(h_hist,   s),                                                   # define figure first row
-                                                row(main_fig, v_hist))                                              # define figure second row
-
-        # save figures as .svg files
-        if self.saving_figs: self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = None)
         
         return (f,main_fig)
-
-    def draw_pRFshift(self, params, old_main_fig =[]):
-        """
-        -----------------------------------------------------------------------------------------
-        draw_pRFshift(self.params,old_main_fig =[])
-        -----------------------------------------------------------------------------------------
-        Goal of the script:
-        Create a graph with pRF position shift between gazeRight and gazeLeft condition
-        -----------------------------------------------------------------------------------------
-        Input(s):
-        self.params: dict containing a set of parameters for the figure
-        old_main_fig: handle to the central figure to conserve same axis property across plots
-        -----------------------------------------------------------------------------------------
-        Output(s):
-        none
-        -----------------------------------------------------------------------------------------
-        """
-        # Main figure
-        # -----------
-        self.condition                  =   'shift'
-        if not old_main_fig:
-            x_range                     =    self.x_range                                                  # define x range for the first time based on self.params
-            y_range                     =    self.y_range                                                  # define y range for the first time based on self.params
-        else:
-            x_range                     =    old_main_fig[0].x_range                                               # define x range based on first figure to have shared axis
-            y_range                     =    old_main_fig[0].y_range                                               # define y range based on first figure to have shared axis
-        
-        self.dataMat_gazeLeft           =    self.dataMat[0]
-        self.dataMat_gazeRight          =    self.dataMat[1]
-        self.dataMat_gazeAll            =    self.dataMat[2]
-
-        x_diff                          =    self.dataMat_gazeRight[:,0] -\
-                                                                        self.dataMat_gazeLeft[:,0]             # compute difference [right - left] for pRF x coord.
-        y_diff                          =    self.dataMat_gazeRight[:,1] -\
-                                                                        self.dataMat_gazeLeft[:,1]             # compute difference [right - left] for pRF y coord.
-        x_mean                          =    (self.dataMat_gazeRight[:,0] +\
-                                                                        self.dataMat_gazeLeft[:,0])/2.0        # compute left/right mean pRF x coord.
-        y_mean                          =    (self.dataMat_gazeRight[:,1] +\
-                                                                        self.dataMat_gazeLeft[:,1])/2.0        # compute left/right mean pRF y coord.
-        # define data source
-        data_source                     =   get_data_source_dict(data = self.dataMat, condition = self.condition)
-        data_source.update({'xs':            [[x1,x2] for (x1,x2) in zip(self.dataMat_gazeLeft[:,0],self.dataMat_gazeRight[:,0])], # list of list of xLeft/xRight
-                           'ys':            [[y1,y2] for (y1,y2) in zip(self.dataMat_gazeLeft[:,1],self.dataMat_gazeRight[:,1])], # list of list of yLeft/yRight
-                           'x_diff':        x_diff,                                         # difference [right - left] for pRF x coord.
-                           'y_diff':        y_diff,                                         # difference [right - left] for pRF y coord.
-                           'x_mean':        x_mean,                                         # left/right mean pRF x coord.
-                           'y_mean':        y_mean,                                         # left/right mean pRF y coord.
-                           'xs_mean':       [[x1,x2] for (x1,x2) in zip(x_mean,x_mean)],    # list of list of xLeft/xRight mean
-                           'ys_mean':       [[x1,x2] for (x1,x2) in zip(y_mean,y_mean)]})    # list of list of yLeft/yRight mean
-        
-        # create the main plot source
-        main_source                     =   ColumnDataSource(data = data_source)                                    # define ColumnDataSource
-
-        # define stimuli settings
-        self.stim_fig_xlim              =   (self.x_range[0] - 5 * self.x_tick_steps,self.x_range[1] + 5 * self.x_tick_steps) # define stimuli max axis
-        self.stim_fig_ylim              =   (self.y_range[0] - 5 * self.y_tick_steps,self.y_range[1] + 5 * self.y_tick_steps) # define stimuli max axis
-
-        # figure settings
-        main_fig                        =   figure(                                                                 # create a figure in bokeh
-                                                plot_width          =   self.p_width,                          # define figure width in pixel
-                                                plot_height         =   self.p_height,                         # define figure height in pixel
-                                                min_border_top      =   self.min_border_large,                 # define top border size
-                                                min_border_right    =   self.min_border_large,                 # define right border size
-                                                toolbar_location    =   None,                                       # define toolbar location
-                                                x_range             =   x_range,                                    # define x limits
-                                                y_range             =   y_range,                                    # define y limits
-                                                title               =   self.main_fig_title,                   # specify title
-                                                tools               =   "pan,wheel_zoom,box_zoom,reset")            # define tools
-        main_fig                        =   self.initialize_main_fig_attributes(main_fig = main_fig)
-        
-        plot_stim                       =   main_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
-
-        # plot data
-        plot_data_line                  =   main_fig.multi_line(                                                    # create lines between gazeLeft/Right pRF
-                                                xs                  =   self.xs,                               # list of list of x coord.
-                                                ys                  =   self.ys,                               # list of list of y coord.
-                                                line_color          =   'black',                                    # define fill color
-                                                line_alpha          =   0.5,                                        # define line alpha
-                                                source              =   main_source,                                # define datasources
-                                                hover_line_color    =   'black',                                    # specify hover line color
-                                                hover_line_alpha    =   1                                           # define hover line alpha
-                                                )
-
-        for ext, color in [('left', '#FF4136'), ('right', '#0074D9')]:
-            exec('param_x = self.x_{ext}'.format(ext = ext))
-            exec('param_y = self.y_{ext}'.format(ext = ext))
-
-            _                           =   main_fig.circle(                                                        # create circle for gazeLeft pRF coord
-                                                    x                   =   param_x,                           # define x coord
-                                                    y                   =   param_y,                           # define y coord
-                                                    size                =   10,                                         # define circle size
-                                                    fill_color          =   color,                                  # define fill color
-                                                    line_color          =   'black',                                    # define line color
-                                                    fill_alpha          =   0.5,                                        # define fill alpha
-                                                    line_alpha          =   0.5,                                        # define line alpha
-                                                    source              =   main_source,                                # define datasource
-                                                    legend              =   'gaze %s' % ext,                                # define legend
-                                                    hover_fill_color    =   'black',                                    # specify hover fill color 
-                                                    hover_line_color    =   'black',                                    # specify hover line color
-                                                    hover_fill_alpha    =   1,                                          # specify hover fill alpha
-                                                    hover_line_alpha    =   1)                                          # specify hover line alpha
-
-        main_fig.legend.border_line_alpha  = 0                                                                      # make legend box line transparent
-        main_fig.legend.background_fill_alpha = 0                                                                   # make legend box background transparent
-        main_fig.legend.location              = 'bottom_right'
-        
-        # add a hover tool
-        main_fig_tooltips               =   [   ('Gaze right: [X,Y]',       '[@x_right{0.00}, @y_right{0.00}]'),    # x,y coord of hover tool for gaze right
-                                                ('Gaze left: [X,Y]',        '[@x_left{0.00}, @y_left{0.00}]'),      # x,y coord of hover tool for gaze left
-                                                ('[Right-Left]: [X,Y]',     '[@x_diff{0.00}, @y_diff{0.00}]'),      # x,y coord of hover tool
-                                                ('[Right|Left]: [cv R2]',   '[@cv_rsq_right{0.00}, @cv_rsq_left{0.00}]'), # cv r2 coord of hover tool
-                                                ('X Gain (%): ',             '@retinal_x_gain{0.00}'),
-                                                ('Retinal Gain Index: ',     '@retinal_gain_index{0.00}')
-                                            ]
-        main_fig_hover                  =   HoverTool(                                                              # create hover tool
-                                                    tooltips            =   main_fig_tooltips,                      # specify content
-                                                    mode                =   'mouse',                                # specify mode
-                                                    renderers           =   [plot_data_line])                       # specify renderer                              
-        # add some span
-        main_fig.add_layout(self.get_span('width'))                                                                    # add the vertical line span to the figure
-        main_fig.add_layout(self.get_span('height'))                                                                    # add the horizontal line span to the figure
-        main_fig.add_tools(main_fig_hover)                                                                          # add hover tool to main plot
-
-        # Put figure together
-        # -------------------
-        f                               =   column(row(main_fig))                                                   # define figure first row
-
-        # save figures as .svg files
-        if self.saving_figs: self.save_figures_svg(main_fig = main_fig)
-
-        return (f,main_fig)
-
-
-
 
 
     def draw_pRFroi(self, params, old_main_fig = [], condition = 'roi'):
@@ -1261,25 +881,28 @@ class PlotOperator(object):
         colors_val_leg                  =   self.get_colors(data_leg_val)
         dataMat                         =   self.dataMat
         smooth_factor                   =   self.smooth_factor
-        deg_x, deg_y                    =   np.meshgrid(np.linspace(-15, 15, 30*smooth_factor), 
-                                                        np.linspace(-15, 15, 30*smooth_factor))                     # define prfs in visual space
-        pRFs                            =   generate_og_receptive_fields(                                           # generate gaussian
-                                                                          dataMat[:,0].astype(np.float64),          # coordinate of the center x of the Gaussian
-                                                                          dataMat[:,1].astype(np.float64),          # coordinate of the center y of the Gaussian
-                                                                          dataMat[:,2],                             # dispersion of the Gaussian
+        
+        deg_x, deg_y                    =   np.meshgrid(np.linspace(self.x_range[0]*1.5, self.x_range[1]*1.5, (-self.x_range[0]*1.5+self.x_range[1]*1.5)*smooth_factor), 
+                                                        np.linspace(self.x_range[0]*1.5, self.x_range[1]*1.5, (-self.x_range[0]*1.5+self.x_range[1]*1.5)*smooth_factor))                     # define prfs in visual space
+
+
+        pRFs                            =   generate_og_receptive_fields(                                           
+                                                                          dataMat[:,10].astype(np.float64),         # coordinate of the center x of the Gaussian
+                                                                          dataMat[:,11].astype(np.float64),         # coordinate of the center y of the Gaussian
+                                                                          dataMat[:,5].astype(np.float64),          # dispersion of the Gaussian
                                                                           np.ones((dataMat.shape[0])),              # amplitude of the Gaussian
                                                                           deg_x,                                    # coordinate matrix along the horizontal dimension of the display (degrees)
                                                                           deg_y)                                    # coordinate matrix along the vertical dimension of the display (degrees)
 
-        pRFs_cv_rsq                     =   pRFs*dataMat[:,6]                                                       # weighted by cv rsq
-        pRFs_cv_rsq_sum                 =   np.nansum(pRFs_cv_rsq,axis = 2)                                         # sum of pRF
-        maxVal                          =   np.nanmax(pRFs_cv_rsq_sum)                                              # define max pixel
-        minVal                          =   np.nanmin(pRFs_cv_rsq_sum)
+        pRFs_rsq                        =   pRFs*dataMat[:,1]                                                       # weighted by cv rsq
+        pRFs_rsq_sum                    =   np.nansum(pRFs_rsq,axis = 2)                                            # sum of pRF
+        maxVal                          =   np.nanmax(pRFs_rsq_sum)                                                 # define max pixel
+        minVal                          =   np.nanmin(pRFs_rsq_sum)
         valRange                        =   maxVal - minVal                                                         # define data range                                                 
-        pRFs_cv_rsq_sum_norm            =   ((pRFs_cv_rsq_sum-minVal)/valRange)
+        pRFs_rsq_sum_norm               =   ((pRFs_rsq_sum-minVal)/valRange)
 
         # define main data source
-        data_source                     =   {'image':           pRFs_cv_rsq_sum_norm,                               # pRF coverage image 
+        data_source                     =   {'image':           pRFs_rsq_sum_norm,                               # pRF coverage image 
                                              'data_leg':        data_leg,                                           # scale for colorbar
                                              'colors':          colors_val_leg}
         # create the main plot source
@@ -1287,6 +910,7 @@ class PlotOperator(object):
         
         # Main figure
         # -----------
+        
         if not old_main_fig:
             x_range                         =    self.x_range                                                  # define x range for the first time based on params
             y_range                         =    self.y_range                                                  # define y range for the first time based on params
@@ -1294,6 +918,8 @@ class PlotOperator(object):
             x_range                         =    old_main_fig.x_range                                               # define x range based on first figure to have shared axis
             y_range                         =    old_main_fig.y_range                                               # define y range based on first figure to have shared axis
         
+
+
         # define stimuli settings
         stim_fig_xlim                   =   (self.x_range[0]-5*self.x_tick_steps,self.x_range[1]+5*self.x_tick_steps) # define stimuli max axis
         stim_fig_ylim                   =   (self.y_range[0]-5*self.y_tick_steps,self.y_range[1]+5*self.y_tick_steps) # define stimuli max axis
@@ -1307,35 +933,49 @@ class PlotOperator(object):
                                                 toolbar_location    =   None,                                       # define toolbar location
                                                 x_range             =   x_range,                                    # define x limits
                                                 y_range             =   y_range,                                    # define y limits
-                                                title               =   self.main_fig_title,                   # define title
                                                 tools               =   "pan,wheel_zoom,box_zoom,reset")            # define tools to show
 
-        _                               =   self.initialize_main_fig_attributes(main_fig)
+
+        main_fig.xaxis.axis_label       =   self.x_label                                                       # define x axis label
+        main_fig.yaxis.axis_label       =   self.y_label                                                       # define y axis label
+        main_fig.grid.grid_line_color   =   None                                                                    # define color of the grids for both axis
+        main_fig.axis.minor_tick_in     =   False                                                                   # set minor tick in
+        main_fig.axis.minor_tick_out    =   False                                                                   # set minor tick out
+        main_fig.axis.major_tick_in     =   False                                                                   # set major tick in
+        main_fig.outline_line_alpha     =   0                                                                       # change alpha of box contour
+        
+        main_fig.yaxis.ticker           =   np.linspace(self.x_range[0], self.x_range[1], (-self.x_range[0]+self.x_range[1])/self.y_tick_steps+1)     # define y axis ticks
+        main_fig.xaxis.ticker           =   np.linspace(self.y_range[0], self.y_range[1], (-self.y_range[0]+self.y_range[1])/self.y_tick_steps+1)     # define y axis ticks
+
+        
+        main_fig.background_fill_color  =   self.bg_color                                                           # define backgroud color
+        main_fig.axis.axis_label_standoff = 10                                                                      # set space between axis and label
+        main_fig.axis.axis_label_text_font_style = 'normal' 
 
 
-        main_fig.add_layout(self.get_span('height'))                                                                    # add the vertical line span to the figure
-        main_fig.add_layout(self.get_span('width'))                                                                    # add the horizontal line span to the figure
+        main_fig.add_layout(self.get_span('height',color = 'white'))                                                # add the vertical line span to the figure
+        main_fig.add_layout(self.get_span('width',color = 'white'))                                                 # add the horizontal line span to the figure
 
         # colormap definition
         color_mapper                    =  LinearColorMapper(
                                                 palette             =   colors_val_leg,                             # palette of color to use in Hex format
-                                                low                 =   self.vmin,                             # min of the colormap
-                                                high                =   self.vmax)                             # max of the colormap
+                                                low                 =   self.vmin,                                  # min of the colormap
+                                                high                =   self.vmax)                                  # max of the colormap
                                                 
         # plot data
         plot_data                       =  main_fig.image(
-                                                image               =   [pRFs_cv_rsq_sum_norm],                     # define image to plot
-                                                x                   =   -15,                                        # define x left bottom position
-                                                y                   =   -15,                                        # define y left bottom position
-                                                dw                  =   [30],                                       # define width size
-                                                dh                  =   [30],                                       # define height size
+                                                image               =   [pRFs_rsq_sum_norm],                        # define image to plot
+                                                x                   =   self.x_range[0]*1.5,                       # define x left bottom position
+                                                y                   =   self.y_range[0]*1.5,                       # define y left bottom position
+                                                dw                  =   [(-self.x_range[0]*1.5+self.x_range[1]*1.5)], # define width size
+                                                dh                  =   [(-self.y_range[0]*1.5+self.y_range[1]*1.5)], # define height size
                                                 color_mapper        =   color_mapper)                               # define colormap
 
         # plot stimulus circle
         plot_stim                       =   main_fig.circle(                                                        # create circle plots for the stim circle
                                                 x                   =   0,                                          # define x coord
                                                 y                   =   0,                                          # define y coord
-                                                radius              =   self.stim_radius,                      # define radius
+                                                radius              =   self.stim_radius,                           # define radius
                                                 line_alpha          =   0.5,                                        # define line alpha
                                                 fill_color          =   None,                                       # define color
                                                 line_color          =   'white',                                    # define line color
@@ -1362,10 +1002,10 @@ class PlotOperator(object):
         colorbar_fig.xaxis.major_label_text_font_size = '0pt'                                                       # set y axis font size (make it disappear)
         colorbar_fig.outline_line_alpha       =   0                                                                 # set box contour alpha
         colorbar_fig.axis.axis_label_standoff =   10                                                                # set space between axis and label
-        colorbar_fig.yaxis.axis_label         =   self.colorbar_label
+        colorbar_fig.yaxis.axis_label         =   self.cb_label
         colorbar_fig.axis.axis_label_text_font_style = 'normal'                                                     # set axis label font style
-        colorbar_fig.yaxis.ticker             =   np.arange(self.vmin, self.vmax + self.colorbar_tick_steps,
-                                                            self.colorbar_tick_steps) # define x axis ticks
+        colorbar_fig.yaxis.ticker             =   np.arange(self.vmin, self.vmax + self.cb_tick_steps,
+                                                            self.cb_tick_steps) # define x axis ticks
         
         plot_colorbar                   =   colorbar_fig.quad(
                                                 left                =   0,                                          # define left value
@@ -1386,7 +1026,7 @@ class PlotOperator(object):
                                                 row(main_fig, colorbar_fig))                                        # define figure second row
 
         # save figures as .svg files
-        if self.saving_figs: self.save_figures_svg(main_fig = main_fig, h_hist = None, v_hist = None, leg = colorbar_fig)
+        # if self.saving_figs: self.save_figures_svg(main_fig = main_fig, h_hist = None, v_hist = None, leg = colorbar_fig)
 
         return (f,main_fig)
 
@@ -1403,7 +1043,10 @@ class PlotOperator(object):
         
         if plot == 'map':
             f, main_fig = self.draw_pRFmap(params = parameters, old_main_fig = old_main_fig)
+        elif plot == 'ecc':
+            f, main_fig = self.draw_pRFecc(params = parameters, old_main_fig = old_main_fig)
+        elif plot == 'cov':
+            f, main_fig = self.draw_pRFcov(params = parameters, old_main_fig = old_main_fig)
         
-
         return (f, main_fig)
 

@@ -12,6 +12,6 @@
                 "V4v_SHM07":"V4v",      "LO1_KPO10":"LO1",      "LO2_KPO10":"LO2",      "PITd_KPO10":"PITd",    "PITv_KPO10":"PITv",
                 "hOc5_MT_FRB08":"MT",   "V7_SHM07":"V7",        "V6_PHG06":"V6",        "IPS1_SHM07":"IPS1",    "IPS2_SHM07":"IPS2",
                 "IPS3_SHM07":"IPS3",    "IPS4_SHM07":"IPS4"},
-    "rsq_threshold": 0.10,
+    "rsq_threshold": 0.20,
     "cov_threshold": 0.30
 }
