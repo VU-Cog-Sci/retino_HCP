@@ -24,6 +24,14 @@ python fit/submit_fit_jobs.py 192641 L gauss 2500 10
 python fit/submit_fit_jobs.py 192641 R gauss 2500 10
 python fit/submit_fit_jobs.py 192641 L css 2500 10
 python fit/submit_fit_jobs.py 192641 R css 2500 10
+
+sub 192641 : ran 18/08/2018 at 20:15
+python fit/submit_fit_jobs.py 192641 L gauss 2500 10
+python fit/submit_fit_jobs.py 192641 R gauss 2500 10
+python fit/submit_fit_jobs.py 192641 L css 2500 10
+python fit/submit_fit_jobs.py 192641 R css 2500 10
+
+
 -----------------------------------------------------------------------------------------
 """
 
