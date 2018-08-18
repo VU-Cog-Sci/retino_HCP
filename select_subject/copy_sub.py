@@ -14,7 +14,7 @@ none
 Exemple:
 # to run from lisa
 cd /Users/martin/Dropbox/GitHub/retino_HCP/ 
-python scripts/copy_sub.py
+python select_subject/copy_sub.py
 -----------------------------------------------------------------------------------------
 """
 
@@ -29,7 +29,7 @@ subs = ['192641','105923','111312','926862','182739','167440','789373','690152',
 files_to_trans = [	'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries_L.func_bla_psc_av.gii',\
 					'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries_R.func_bla_psc_av.gii'	]
 
-database_dir = '/home/shared/2018/visual/nprf_hcp'
+database_dir = '/home/shared/2018/visual/nprf_hcp/data/'
 target_dir = 'szinte@lisa.surfsara.nl:/home/szinte/data/nprf_hcp'
 
 copy_cmd_beg = 'rsync -a --no-g --no-p -vzhe ssh --progress'
