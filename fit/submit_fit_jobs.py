@@ -18,9 +18,12 @@ Output(s):
 -----------------------------------------------------------------------------------------
 Exemple:
 cd /home/szinte/projects/retino_HCP/
-python fit/submit_fit_jobs.py 192641 L css 1000 10
-python fit/submit_fit_jobs.py 192641 L gauss 1000 10
 
+sub 192641 : ran 18/08/2018 at 20:15
+python fit/submit_fit_jobs.py 192641 L gauss 2500 10
+python fit/submit_fit_jobs.py 192641 R gauss 2500 10
+python fit/submit_fit_jobs.py 192641 L css 2500 10
+python fit/submit_fit_jobs.py 192641 R css 2500 10
 -----------------------------------------------------------------------------------------
 """
 
@@ -136,9 +139,10 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
     if 'lisa' in platform.uname()[1]:
         os.chdir(opj(base_dir,'pp_data',subject,fit_model,'log_outputs'))
         os.system('qsub ' + js_name)
+        
     elif 'aeneas' in platform.uname()[1]:
         os.system('sh ' + js_name)
-        deb()
+        
     elif 'local' in platform.uname()[1]:
         os.system('sh ' + js_name)
     

@@ -64,7 +64,6 @@ elif 'local' in platform.uname()[1]:
     N_PROCS = 8
 
 # Define output file path and directories
-
 base_file_name = os.path.split(data_file)[-1][:-7]
 opfn_est = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.gii' %(start_idx,end_idx))
 opfn_pred = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_pred_%s_to_%s.gii' %(start_idx,end_idx))
