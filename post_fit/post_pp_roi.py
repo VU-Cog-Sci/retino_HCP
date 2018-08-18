@@ -7,6 +7,7 @@ Draw basic plot of pRF analysis
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[1]: subject number
+sys.argv[2]: fit model ('gauss','css')
 -----------------------------------------------------------------------------------------
 Output(s):
 None
@@ -54,6 +55,7 @@ from bokeh.layouts import row, column, gridplot
 # Get inputs
 # ----------
 subject = sys.argv[1]
+fit_model = sys.argv[2]
 
 # Define analysis parameters
 # --------------------------
@@ -67,15 +69,14 @@ if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
-deriv_dir = opj(base_dir,'pp',subject,'deriv')
-h5_dir = opj(base_dir,'pp',subject,'h5')
+deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
+h5_dir = opj(base_dir,'pp_data',subject,fit_model,'h5')
 
 # Draw main analysis figure
 # -------------------------
 print('creating bokeh plots')
 
 # Initialize data dictionary that will save all data arrays
-
 for roi in analysis_info['rois']:
     
     for mask_dir in ['all','pos','neg']:
@@ -85,7 +86,7 @@ for roi in analysis_info['rois']:
 
             # create folders
             roi_text = analysis_info['rois'][roi]
-            exec('fig_bokeh_dir_{mask_dir}_{hemi} = opj(base_dir,"pp",subject,"figs_prf","{mask_dir}","{hemi}")'.format(mask_dir=mask_dir, hemi = hemi))
+            exec('fig_bokeh_dir_{mask_dir}_{hemi} = opj(base_dir,"pp_data",subject,fit_model,"figs","prf","{mask_dir}","{hemi}")'.format(mask_dir=mask_dir, hemi = hemi))
             try: exec('os.makedirs(fig_bokeh_dir_{mask_dir}_{hemi})'.format(mask_dir=mask_dir,hemi = hemi))
             except: pass
             
@@ -171,7 +172,12 @@ for roi in analysis_info['rois']:
                 # pRFecc
                 old_main_fig = []
                 f_pRFecc = []
-                for numData, type_comp in enumerate(['Size','R2','Non-Linearity','Amplitude','Coverage','Baseline']):
+                if fit_model == 'gauss':
+                    type_comp_list = ['Size','R2','Amplitude','Coverage','Baseline']
+                elif fit_model == 'css':
+                    type_comp_list = ['Size','R2','Non-Linearity','Amplitude','Coverage','Baseline']
+
+                for numData, type_comp in enumerate(type_comp_list):
 
                     params_pRFecc = param_all
                     params_pRFecc.update(   
@@ -260,8 +266,13 @@ for roi in analysis_info['rois']:
                 f_pRFcov = plotter.draw_figure(parameters = params_pRFcov, plot = 'cov')
 
                 # save files
-                all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
-                                    [f_pRFecc[3],f_pRFecc[4],f_pRFecc[5]]])
+                if fit_model == 'gauss':
+                    all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
+                                        [f_pRFecc[3],f_pRFecc[4],None]])
+                elif fit_model == 'css':
+                    all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
+                                        [f_pRFecc[3],f_pRFecc[4],f_pRFecc[5]]])
+                
                 exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}_{mask_dir}_pRFecc.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
                 output_file(output_file_html, title='%s pRF analysis'%roi_text)
                 save(all_f1)

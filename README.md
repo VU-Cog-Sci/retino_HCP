@@ -1,6 +1,7 @@
 ## retino_HCP
-martin_dev
-----------
+
+martin_dev branch
+-----------------
 
 ## Analysis specifics
 - HCP subjects were first pre-processed and averaged by Tomas
@@ -11,7 +12,7 @@ martin_dev
 - pRF derivatives data are resampled to fsaverage using pp_roi.py
 - pRF derivatives are plotted with pycortex using pp_roi.py
 - ROI are determined from Conte69 atlas using pp_roi.py
+- draw region of interst in inkscape
 - pRF derivatives are saved as a function of ROI in hdf5 files using pp_roi.py
 - PRF derivatives summary are plotted with bokeh using post_pp_roi.py
-
 

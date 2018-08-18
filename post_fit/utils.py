@@ -61,7 +61,8 @@ def set_pycortex_config_file(project_folder):
 def convert_fit_results(prf_filename,
                         output_dir,
                         stim_radius,
-                        hemi):
+                        hemi,
+                        fit_model):
     """
     Convert pRF fitting value in different parameters for following analysis
    
@@ -71,6 +72,7 @@ def convert_fit_results(prf_filename,
     output_dir: absolute path to directory into which to put the resulting files.
     stim_radius: stimulus radius in deg
     hemi: brain hemisphere
+    fit_model: fit model ('gauss','css')
 
     Returns
     -------
@@ -78,7 +80,7 @@ def convert_fit_results(prf_filename,
     prf_deriv_L_neg and  prf_deriv_R_neg : derivative of pRF analysis for all negative pRF voxels
     prf_deriv_L_pos and  prf_deriv_R_pos : derivative of pRF analysis for all positive pRF voxels
 
-    stucture:
+    stucture output:
     columns: 1->32492
     row00 : sign
     row01 : R2
@@ -86,7 +88,7 @@ def convert_fit_results(prf_filename,
     row03 : polar angle real component in deg
     row04 : polar angle imaginary component in deg
     row05 : size in deg
-    row06 : non-linerity
+    row06 : non-linerity or nans
     row07 : amplitude
     row08 : baseline
     row09 : coverage
@@ -95,7 +97,6 @@ def convert_fit_results(prf_filename,
     
     ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov','prf_x','prf_y']
 
-    None
     """
 
     # Imports
@@ -110,6 +111,9 @@ def convert_fit_results(prf_filename,
     # Popeye imports
     from popeye.spinach import generate_og_receptive_fields
 
+
+    # Create folders
+    # --------------
     try:
         os.makedirs(os.path.join(output_dir,'all'))
         os.makedirs(os.path.join(output_dir,'pos'))
@@ -129,44 +133,51 @@ def convert_fit_results(prf_filename,
 
     # Compute derived measures from prfs
     # ----------------------------------
+    # get data index
+    if fit_model == 'gauss':
+        x_idx, y_idx, sigma_idx, beta_idx, baseline_idx, rsq_idx = 0, 1, 2, 3, 4, 5
+    elif fit_model == 'css':
+        x_idx, y_idx, sigma_idx, non_lin_idx, beta_idx, baseline_idx, rsq_idx = 0, 1, 2, 3, 4, 5, 6
+        
     # pRF sign
-    prf_sign_all = np.sign((prf_data[4,:]))
+    prf_sign_all = np.sign((prf_data[beta_idx,:]))
     pos_mask = prf_sign_all > 0.0
     neg_mask = prf_sign_all < 0.0
     all_mask = pos_mask | neg_mask
     
     # r-square
-    prf_rsq_all = prf_data[6,:]
+    prf_rsq_all = prf_data[rsq_idx,:]
 
     # pRF eccentricity
-    prf_ecc_all = np.nan_to_num(np.sqrt(prf_data[0,:]**2 + prf_data[1,:]**2))
+    prf_ecc_all = np.nan_to_num(np.sqrt(prf_data[x_idx,:]**2 + prf_data[y_idx,:]**2))
 
     # pRF polar angle
-    complex_polar = prf_data[0,:] + 1j * prf_data[1,:]
+    complex_polar = prf_data[x_idx,:] + 1j * prf_data[y_idx,:]
     normed_polar = complex_polar / np.abs(complex_polar)
     prf_polar_real_all = np.real(normed_polar)
     prf_polar_imag_all = np.imag(normed_polar)
     
     # pRF size
-    prf_size_all = prf_data[2,:].astype(np.float64)
+    prf_size_all = prf_data[sigma_idx,:].astype(np.float64)
     prf_size_all[prf_size_all<1e-4] = 1e-4
 
     # pRF non-linearity
-    prf_non_lin_all = prf_data[3,:]
-
+    if fit_model == 'gauss':
+        prf_non_lin_all = np_zeros((prf_size_all.shape))*np.nan
+    elif fit_model == 'css':
+        prf_non_lin_all = prf_data[non_lin_idx,:]
 
     # pRF amplitude
-    prf_amp_all = prf_data[4,:]
+    prf_amp_all = prf_data[beta_idx,:]
 
     # pRF baseline
-    prf_baseline_all = prf_data[5,:]
-
+    prf_baseline_all = prf_data[baseline_idx,:]
 
     # pRF coverage
     deg_x, deg_y = np.meshgrid(np.linspace(-30, 30, 121), np.linspace(-30, 30, 121))         # define prfs in visual space
     
-    rfs = generate_og_receptive_fields( prf_data[0,:],
-                                        prf_data[1,:],
+    rfs = generate_og_receptive_fields( prf_data[x_idx,:],
+                                        prf_data[y_idx,:],
                                         prf_size_all,
                                         np.ones(np.prod(prf_data[0,:].shape[0])),
                                         deg_x,
@@ -178,8 +189,10 @@ def convert_fit_results(prf_filename,
     prf_cov_all = css_rfs[stim_vignet, :].sum(axis=0) / total_prf_content
 
     # pRF x
-    prf_x_all = prf_data[0,:]
-    prf_y_all = prf_data[1,:]
+    prf_x_all = prf_data[x_idx,:]
+
+    # pRF y
+    prf_y_all = prf_data[y_idx,:]
 
     # Saving
     # ------
