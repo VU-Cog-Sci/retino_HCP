@@ -19,18 +19,89 @@ Output(s):
 Exemple:
 cd /home/szinte/projects/retino_HCP/
 
-sub 192641 : ran 18/08/2018 at 20:15
+#1: sub 192641 : ran 18/08/2018 at 20:15
 python fit/submit_fit_jobs.py 192641 L gauss 2500 10
 python fit/submit_fit_jobs.py 192641 R gauss 2500 10
 python fit/submit_fit_jobs.py 192641 L css 2500 10
 python fit/submit_fit_jobs.py 192641 R css 2500 10
 
-sub 192641 : ran 18/08/2018 at 20:15
-python fit/submit_fit_jobs.py 192641 L gauss 2500 10
-python fit/submit_fit_jobs.py 192641 R gauss 2500 10
-python fit/submit_fit_jobs.py 192641 L css 2500 10
-python fit/submit_fit_jobs.py 192641 R css 2500 10
+#2: sub 105923 : ran 18/08/2018 at 20:15
+python fit/submit_fit_jobs.py 105923 L gauss 2500 10
+python fit/submit_fit_jobs.py 105923 R gauss 2500 10
+python fit/submit_fit_jobs.py 105923 L css 2500 10
+python fit/submit_fit_jobs.py 105923 R css 2500 10
 
+#3: sub 111312 : ran 19/08/2018 at 10:30
+python fit/submit_fit_jobs.py 111312 L gauss 2500 10
+python fit/submit_fit_jobs.py 111312 R gauss 2500 10
+python fit/submit_fit_jobs.py 111312 L css 2500 10
+python fit/submit_fit_jobs.py 111312 R css 2500 10
+
+#4: sub 926862 : ran 19/08/2018 at 10:30
+python fit/submit_fit_jobs.py 926862 L gauss 2500 10
+python fit/submit_fit_jobs.py 926862 R gauss 2500 10
+python fit/submit_fit_jobs.py 926862 L css 2500 10
+python fit/submit_fit_jobs.py 926862 R css 2500 10
+
+#5: sub 926862 : ran 19/08/2018 at 10:30
+python fit/submit_fit_jobs.py 182739 L gauss 2500 10
+python fit/submit_fit_jobs.py 182739 R gauss 2500 10
+python fit/submit_fit_jobs.py 182739 L css 2500 10
+python fit/submit_fit_jobs.py 182739 R css 2500 10
+
+#6: sub 167440 : ran 19/08/2018 at 15:00
+python fit/submit_fit_jobs.py 167440 L gauss 2500 10
+python fit/submit_fit_jobs.py 167440 R gauss 2500 10
+python fit/submit_fit_jobs.py 167440 L css 2500 10
+python fit/submit_fit_jobs.py 167440 R css 2500 10
+
+#7: sub 789373 : ran 19/08/2018 at 15:00
+python fit/submit_fit_jobs.py 789373 L gauss 2500 10
+python fit/submit_fit_jobs.py 789373 R gauss 2500 10
+python fit/submit_fit_jobs.py 789373 L css 2500 10
+python fit/submit_fit_jobs.py 789373 R css 2500 10
+
+#8: sub 690152 : ran 19/08/2018 at 15:00
+python fit/submit_fit_jobs.py 690152 L gauss 2500 10
+python fit/submit_fit_jobs.py 690152 R gauss 2500 10
+python fit/submit_fit_jobs.py 690152 L css 2500 10
+python fit/submit_fit_jobs.py 690152 R css 2500 10
+
+#9: sub 148133 : ran 19/08/2018 at 20:50
+python fit/submit_fit_jobs.py 148133 L gauss 2500 10
+python fit/submit_fit_jobs.py 148133 R gauss 2500 10
+python fit/submit_fit_jobs.py 148133 L css 2500 10
+python fit/submit_fit_jobs.py 148133 R css 2500 10
+
+#10: sub 467351 : ran 19/08/2018 at 20:50
+python fit/submit_fit_jobs.py 467351 L gauss 2500 10
+python fit/submit_fit_jobs.py 467351 R gauss 2500 10
+python fit/submit_fit_jobs.py 467351 L css 2500 10
+python fit/submit_fit_jobs.py 467351 R css 2500 10
+
+#11: sub 233326 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 233326 L gauss 2500 10
+python fit/submit_fit_jobs.py 233326 R gauss 2500 10
+python fit/submit_fit_jobs.py 233326 L css 2500 10
+python fit/submit_fit_jobs.py 233326 R css 2500 10
+
+#12: sub 233326 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 144226 L gauss 2500 10
+python fit/submit_fit_jobs.py 144226 R gauss 2500 10
+python fit/submit_fit_jobs.py 144226 L css 2500 10
+python fit/submit_fit_jobs.py 144226 R css 2500 10
+
+#13: sub 638049 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 638049 L gauss 2500 10
+python fit/submit_fit_jobs.py 638049 R gauss 2500 10
+python fit/submit_fit_jobs.py 638049 L css 2500 10
+python fit/submit_fit_jobs.py 638049 R css 2500 10
+
+#14: sub 638049 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 318637 L gauss 2500 10
+python fit/submit_fit_jobs.py 318637 R gauss 2500 10
+python fit/submit_fit_jobs.py 318637 L css 2500 10
+python fit/submit_fit_jobs.py 318637 R css 2500 10
 
 -----------------------------------------------------------------------------------------
 """

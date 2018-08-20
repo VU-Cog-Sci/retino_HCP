@@ -163,7 +163,7 @@ def convert_fit_results(prf_filename,
 
     # pRF non-linearity
     if fit_model == 'gauss':
-        prf_non_lin_all = np_zeros((prf_size_all.shape))*np.nan
+        prf_non_lin_all = np.zeros((prf_size_all.shape))*np.nan
     elif fit_model == 'css':
         prf_non_lin_all = prf_data[non_lin_idx,:]
 

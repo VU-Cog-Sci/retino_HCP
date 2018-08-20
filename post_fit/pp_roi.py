@@ -17,7 +17,7 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/pp_roi.py 192641 400
+python post_fit/pp_roi.py 192641 gauss 2500
 -----------------------------------------------------------------------------------------
 """
 
@@ -99,8 +99,8 @@ for hemi in ['L','R']:
             num_miss_part += 1
 
 if num_miss_part != 0:
-    # sys.exit('%i missing files, analysis stopped'%num_miss_part)
-    print('%i missing files, partial analysis'%num_miss_part)
+    sys.exit('%i missing files, analysis stopped'%num_miss_part)
+    # print('%i missing files, partial analysis'%num_miss_part)
 
 # Combine fit files
 # -----------------
