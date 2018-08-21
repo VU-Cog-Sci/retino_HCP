@@ -179,7 +179,7 @@ set_pycortex_config_file(project_folder     =   pycortex_folder)
 # Create derivatives flatmaps
 # ---------------------------
 print('draw deriv maps')
-if fit_model == 'css':
+if subject == '999999' and fit_model == 'css':
     try: os.system('rm -rf '+ opj(pycortex_folder,"db",subject))
     except: pass
     cp_cmd = """cp -a {source_folder} {dest_folder}"""
@@ -208,6 +208,7 @@ for mask_dir in ['all','pos','neg']:
     for hemi in ['L','R']:
         deriv_file = nb.load(opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir)))
         deriv_mat.append(np.array([deriv_file.darrays[i].data for i in range(len(deriv_file.darrays))]))
+        
     deriv_mat = np.hstack(deriv_mat)
 
     # R-square
@@ -273,12 +274,12 @@ for mask_dir in ['all','pos','neg']:
     for vertex_name in vertex_names:
         roi_name = '{vertex_name}_{mask_dir}'.format(vertex_name = vertex_name, mask_dir = mask_dir)
 
-        if mask_dir == 'all' and fit_model == 'css':
+        if mask_dir == 'all' and fit_model == 'gauss' and subject == '999999': 
             roi_param = {   'subject': subject,
                             'add_roi': True,
                             'roi_name': roi_name}
         else:
-            roi_param = {   'subject': subject,
+            roi_param = {   'subject': 'fsaverage',
                             'add_roi': False,
                             'roi_name': roi_name}
 

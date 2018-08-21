@@ -15,6 +15,9 @@ def set_pycortex_config_file(project_folder):
     import cortex
     from pathlib import Path
 
+    import ipdb
+
+    
     # Define the new database and colormaps folder
     pycortex_db_folder = project_folder + '/db/'
     pycortex_cm_folder = project_folder + '/colormaps/'
