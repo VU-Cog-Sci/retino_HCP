@@ -66,7 +66,7 @@ elif 'local' in platform.uname()[1]:
 # Define output file path and directories
 base_file_name = os.path.split(data_file)[-1][:-7]
 opfn_est = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.gii' %(start_idx,end_idx))
-opfn_pred = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_pred_%s_to_%s.gii' %(start_idx,end_idx))
+
 try: os.makedirs(opj(base_dir,'pp_data',subject,fit_model,'fit'))
 except: pass
 
@@ -126,12 +126,11 @@ elif fit_model == 'css':
 
 # Fit: define empty estimate and voxel indeces
 estimates = np.zeros((num_est,data.shape[1]))
-prediction = np.zeros((data.shape))
 vertex_indices = [(xx, 0, 0) for xx in np.arange(int(start_idx),int(end_idx),1)]
 
 # Define multiprocess bundle
 bundle = utils.multiprocess_bundle( Fit = fit_func,
-                                    model = model_func, 
+                                    model = model_func,
                                     data = data_to_analyse.T,
                                     grids = fit_model_grids, 
                                     bounds = fit_model_bounds, 
@@ -147,7 +146,6 @@ output = pool.map(  func = utils.parallel_fit,
 for fit in output:
     estimates[:num_est-1,fit.voxel_index[0]] = fit.estimate
     estimates[num_est-1,fit.voxel_index[0]] = fit.rsquared
-    prediction[:,fit.voxel_index[0]] = fit.prediction
 
 # Free up memory
 pool.close()
@@ -160,9 +158,3 @@ gii_out = nb.gifti.gifti.GiftiImage(header = data_file_load.header,
                                     darrays = darrays)
 nb.save(gii_out, opfn_est)
 
-# Save estimates data
-darrays = [nb.gifti.gifti.GiftiDataArray(tc) for tc in prediction]
-gii_out = nb.gifti.gifti.GiftiImage(header = data_file_load.header, 
-                                    extra = data_file_load.extra,
-                                    darrays = darrays)
-nb.save(gii_out, opfn_pred)

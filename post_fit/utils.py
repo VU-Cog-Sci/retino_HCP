@@ -107,6 +107,7 @@ def convert_fit_results(prf_filename,
     import glob
     import numpy as np
     import ipdb
+    deb = ipdb.set_trace
 
     # Popeye imports
     from popeye.spinach import generate_og_receptive_fields
@@ -129,6 +130,7 @@ def convert_fit_results(prf_filename,
     prf_data = np.vstack(prf_data)    
     ext = prf_data_load.extra
     hdr = prf_data_load.header
+
     
 
     # Compute derived measures from prfs
@@ -138,7 +140,7 @@ def convert_fit_results(prf_filename,
         x_idx, y_idx, sigma_idx, beta_idx, baseline_idx, rsq_idx = 0, 1, 2, 3, 4, 5
     elif fit_model == 'css':
         x_idx, y_idx, sigma_idx, non_lin_idx, beta_idx, baseline_idx, rsq_idx = 0, 1, 2, 3, 4, 5, 6
-        
+    
     # pRF sign
     prf_sign_all = np.sign((prf_data[beta_idx,:]))
     pos_mask = prf_sign_all > 0.0
@@ -168,10 +170,16 @@ def convert_fit_results(prf_filename,
         prf_non_lin_all = prf_data[non_lin_idx,:]
 
     # pRF amplitude
-    prf_amp_all = prf_data[beta_idx,:]
+    if fit_model == 'gauss':
+        prf_amp_all = prf_data[beta_idx,:]*100
+    elif fit_model == 'css':
+        prf_amp_all = prf_data[beta_idx,:]
 
     # pRF baseline
-    prf_baseline_all = prf_data[baseline_idx,:]
+    if fit_model == 'gauss':
+        prf_baseline_all = prf_data[baseline_idx,:]/100
+    elif fit_model == 'css':
+        prf_baseline_all = prf_data[baseline_idx,:]
 
     # pRF coverage
     deg_x, deg_y = np.meshgrid(np.linspace(-30, 30, 121), np.linspace(-30, 30, 121))         # define prfs in visual space
@@ -182,11 +190,12 @@ def convert_fit_results(prf_filename,
                                         np.ones(np.prod(prf_data[0,:].shape[0])),
                                         deg_x,
                                         deg_y)
-    
-    css_rfs = rfs ** prf_data[3,:]
-    total_prf_content = css_rfs.reshape((-1, prf_data.shape[1])).sum(axis=0)
+    if fit_model == 'css':
+        rfs = rfs ** prf_data[non_lin_idx,:]
+
+    total_prf_content = rfs.reshape((-1, prf_data.shape[1])).sum(axis=0)
     stim_vignet = np.sqrt(deg_x ** 2 + deg_y**2) < stim_radius    
-    prf_cov_all = css_rfs[stim_vignet, :].sum(axis=0) / total_prf_content
+    prf_cov_all = rfs[stim_vignet, :].sum(axis=0) / total_prf_content
 
     # pRF x
     prf_x_all = prf_data[x_idx,:]
@@ -213,7 +222,7 @@ def convert_fit_results(prf_filename,
 
     return None
 
-def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias):
+def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     """masks data in in_file with mask in mask_file,
     to be stored in an hdf5 file
 
@@ -233,8 +242,9 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias):
         mask_files are assumed to be 3D
     hdf5_file : str
         absolute path to hdf5 file.
-        folder_alias : str
+    folder_alias : str
                 name of the to-be-created folder in the hdf5 file.
+    roi_num: roi row number
 
     Returns
     -------
@@ -249,19 +259,18 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias):
     import ipdb
     deb = ipdb.set_trace
 
-    success = True
-
     gii_in_data = nb.load(in_file)
     data_mat = np.array([gii_in_data.darrays[i].data for i in range(len(gii_in_data.darrays))])
     data_name = op.split(in_file)[-1].split('.gii')[0]
 
     gii_in_mask = nb.load(mask_file)
     mask_mat = np.array([gii_in_mask.darrays[i].data for i in range(len(gii_in_mask.darrays))])
-    mask_mat = mask_mat[0,:]
-    mask_name = op.split(mask_file)[-1].split('.')[3]
 
+    mask_mat = mask_mat[roi_num,:]
+    mask_mat = np.round(mask_mat)
+    
     roi_data = data_mat[:, mask_mat==1]
-
+    
     try:
         h5file = h5py.File(hdf5_file, "r+")
     except:
