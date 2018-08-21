@@ -11,7 +11,6 @@ sys.argv[2]: subject hemisphere (e.g. 'L')
 sys.argv[3]: fit model ('gauss','css')
 sys.argv[4]: voxel per jobs (used 400 on lisa)
 sys.argv[5]: job duration requested in hours (used 10h on lisa)
-
 -----------------------------------------------------------------------------------------
 Output(s):
 .sh file to execute in server
@@ -102,6 +101,12 @@ python fit/submit_fit_jobs.py 318637 L gauss 2500 10
 python fit/submit_fit_jobs.py 318637 R gauss 2500 10
 python fit/submit_fit_jobs.py 318637 L css 2500 10
 python fit/submit_fit_jobs.py 318637 R css 2500 10
+
+#15: sub 999999 : ran 20/08/2018 at 14:01
+python fit/submit_fit_jobs.py 999999 L gauss 2500 10
+python fit/submit_fit_jobs.py 999999 R gauss 2500 10
+python fit/submit_fit_jobs.py 999999 L css 2500 10
+python fit/submit_fit_jobs.py 999999 R css 2500 10
 
 -----------------------------------------------------------------------------------------
 """
