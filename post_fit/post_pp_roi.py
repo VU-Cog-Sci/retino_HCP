@@ -78,92 +78,99 @@ elif 'local' in platform.uname()[1]:
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 roi_masks_dir = opj(base_dir,'pp_data','cortex','db',subject,'roi_masks')
 h5_dir = opj(base_dir,'pp_data',subject,fit_model,'h5')
+
 try: os.makedirs(roi_masks_dir)
 except OSError: pass
 
-# # Create mask from pycortex
-# # -------------------------
-# print('creating roi masks')
-# masks = cortex.utils.get_roi_verts( subject = subject, 
-#                                     roi = analysis_info['rois'], 
-#                                     mask = True)
-# mat_masks = []
-# for roi in analysis_info['rois']:
-#     mat_masks.append(masks[roi])
-# mat_masks = np.vstack(mat_masks)
-# mat_masks = mat_masks.astype('float32')
+# Create mask from pycortex
+# -------------------------
+print('creating roi masks')
+masks = cortex.utils.get_roi_verts( subject = subject, 
+                                    roi = analysis_info['rois'], 
+                                    mask = True)
+mat_masks = []
+for roi in analysis_info['rois']:
+    mat_masks.append(masks[roi])
+mat_masks = np.vstack(mat_masks)
+mat_masks = mat_masks.astype('float32')
 
-# prf_deriv_L_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_L_all_fsaverage.func.gii'))
-# mat_masks_L = mat_masks[:,0:163842]
-# darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in mat_masks_L]
-# gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_L_all_fsaverage.header, 
-#                                     extra = prf_deriv_L_all_fsaverage.extra, 
-#                                     darrays = darrays)
-# nb.save(gii_out,opj(roi_masks_dir,"masks_L_fsaverage.func.gii"))
+prf_deriv_L_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_L_all_fsaverage.func.gii'))
+mat_masks_L = mat_masks[:,0:163842]
+darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in mat_masks_L]
+gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_L_all_fsaverage.header, 
+                                    extra = prf_deriv_L_all_fsaverage.extra, 
+                                    darrays = darrays)
+nb.save(gii_out,opj(roi_masks_dir,"masks_L_fsaverage.func.gii"))
 
-# prf_deriv_R_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_R_all_fsaverage.func.gii'))
-# mat_masks_R = mat_masks[:,163842:327684]
-# darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in mat_masks_R]
-# gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_R_all_fsaverage.header, 
-#                                     extra = prf_deriv_R_all_fsaverage.extra, 
-#                                     darrays = darrays)
-# nb.save(gii_out,opj(roi_masks_dir,"masks_R_fsaverage.func.gii"))
+prf_deriv_R_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_R_all_fsaverage.func.gii'))
+mat_masks_R = mat_masks[:,163842:327684]
+darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in mat_masks_R]
+gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_R_all_fsaverage.header, 
+                                    extra = prf_deriv_R_all_fsaverage.extra, 
+                                    darrays = darrays)
+nb.save(gii_out,opj(roi_masks_dir,"masks_R_fsaverage.func.gii"))
 
-# resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
-# for hemi in ['L','R']:
+resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+for hemi in ['L','R']:
 
-#     current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-#     new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
-#     current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
-#     new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
+    current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
+    new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
+    current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
+    new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
 
-#     metric_in = opj(roi_masks_dir,"masks_{hemi}_fsaverage.func.gii".format(hemi = hemi))
-#     metric_out = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
+    metric_in = opj(roi_masks_dir,"masks_{hemi}_fsaverage.func.gii".format(hemi = hemi))
+    metric_out = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
 
-#     os.system(resample_cmd.format(  main_cmd = main_cmd,
-#                                     metric_in = metric_in, 
-#                                     current_sphere = current_sphere, 
-#                                     new_sphere = new_sphere, 
-#                                     metric_out = metric_out, 
-#                                     current_area = current_area, 
-#                                     new_area = new_area))
+    os.system(resample_cmd.format(  main_cmd = main_cmd,
+                                    metric_in = metric_in, 
+                                    current_sphere = current_sphere, 
+                                    new_sphere = new_sphere, 
+                                    metric_out = metric_out, 
+                                    current_area = current_area, 
+                                    new_area = new_area))
 
 # Save ROIS data in hdf5
 # ----------------------
-# print('creating h5 files')
-# for roi_num, roi in enumerate(analysis_info['rois']):
+print('creating h5 files')
+for roi_num, roi in enumerate(analysis_info['rois']):
     
-#     try: os.makedirs(h5_dir)
-#     except OSError: pass
+    try: os.makedirs(h5_dir)
+    except OSError: pass
 
-#     h5_file = opj(h5_dir,'{roi}.h5'.format(roi = roi))
-#     try: os.system('rm '+ h5_file)
-#     except: pass
+    h5_file = opj(h5_dir,'{roi}.h5'.format(roi = roi))
+    try: os.system('rm '+ h5_file)
+    except: pass
 
 
-#     for hemi in ['L','R']:
-#         mask_file = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
+    for hemi in ['L','R']:
+        orig_data_file = sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*%s.func_bla_psc_av.gii'% hemi)))
+        mask_file = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
         
-#         for mask_dir in ['all','pos','neg']:
+        for mask_dir in ['all','pos','neg']:
             
-#             in_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
-#             folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
-            
-            
-
-#             mask_gii_2_hdf5(in_file = in_file,
-#                             mask_file = mask_file,
-#                             hdf5_file = h5_file,
-#                             folder_alias = folder_alias,
-#                             roi_num = roi_num)
+            in_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+            folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
             
 
-#             # in_file = opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_pred.gii".format(hemi = hemi,bfn = base_file_name))
-#             # folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
-#             # mask_gii_2_hdf5(in_file = in_file,
-#             #                 mask_file = mask_file,
-#             #                 hdf5_file = h5_file,
-#             #                 folder_alias = folder_alias)
+            mask_gii_2_hdf5(in_file = in_file,
+                            mask_file = mask_file,
+                            hdf5_file = h5_file,
+                            folder_alias = folder_alias,
+                            roi_num = roi_num)
+            
+            in_file = orig_data_file[0]
+            mask_gii_2_hdf5(in_file = in_file,
+                            mask_file = mask_file,
+                            hdf5_file = h5_file,
+                            folder_alias = folder_alias,
+                            roi_num = roi_num)
+
+            # in_file = opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_pred.gii".format(hemi = hemi,bfn = base_file_name))
+            # folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
+            # mask_gii_2_hdf5(in_file = in_file,
+            #                 mask_file = mask_file,
+            #                 hdf5_file = h5_file,
+            #                 folder_alias = folder_alias)
 
 # Draw main analysis figure
 # -------------------------

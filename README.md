@@ -21,9 +21,16 @@ martin_dev branch
 # -----
 # 0. understand why output of gauss different for baseline and amplitude??
 # 0. make plot of comparison time course and model
-# 1. make plot of comparison time course and model
-# 2. Erase from database the time series of the plot and from the pp_roi and post_pp_roi
+# 0. Erase from database the time series of the plot and from the pp_roi and post_pp_roi
 
+
+# 1. Load Yeo, draw mask on flatmap of fsaverage
+# 2. Draw with Inkscape DMN areas: ANG / MED_PAR / SUP_MED_FR / LAT_TEMP
+# 3. Run averaged subject with gauss and css model
+# 4. Draw Visual areas based on polarity/eccentricity flatmap on fsaverage subject: V1/V2/V3/LO/TO/DO/SUP_PAR/TPJ/sPCS/iPCS/mPCS/INS/DLPFC
+# 5. Ran post_pp_roi based on all these regions in 10 subjects and look
+
+# note: TPJ is the bottom section of SUP_PAR
 # 4. draw ROI in agreement with Tomas
 # 5. make launcher of submit_fit_jobs pp_roi and post_pp_roi
 

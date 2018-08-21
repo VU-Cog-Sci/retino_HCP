@@ -79,62 +79,62 @@ elif 'local' in platform.uname()[1]:
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 
-# # Check if all slices are present
-# # -------------------------------
-# start_idx =  np.arange(0,vox_num,job_vox)
-# end_idx = start_idx+job_vox
-# end_idx[-1] = vox_num
-# num_miss_part = 0
-# fit_est_files_L = []
-# fit_est_files_R = []
-# fit_pred_files_L = []
-# fit_pred_files_R = []
-# for hemi in ['L','R']:
-#     for iter_job in np.arange(0,start_idx.shape[0],1):
-#         fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-#         fit_pred_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_pred_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-#         if os.path.isfile(fit_est_file):
-#             if os.path.getsize(fit_est_file) == 0:
-#                 num_miss_part += 1 
-#             else:
-#                 exec('fit_est_files_{hemi}.append(fit_est_file)'.format(hemi = hemi))
-#                 exec('fit_pred_files_{hemi}.append(fit_pred_file)'.format(hemi = hemi))
-#         else:
-#             num_miss_part += 1
+# Check if all slices are present
+# -------------------------------
+start_idx =  np.arange(0,vox_num,job_vox)
+end_idx = start_idx+job_vox
+end_idx[-1] = vox_num
+num_miss_part = 0
+fit_est_files_L = []
+fit_est_files_R = []
+fit_pred_files_L = []
+fit_pred_files_R = []
+for hemi in ['L','R']:
+    for iter_job in np.arange(0,start_idx.shape[0],1):
+        fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+        fit_pred_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_pred_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+        if os.path.isfile(fit_est_file):
+            if os.path.getsize(fit_est_file) == 0:
+                num_miss_part += 1 
+            else:
+                exec('fit_est_files_{hemi}.append(fit_est_file)'.format(hemi = hemi))
+                exec('fit_pred_files_{hemi}.append(fit_pred_file)'.format(hemi = hemi))
+        else:
+            num_miss_part += 1
 
-# if num_miss_part != 0:
-#     sys.exit('%i missing files, analysis stopped'%num_miss_part)
-#     # print('%i missing files, partial analysis'%num_miss_part)
+if num_miss_part != 0:
+    sys.exit('%i missing files, analysis stopped'%num_miss_part)
+    # print('%i missing files, partial analysis'%num_miss_part)
 
-# # Combine fit files
-# # -----------------
-# print('combining fit files')
-# for hemi in ['L','R']:
-#     data_hemi = np.zeros((fit_val,vox_num))
-#     exec('fit_est_files_hemi = fit_est_files_{hemi}'.format(hemi=hemi))    
-#     for fit_filename_hemi in fit_est_files_hemi:
-#         data_fit_hemi = []
-#         data_fit_file_hemi = nb.load(fit_filename_hemi)
-#         data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
-#         data_fit_hemi = np.vstack(data_fit_hemi)
-#         data_hemi = data_hemi + data_fit_hemi
+# Combine fit files
+# -----------------
+print('combining fit files')
+for hemi in ['L','R']:
+    data_hemi = np.zeros((fit_val,vox_num))
+    exec('fit_est_files_hemi = fit_est_files_{hemi}'.format(hemi=hemi))    
+    for fit_filename_hemi in fit_est_files_hemi:
+        data_fit_hemi = []
+        data_fit_file_hemi = nb.load(fit_filename_hemi)
+        data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
+        data_fit_hemi = np.vstack(data_fit_hemi)
+        data_hemi = data_hemi + data_fit_hemi
 
-#     darrays_est_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
-#     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_est_hemi)'.format(hemi=hemi))
-#     exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
+    darrays_est_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
+    exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_est_hemi)'.format(hemi=hemi))
+    exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
-#     data_hemi = np.zeros((ts_num,vox_num))
-#     exec('fit_pred_files_hemi = fit_pred_files_{hemi}'.format(hemi=hemi))
-#     for fit_filename_hemi in fit_pred_files_hemi:
-#         data_fit_hemi = []
-#         data_fit_file_hemi = nb.load(fit_filename_hemi)
-#         data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
-#         data_fit_hemi = np.vstack(data_fit_hemi)
-#         data_hemi = data_hemi + data_fit_hemi
+    data_hemi = np.zeros((ts_num,vox_num))
+    exec('fit_pred_files_hemi = fit_pred_files_{hemi}'.format(hemi=hemi))
+    for fit_filename_hemi in fit_pred_files_hemi:
+        data_fit_hemi = []
+        data_fit_file_hemi = nb.load(fit_filename_hemi)
+        data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
+        data_fit_hemi = np.vstack(data_fit_hemi)
+        data_hemi = data_hemi + data_fit_hemi
 
-#     darrays_pred_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
-#     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_pred_hemi)'.format(hemi=hemi))
-#     exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_pred.gii"))'.format(hemi=hemi,bfn =base_file_name))
+    darrays_pred_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
+    exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_pred_hemi)'.format(hemi=hemi))
+    exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_pred.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
 # Compute derived measures from prfs
 # ----------------------------------
@@ -147,30 +147,29 @@ for hemi in ['L','R']:
                         hemi = hemi,
                         fit_model = fit_model)
 
+# Resample gii to fsaverage
+# -------------------------
+print('converting derivative files to fsaverage')
+resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+for hemi in ['L','R']:
 
-# # Resample gii to fsaverage
-# # -------------------------
-# print('converting derivative files to fsaverage')
-# resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
-# for hemi in ['L','R']:
+    current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
+    new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
+    current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
+    new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
 
-#     current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
-#     new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-#     current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
-#     new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
-
-#     for mask_dir in ['all','pos','neg']:
+    for mask_dir in ['all','pos','neg']:
         
-#         metric_in = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
-#         metric_out = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_in = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_out = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
 
-#         os.system(resample_cmd.format(  main_cmd = main_cmd,
-#                                         metric_in = metric_in, 
-#                                         current_sphere = current_sphere, 
-#                                         new_sphere = new_sphere, 
-#                                         metric_out = metric_out, 
-#                                         current_area = current_area, 
-#                                         new_area = new_area))
+        os.system(resample_cmd.format(  main_cmd = main_cmd,
+                                        metric_in = metric_in, 
+                                        current_sphere = current_sphere, 
+                                        new_sphere = new_sphere, 
+                                        metric_out = metric_out, 
+                                        current_area = current_area, 
+                                        new_area = new_area))
 
 # Change cortex database folder
 # -----------------------------
