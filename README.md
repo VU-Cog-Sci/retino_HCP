@@ -23,12 +23,18 @@ martin_dev branch
 # 0. understand why output of gauss different for baseline and amplitude??
 # 0. make plot of comparison time course and model
 
-# 0. Copy all subjects in database of lisa
-# 1. Figure out ranking of subject for 31 to 182
+# 1. Code lisa launcher with manual edit
+# 2. Copy raw data to Lisa
+# 2. Ran post_pp_roi based on all these regions for suject 999999 => debug it (check how masks work before saving in h5file, how is it possible that with 0 vertex the code ran and bugged)
 
-# 1. Ran post_pp_roi based on all these regions for subejct 999999 => debug it (check how masks work before saving in h5file, how is it possible that with 0 vertex the code ran and bugged)
-# 2. Run pp_roi for each of the fitted subjects
-# 5. run last subjects in lisa
+
+
+# Everyday
+# - transfer data from lisa to aeneas
+# - run launcher of pp_roi
+# - run launcher of post_pp_roi
+
+
 
 # 6. Check variability of individual subjects with 999999 ROIs
 # 7. Decide what to draw as statistics across participants
