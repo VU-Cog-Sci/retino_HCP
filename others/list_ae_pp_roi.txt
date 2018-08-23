@@ -1,0 +1,23 @@
+cd /home/szinte/projects/retino_HCP/
+source activate i27
+
+00/ 999999: run 22/08/2018
+    ------
+python post_fit/pp_roi.py 999999 gauss 2500
+python post_fit/pp_roi.py 999999 css 2500
+
+
+01/ 192641: run 22/08/2018
+	------
+python post_fit/pp_roi.py 192641 gauss 2500
+python post_fit/pp_roi.py 192641 css 2500
+
+02/ 105923: run 22/08/2018
+	------
+python post_fit/pp_roi.py 105923 gauss 2500
+python post_fit/pp_roi.py 105923 css 2500
+
+03/ 111312: run 22/08/2018
+	------
+python post_fit/pp_roi.py 111312 gauss 2500
+python post_fit/pp_roi.py 111312 css 2500

@@ -47,7 +47,7 @@ import cortex
 # Functions import
 # ----------------
 from plot_class import PlotOperator
-from utils import mask_gii_2_hdf5
+from utils import set_pycortex_config_file, mask_gii_2_hdf5 
 
 # Bokeh imports
 # ---------------
@@ -65,7 +65,6 @@ with open('settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
-
 # Define cluster/server specific parameters
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
@@ -76,16 +75,24 @@ elif 'local' in platform.uname()[1]:
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
-roi_masks_dir = opj(base_dir,'pp_data','cortex','db',subject,'roi_masks')
+roi_masks_dir = opj(base_dir,'pp_data',subject,fit_model,'roi_masks')
 h5_dir = opj(base_dir,'pp_data',subject,fit_model,'h5')
-
 try: os.makedirs(roi_masks_dir)
 except OSError: pass
 
-# Create mask from pycortex
-# -------------------------
-print('creating roi masks')
-masks = cortex.utils.get_roi_verts( subject = subject, 
+# Check system
+# ------------
+sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
+
+# Change cortex database folder
+# -----------------------------
+pycortex_folder     =   opj(base_dir,'pp_data','cortex')
+set_pycortex_config_file(   project_folder = pycortex_folder)
+
+# Create mask from overlay.svg
+# ----------------------------
+print('creating roi masks from overlay.svg')
+masks = cortex.utils.get_roi_verts( subject = 'fsaverage', 
                                     roi = analysis_info['rois'], 
                                     mask = True)
 mat_masks = []
@@ -97,8 +104,8 @@ mat_masks = mat_masks.astype('float32')
 prf_deriv_L_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_L_all_fsaverage.func.gii'))
 mat_masks_L = mat_masks[:,0:163842]
 darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in mat_masks_L]
-gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_L_all_fsaverage.header, 
-                                    extra = prf_deriv_L_all_fsaverage.extra, 
+gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_L_all_fsaverage.header,
+                                    extra = prf_deriv_L_all_fsaverage.extra,
                                     darrays = darrays)
 nb.save(gii_out,opj(roi_masks_dir,"masks_L_fsaverage.func.gii"))
 
@@ -165,26 +172,19 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                             folder_alias = folder_alias,
                             roi_num = roi_num)
 
-            # in_file = opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_pred.gii".format(hemi = hemi,bfn = base_file_name))
-            # folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
-            # mask_gii_2_hdf5(in_file = in_file,
-            #                 mask_file = mask_file,
-            #                 hdf5_file = h5_file,
-            #                 folder_alias = folder_alias)
-
 # Draw main analysis figure
 # -------------------------
 print('creating bokeh plots')
+sign_idx, rsq_idx, ecc_idx, polar_real_idx, polar_imag_idx , size_idx, \
+            non_lin_idx, amp_idx, baseline_idx, cov_idx, x_idx, y_idx = 0,1,2,3,4,5,6,7,8,9,10,11
 
 # Initialize data dictionary that will save all data arrays
 for roi in analysis_info['rois']:
-    
     for mask_dir in ['all','pos','neg']:
-
         data_hemi = []
         for hemi in ['L', 'R', 'LR']:
 
-            # create folders
+            # create folder
             roi_text = roi
             exec('fig_bokeh_dir_{mask_dir}_{hemi} = opj(base_dir,"pp_data",subject,fit_model,"figs","prf","{mask_dir}","{hemi}")'.format(mask_dir=mask_dir, hemi = hemi))
             try: exec('os.makedirs(fig_bokeh_dir_{mask_dir}_{hemi})'.format(mask_dir=mask_dir,hemi = hemi))
@@ -204,23 +204,23 @@ for roi in analysis_info['rois']:
 
             vertex_ini = data.shape[0]
             if vertex_ini != 1:
-                data = data[data[:,1]>=analysis_info['rsq_threshold'],:]
-                data = data[data[:,9]>=analysis_info['cov_threshold'],:]
+                data = data[data[:,rsq_idx]>=analysis_info['rsq_threshold'],:]
+                data = data[data[:,cov_idx]>=analysis_info['cov_threshold'],:]
                 vertex = data.shape[0]
                 
                 print("drawing {roi}_{hemi}_{mask_dir} figures, n={vertex}".format(roi = roi_text,hemi = hemi,vertex = vertex, mask_dir = mask_dir)) 
                 
-                data_source = { 'sign':             data[:,0],
-                                'rsq':              data[:,1],
-                                'ecc':              data[:,2],
-                                'sigma':            data[:,5],
-                                'non_lin':          data[:,6],
-                                'beta':             data[:,7],
-                                'baseline':         data[:,8],
-                                'cov':              data[:,9],
-                                'x':                data[:,10],
-                                'y':                data[:,11],
-                                'colors_ref':       data[:, 2]}
+                data_source = { 'sign':             data[:,sign_idx],
+                                'rsq':              data[:,rsq_idx],
+                                'ecc':              data[:,ecc_idx],
+                                'sigma':            data[:,size_idx],
+                                'non_lin':          data[:,non_lin_idx],
+                                'beta':             data[:,amp_idx],
+                                'baseline':         data[:,baseline_idx],
+                                'cov':              data[:,cov_idx],
+                                'x':                data[:,x_idx],
+                                'y':                data[:,y_idx],
+                                'colors_ref':       data[:,ecc_idx]}
 
                 
                 param_all = {   'roi_t':            roi_text, 

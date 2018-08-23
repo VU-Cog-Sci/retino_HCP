@@ -1,0 +1,153 @@
+#00: sub 999999 : ran 21/08/2018 at 14:01
+python fit/submit_fit_jobs.py 999999 L gauss 2500 10
+python fit/submit_fit_jobs.py 999999 R gauss 2500 10
+python fit/submit_fit_jobs.py 999999 L css 2500 10
+python fit/submit_fit_jobs.py 999999 R css 2500 10
+
+#01: sub 192641 : ran 18/08/2018 at 20:15
+python fit/submit_fit_jobs.py 192641 L gauss 2500 10
+python fit/submit_fit_jobs.py 192641 R gauss 2500 10
+python fit/submit_fit_jobs.py 192641 L css 2500 10
+python fit/submit_fit_jobs.py 192641 R css 2500 10
+
+#02: sub 105923 : ran 18/08/2018 at 20:15
+python fit/submit_fit_jobs.py 105923 L gauss 2500 10
+python fit/submit_fit_jobs.py 105923 R gauss 2500 10
+python fit/submit_fit_jobs.py 105923 L css 2500 10
+python fit/submit_fit_jobs.py 105923 R css 2500 10
+
+#03: sub 111312 : ran 19/08/2018 at 10:30
+python fit/submit_fit_jobs.py 111312 L gauss 2500 10
+python fit/submit_fit_jobs.py 111312 R gauss 2500 10
+python fit/submit_fit_jobs.py 111312 L css 2500 10
+python fit/submit_fit_jobs.py 111312 R css 2500 10
+
+#04: sub 926862 : ran 19/08/2018 at 10:30
+python fit/submit_fit_jobs.py 926862 L gauss 2500 10
+python fit/submit_fit_jobs.py 926862 R gauss 2500 10
+python fit/submit_fit_jobs.py 926862 L css 2500 10
+python fit/submit_fit_jobs.py 926862 R css 2500 10
+
+#05: sub 182739 : ran 19/08/2018 at 10:30
+python fit/submit_fit_jobs.py 182739 L gauss 2500 10
+python fit/submit_fit_jobs.py 182739 R gauss 2500 10
+python fit/submit_fit_jobs.py 182739 L css 2500 10
+python fit/submit_fit_jobs.py 182739 R css 2500 10
+
+#06: sub 167440 : ran 19/08/2018 at 15:00
+python fit/submit_fit_jobs.py 167440 L gauss 2500 10
+python fit/submit_fit_jobs.py 167440 R gauss 2500 10
+python fit/submit_fit_jobs.py 167440 L css 2500 10
+python fit/submit_fit_jobs.py 167440 R css 2500 10
+
+#07: sub 789373 : ran 19/08/2018 at 15:00
+python fit/submit_fit_jobs.py 789373 L gauss 2500 10
+python fit/submit_fit_jobs.py 789373 R gauss 2500 10
+python fit/submit_fit_jobs.py 789373 L css 2500 10
+python fit/submit_fit_jobs.py 789373 R css 2500 10
+
+#08: sub 690152 : ran 19/08/2018 at 15:00
+python fit/submit_fit_jobs.py 690152 L gauss 2500 10
+python fit/submit_fit_jobs.py 690152 R gauss 2500 10
+python fit/submit_fit_jobs.py 690152 L css 2500 10
+python fit/submit_fit_jobs.py 690152 R css 2500 10
+
+#09: sub 148133 : ran 19/08/2018 at 20:50
+python fit/submit_fit_jobs.py 148133 L gauss 2500 10
+python fit/submit_fit_jobs.py 148133 R gauss 2500 10
+python fit/submit_fit_jobs.py 148133 L css 2500 10
+python fit/submit_fit_jobs.py 148133 R css 2500 10
+
+#10: sub 467351 : ran 19/08/2018 at 20:50
+python fit/submit_fit_jobs.py 467351 L gauss 2500 10
+python fit/submit_fit_jobs.py 467351 R gauss 2500 10
+python fit/submit_fit_jobs.py 467351 L css 2500 10
+python fit/submit_fit_jobs.py 467351 R css 2500 10
+
+#11: sub 233326 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 233326 L gauss 2500 10
+python fit/submit_fit_jobs.py 233326 R gauss 2500 10
+python fit/submit_fit_jobs.py 233326 L css 2500 10
+python fit/submit_fit_jobs.py 233326 R css 2500 10
+
+#12: sub 233326 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 144226 L gauss 2500 10
+python fit/submit_fit_jobs.py 144226 R gauss 2500 10
+python fit/submit_fit_jobs.py 144226 L css 2500 10
+python fit/submit_fit_jobs.py 144226 R css 2500 10
+
+#13: sub 638049 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 638049 L gauss 2500 10
+python fit/submit_fit_jobs.py 638049 R gauss 2500 10
+python fit/submit_fit_jobs.py 638049 L css 2500 10
+python fit/submit_fit_jobs.py 638049 R css 2500 10
+
+#14: sub 318637 : ran 20/08/2018 at 10:00
+python fit/submit_fit_jobs.py 318637 L gauss 2500 10
+python fit/submit_fit_jobs.py 318637 R gauss 2500 10
+python fit/submit_fit_jobs.py 318637 L css 2500 10
+python fit/submit_fit_jobs.py 318637 R css 2500 10
+
+#15: sub 165436 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 165436 L gauss 2500 10
+python fit/submit_fit_jobs.py 165436 R gauss 2500 10
+
+#16: sub 771354 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 771354 L gauss 2500 10
+python fit/submit_fit_jobs.py 771354 R gauss 2500 10
+
+#17: sub 995174 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 995174 L gauss 2500 10
+python fit/submit_fit_jobs.py 995174 R gauss 2500 10
+
+#18: sub 463040 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 463040 L gauss 2500 10
+python fit/submit_fit_jobs.py 463040 R gauss 2500 10
+
+#19: sub 187345 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 187345 L gauss 2500 10
+python fit/submit_fit_jobs.py 187345 R gauss 2500 10
+
+#20: sub 547046 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 547046 L gauss 2500 10
+python fit/submit_fit_jobs.py 547046 R gauss 2500 10
+
+#21: sub 150423 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 150423 L gauss 2500 10
+python fit/submit_fit_jobs.py 150423 R gauss 2500 10
+
+#22: sub 167036 : ran 22/08/2018 at 13:45
+python fit/submit_fit_jobs.py 167036 L gauss 2500 10
+python fit/submit_fit_jobs.py 167036 R gauss 2500 10
+
+#23: sub 104416 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 104416 L gauss 2500 10
+python fit/submit_fit_jobs.py 104416 R gauss 2500 10
+
+#24: sub 536647 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 536647 L gauss 2500 10
+python fit/submit_fit_jobs.py 536647 R gauss 2500 10
+
+#25: sub 397760 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 397760 L gauss 2500 10
+python fit/submit_fit_jobs.py 397760 R gauss 2500 10
+
+#26: sub 552241 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 552241 L gauss 2500 10
+python fit/submit_fit_jobs.py 552241 R gauss 2500 10
+
+#27: sub 169040 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 169040 L gauss 2500 10
+python fit/submit_fit_jobs.py 169040 R gauss 2500 10
+
+#28: sub 973770 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 973770 L gauss 2500 10
+python fit/submit_fit_jobs.py 973770 R gauss 2500 10
+
+#29: sub 116726 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 116726 L gauss 2500 10
+python fit/submit_fit_jobs.py 116726 R gauss 2500 10
+
+#30: sub 130114 : ran 23/08/2018 at 10:00
+python fit/submit_fit_jobs.py 130114 L gauss 2500 10
+python fit/submit_fit_jobs.py 130114 R gauss 2500 10

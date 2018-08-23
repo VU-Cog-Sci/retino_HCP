@@ -1,3 +1,6 @@
+% load('/Users/martin/disks/ae_S/2018/visual/nprf_hcp/raw_data/atlas.mat')
+% load('/Users/martin/disks/ae_S/2018/visual/nprf_hcp/raw_data/prfresults.mat')
+
 % load('/Users/martin/Downloads/atlas.mat')
 % load('/Users/martin/Downloads/prfresults.mat')
 
@@ -14,6 +17,16 @@ for sub_num = 1:size(subjectids,1)-3 % 3 last are mean
 end
 sort_by_median = sortrows(sub_avg_r2,2,'descend');
 
-num_best = 30;
+num_best = 181;
 best_sub_num = sort_by_median(1:num_best,1);
 best_sub_label = subjectids(best_sub_num);
+
+for bestSub = 1:size(subjectids,1)-3
+    fprintf(1,'%1.0f - %1.0f\n',bestSub,best_sub_label(bestSub))
+end
+
+fprintf(1,'"subject_list": [')
+for bestSub = 1:size(subjectids,1)-3
+    fprintf(1,'"%1.0f", ',best_sub_label(bestSub))
+end
+fprintf(1,']')

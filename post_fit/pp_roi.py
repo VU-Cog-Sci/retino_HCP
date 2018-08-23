@@ -4,7 +4,7 @@ pp_roi.py
 -----------------------------------------------------------------------------------------
 Goal of the script:
 Region of interests pre-processing
-Compute pRF parameters and plot on pycortex overlay to determine ROI
+Compute pRF derivatives and plot on pycortex overlay.svg to determine visual ROI
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[1]: subject number
@@ -87,24 +87,19 @@ end_idx[-1] = vox_num
 num_miss_part = 0
 fit_est_files_L = []
 fit_est_files_R = []
-fit_pred_files_L = []
-fit_pred_files_R = []
 for hemi in ['L','R']:
     for iter_job in np.arange(0,start_idx.shape[0],1):
         fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-        fit_pred_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_pred_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
         if os.path.isfile(fit_est_file):
             if os.path.getsize(fit_est_file) == 0:
                 num_miss_part += 1 
             else:
                 exec('fit_est_files_{hemi}.append(fit_est_file)'.format(hemi = hemi))
-                exec('fit_pred_files_{hemi}.append(fit_pred_file)'.format(hemi = hemi))
         else:
             num_miss_part += 1
 
 if num_miss_part != 0:
     sys.exit('%i missing files, analysis stopped'%num_miss_part)
-    # print('%i missing files, partial analysis'%num_miss_part)
 
 # Combine fit files
 # -----------------
@@ -122,19 +117,6 @@ for hemi in ['L','R']:
     darrays_est_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_est_hemi)'.format(hemi=hemi))
     exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
-
-    data_hemi = np.zeros((ts_num,vox_num))
-    exec('fit_pred_files_hemi = fit_pred_files_{hemi}'.format(hemi=hemi))
-    for fit_filename_hemi in fit_pred_files_hemi:
-        data_fit_hemi = []
-        data_fit_file_hemi = nb.load(fit_filename_hemi)
-        data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
-        data_fit_hemi = np.vstack(data_fit_hemi)
-        data_hemi = data_hemi + data_fit_hemi
-
-    darrays_pred_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
-    exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_pred_hemi)'.format(hemi=hemi))
-    exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_pred.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
 # Compute derived measures from prfs
 # ----------------------------------
@@ -174,18 +156,11 @@ for hemi in ['L','R']:
 # Change cortex database folder
 # -----------------------------
 pycortex_folder     =   opj(base_dir,'pp_data','cortex')
-set_pycortex_config_file(project_folder     =   pycortex_folder)
+set_pycortex_config_file(   project_folder = pycortex_folder)
 
 # Create derivatives flatmaps
 # ---------------------------
 print('draw deriv maps')
-if subject == '999999' and fit_model == 'css':
-    try: os.system('rm -rf '+ opj(pycortex_folder,"db",subject))
-    except: pass
-    cp_cmd = """cp -a {source_folder} {dest_folder}"""
-    os.system(cp_cmd.format(source_folder = opj(pycortex_folder,"db","fsaverage"),
-                            dest_folder = opj(pycortex_folder,"db",subject)))
-
 cmap_neg_pos = 'RdBu_r'
 cmap_polar = 'hsv'
 cmap_gain = 'viridis'
@@ -193,6 +168,8 @@ col_offset = 1/14.0
 polar_col_steps = [4.0, 8.0, 16.0, 255.0]
 cmap_ecc_size = 'Spectral'
 cmap_pos = 'Reds'
+sign_idx, rsq_idx, ecc_idx, polar_real_idx, polar_imag_idx , size_idx, \
+            non_lin_idx, amp_idx, baseline_idx, cov_idx, x_idx, y_idx = 0,1,2,3,4,5,6,7,8,9,10,11
 
 for mask_dir in ['all','pos','neg']:
     
@@ -208,17 +185,16 @@ for mask_dir in ['all','pos','neg']:
     for hemi in ['L','R']:
         deriv_file = nb.load(opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir)))
         deriv_mat.append(np.array([deriv_file.darrays[i].data for i in range(len(deriv_file.darrays))]))
-        
     deriv_mat = np.hstack(deriv_mat)
 
     # R-square
-    rsq_data = deriv_mat[1,:]
+    rsq_data = deriv_mat[rsq_idx,:]
     alpha = rsq_data
     param_rsq = {'subject': 'fsaverage', 'data': rsq_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': 0,'vmax': 1,'cbar': 'discrete'}
     vertex_names.append('rsq')
     
     # Polar angle
-    pol_comp_num = deriv_mat[3,:] + 1j * deriv_mat[4,:]
+    pol_comp_num = deriv_mat[polar_real_idx,:] + 1j * deriv_mat[polar_imag_idx,:]
     polar_ang = np.angle(pol_comp_num)
     ang_norm = (polar_ang + np.pi) / (np.pi * 2.0)
     
@@ -229,23 +205,23 @@ for mask_dir in ['all','pos','neg']:
         exec('vertex_names.append("polar_{csteps}")'.format(csteps = int(cmap_steps)))
 
     # Eccentricity
-    ecc_data = deriv_mat[2,:]
+    ecc_data = deriv_mat[ecc_idx,:]
     param_ecc = {'data': ecc_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 10,'curv_brightness': 0.05,\
                  'curv_contrast': 0.1,'cbar': 'ecc'}
     vertex_names.append('ecc')
 
     # Sign
-    sign_data = deriv_mat[0,:]
+    sign_data = deriv_mat[sign_idx,:]
     param_sign = {'data': sign_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 1, 'cbar': 'discrete'}
     vertex_names.append('sign')
     
     # Size
-    size_data = deriv_mat[5,:]
+    size_data = deriv_mat[size_idx,:]
     param_size = {'data': size_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 15, 'cbar': 'discrete'}
     vertex_names.append('size')
 
     # Amplitude
-    amp_data = np.abs(deriv_mat[7,:])
+    amp_data = np.abs(deriv_mat[amp_idx,:])
     if mask_dir == 'all':
         param_amp = {'data': amp_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 1, 'cbar': 'discrete'}
     elif mask_dir == 'pos':
@@ -255,18 +231,18 @@ for mask_dir in ['all','pos','neg']:
     vertex_names.append('amp')
 
     # Baseline
-    baseline_data = deriv_mat[8,:]
+    baseline_data = deriv_mat[baseline_idx,:]
     param_baseline = {'data': baseline_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -0.5, 'vmax': 0.5,\
                        'curv_brightness': 0.05, 'curv_contrast': 0.1,'cbar': 'discrete'}
     vertex_names.append('baseline')
     
     # Non-linearity
-    non_lin_data = deriv_mat[6,:]
+    non_lin_data = deriv_mat[non_lin_idx,:]
     param_non_lin = {'data': non_lin_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': 0, 'vmax': 1.5, 'cbar': 'discrete'}
     vertex_names.append('non_lin')
 
     # Coverage
-    cov_data = deriv_mat[9,:]
+    cov_data = deriv_mat[cov_idx,:]
     param_cov = {'data': cov_data.T, 'cmap': cmap_pos, 'alpha': alpha.T,'vmin': 0, 'vmax': 1, 'cbar': 'discrete'}
     vertex_names.append('cov')
 
@@ -275,8 +251,8 @@ for mask_dir in ['all','pos','neg']:
         roi_name = '{vertex_name}_{mask_dir}'.format(vertex_name = vertex_name, mask_dir = mask_dir)
 
         if mask_dir == 'all' and fit_model == 'gauss' and subject == '999999': 
-            roi_param = {   'subject': subject,
-                            'add_roi': True,
+            roi_param = {   'subject': 'fsaverage',
+                            'add_roi': False,
                             'roi_name': roi_name}
         else:
             roi_param = {   'subject': 'fsaverage',

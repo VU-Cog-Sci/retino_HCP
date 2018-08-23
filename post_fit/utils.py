@@ -17,7 +17,6 @@ def set_pycortex_config_file(project_folder):
 
     import ipdb
 
-    
     # Define the new database and colormaps folder
     pycortex_db_folder = project_folder + '/db/'
     pycortex_cm_folder = project_folder + '/colormaps/'
@@ -262,7 +261,7 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     import ipdb
     deb = ipdb.set_trace
 
-    deb()
+
     gii_in_data = nb.load(in_file)
     data_mat = np.array([gii_in_data.darrays[i].data for i in range(len(gii_in_data.darrays))])
     data_name = op.split(in_file)[-1].split('.gii')[0]
@@ -280,14 +279,18 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     except:
         h5file = h5py.File(hdf5_file, "a")
     
-    g_hemi = h5file.create_group(folder_alias)    
-    dset = g_hemi.create_dataset(data_name,data = roi_data,dtype='float32')
+    try:
+        g_hemi = h5file.create_group(folder_alias)    
+    except:
+        None
+
+    h5file.create_dataset('{folder_alias}/{data_name}'.format(folder_alias = folder_alias, data_name = data_name),data = roi_data,dtype='float32')
 
     return None
 
 def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps = 255,\
                         alpha = None,depth = 1,thick = 1,height = 1024,sampler = 'nearest',\
-                        with_curvature = True,with_labels = False,with_colorbar = False,\
+                        with_curvature = True,with_labels = True,with_colorbar = False,\
                         with_borders = False,curv_brightness = 0.95,curv_contrast = 0.05,add_roi = False,\
                         roi_name = 'empty',col_offset = 0):
     """
