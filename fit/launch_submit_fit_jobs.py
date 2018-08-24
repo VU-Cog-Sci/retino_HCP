@@ -49,9 +49,9 @@ dur_fit = 10
 # -------
 # "192641", "105923", "111312", "926862", "182739", "167440", "789373", "690152", "148133", "467351",\ DONE
 # "233326", "144226", "638049", "318637", "165436", "771354", "995174", "463040", "187345", "547046",\ DONE
-# "150423", "167036", "104416", "536647", "397760", "552241", "169040", "973770", "116726", "130114",\ LAUNCHED 23/08 10:00
-# "135124", "181636", "177746", "239136", "205220", "200614", "185442", "131722", "406836", "732243",\ LAUNCHED 23/08 18:13
-# "178142", "412528", "146129", "134829", "114823", "140117", "818859", "429040", "191336", "157336",\ 24/08
+# "150423", "167036", "104416", "536647", "397760", "552241", "169040", "973770", "116726", "130114",\ DONE
+# "135124", "181636", "177746", "239136", "205220", "200614", "185442", "131722", "406836", "732243",\ DONE
+# "178142", "412528", "146129", "134829", "114823", "140117", "818859", "429040", "191336", "157336",\ LAUNCHED 24/08 at 12:10
 # "169747", "814649", "171633", "214019", "901139", "680957", "751550", "905147", "178647", "352738",\ 24/08
 # "195041", "971160", "191033", "330324", "927359", "320826", "654552", "158035", "115017", "249947",\ 25/08
 # "601127", "617748", "102311", "861456", "155938", "346137", "156334", "100610", "283543", "145834",\ 25/08
@@ -71,11 +71,11 @@ subs = analysis_info['subject_list']
 
 # Subject to analyse
 # ------------------
-index_start = 31
-index_end = 40
+index_start = 40
+index_end = 50
 for subject in subs[index_start:index_end]:
 	# print("python fit/submit_fit_jobs.py {subject} L {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
 	os.system("python fit/submit_fit_jobs.py {subject} L {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
-	#print("python fit/submit_fit_jobs.py {subject} R {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
+	# print("python fit/submit_fit_jobs.py {subject} R {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
 	os.system("python fit/submit_fit_jobs.py {subject} R {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
 	
