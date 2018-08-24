@@ -23,8 +23,6 @@ martin_dev branch
 # 0. understand why output of gauss different for baseline and amplitude??
 # 0. make plot of comparison time course and model
 
-# 1. Code lisa launcher with manual edit
-# 2. Copy raw data to Lisa
 # 2. Ran post_pp_roi based on all these regions for suject 999999 => debug it (check how masks work before saving in h5file, how is it possible that with 0 vertex the code ran and bugged)
 
 

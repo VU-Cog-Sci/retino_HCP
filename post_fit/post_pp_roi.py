@@ -13,10 +13,10 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i36
+source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/post_pp_roi.py 192641 css
-python post_fit/post_pp_roi.py 192641 gauss
+python post_fit/post_pp_roi.py 999999 css
+python post_fit/post_pp_roi.py 999999 gauss
 -----------------------------------------------------------------------------------------
 """
 
@@ -140,7 +140,6 @@ for hemi in ['L','R']:
 # ----------------------
 print('creating h5 files')
 for roi_num, roi in enumerate(analysis_info['rois']):
-    
     try: os.makedirs(h5_dir)
     except OSError: pass
 
@@ -148,9 +147,8 @@ for roi_num, roi in enumerate(analysis_info['rois']):
     try: os.system('rm '+ h5_file)
     except: pass
 
-
     for hemi in ['L','R']:
-        orig_data_file = sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*%s.func_bla_psc_av.gii'% hemi)))
+
         mask_file = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
         
         for mask_dir in ['all','pos','neg']:
@@ -158,19 +156,13 @@ for roi_num, roi in enumerate(analysis_info['rois']):
             in_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
             folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
             
-
+            
             mask_gii_2_hdf5(in_file = in_file,
                             mask_file = mask_file,
                             hdf5_file = h5_file,
                             folder_alias = folder_alias,
                             roi_num = roi_num)
             
-            in_file = orig_data_file[0]
-            mask_gii_2_hdf5(in_file = in_file,
-                            mask_file = mask_file,
-                            hdf5_file = h5_file,
-                            folder_alias = folder_alias,
-                            roi_num = roi_num)
 
 # Draw main analysis figure
 # -------------------------
@@ -201,188 +193,190 @@ for roi in analysis_info['rois']:
                 data = data[:,:].T
                 data_hemi.append(data)
 
-
             vertex_ini = data.shape[0]
-            if vertex_ini != 1:
+
+            if vertex_ini > 0:
                 data = data[data[:,rsq_idx]>=analysis_info['rsq_threshold'],:]
                 data = data[data[:,cov_idx]>=analysis_info['cov_threshold'],:]
                 vertex = data.shape[0]
-                
-                print("drawing {roi}_{hemi}_{mask_dir} figures, n={vertex}".format(roi = roi_text,hemi = hemi,vertex = vertex, mask_dir = mask_dir)) 
-                
-                data_source = { 'sign':             data[:,sign_idx],
-                                'rsq':              data[:,rsq_idx],
-                                'ecc':              data[:,ecc_idx],
-                                'sigma':            data[:,size_idx],
-                                'non_lin':          data[:,non_lin_idx],
-                                'beta':             data[:,amp_idx],
-                                'baseline':         data[:,baseline_idx],
-                                'cov':              data[:,cov_idx],
-                                'x':                data[:,x_idx],
-                                'y':                data[:,y_idx],
-                                'colors_ref':       data[:,ecc_idx]}
 
-                
-                param_all = {   'roi_t':            roi_text, 
-                                'p_width':          400, 
-                                'p_height':         400, 
-                                'min_border_large': 10, 
-                                'min_border_small': 5,
-                                'bg_color':         tuple([229,229,229]), 
-                                'stim_color':       tuple([250,250,250]), 
-                                'hist_fill_color':  tuple([255,255,255]),
-                                'hist_line_color':  tuple([0,0,0]), 
-                                'stim_radius':      analysis_info['stim_radius'], 
-                                'rsq_threshold':    analysis_info['rsq_threshold'],
-                                'cmap':             'Spectral',
-                                'cmap_steps':       8,
-                                'col_offset':       0,
-                                'vmin':             0,
-                                'vmax':             8,
-                                'leg_xy_max_ratio': 1.8,
-                                'saving_figs':      False,
-                                'svg_folder':       'fig_bokeh_dir_{mask_dir}'.format(mask_dir=mask_dir),
-                                'dataMat':          data,
-                                'data_source':      data_source,
-                                'hist_range':       (0,0.5),
-                                'hist_steps':       0.5,
-                                'h_hist_bins':      16,
-                                }
+                if vertex > 0:
 
-                plotter = PlotOperator(**param_all)
+                    print("drawing {roi}_{hemi}_{mask_dir} figures, n={vertex}".format(roi = roi_text,hemi = hemi,vertex = vertex, mask_dir = mask_dir)) 
+                    
+                    data_source = { 'sign':             data[:,sign_idx],
+                                    'rsq':              data[:,rsq_idx],
+                                    'ecc':              data[:,ecc_idx],
+                                    'sigma':            data[:,size_idx],
+                                    'non_lin':          data[:,non_lin_idx],
+                                    'beta':             data[:,amp_idx],
+                                    'baseline':         data[:,baseline_idx],
+                                    'cov':              data[:,cov_idx],
+                                    'x':                data[:,x_idx],
+                                    'y':                data[:,y_idx],
+                                    'colors_ref':       data[:,ecc_idx]}
 
-                # pRFmap
-                title = '{roi}_{hemi}_{mask_dir}: pRF map (n={vertex})'.format(roi = roi_text, hemi = hemi, vertex = vertex, mask_dir = mask_dir)
-                params_pRFmap = param_all
-                params_pRFmap.update(\
-                            {   'x_range':          (-16, 16),
-                                'y_range':          (-16, 16),
-                                'x_label':          'Horizontal coordinate (dva)',
-                                'y_label':          'Vertical coordinate (dva)',
-                                'x_source_label':   'x',
-                                'y_source_label':   'y',
-                                'x_tick_steps':     4,
-                                'y_tick_steps':     4,
-                                'v_hist_bins':      16,
-                                'main_fig_title':   title})
+                    
+                    param_all = {   'roi_t':            roi_text, 
+                                    'p_width':          400, 
+                                    'p_height':         400, 
+                                    'min_border_large': 10, 
+                                    'min_border_small': 5,
+                                    'bg_color':         tuple([229,229,229]), 
+                                    'stim_color':       tuple([250,250,250]), 
+                                    'hist_fill_color':  tuple([255,255,255]),
+                                    'hist_line_color':  tuple([0,0,0]), 
+                                    'stim_radius':      analysis_info['stim_radius'], 
+                                    'rsq_threshold':    analysis_info['rsq_threshold'],
+                                    'cmap':             'Spectral',
+                                    'cmap_steps':       8,
+                                    'col_offset':       0,
+                                    'vmin':             0,
+                                    'vmax':             8,
+                                    'leg_xy_max_ratio': 1.8,
+                                    'saving_figs':      False,
+                                    'svg_folder':       'fig_bokeh_dir_{mask_dir}'.format(mask_dir=mask_dir),
+                                    'dataMat':          data,
+                                    'data_source':      data_source,
+                                    'hist_range':       (0,0.5),
+                                    'hist_steps':       0.5,
+                                    'h_hist_bins':      16,
+                                    }
 
-                f_pRFmap = plotter.draw_figure(parameters = params_pRFmap, 
-                                                            plot = 'map')
-                
-                # pRFecc
-                old_main_fig = []
-                f_pRFecc = []
-                if fit_model == 'gauss':
-                    type_comp_list = ['Size','R2','Amplitude','Coverage','Baseline']
-                elif fit_model == 'css':
-                    type_comp_list = ['Size','R2','Non-Linearity','Amplitude','Coverage','Baseline']
+                    plotter = PlotOperator(**param_all)
 
-                for numData, type_comp in enumerate(type_comp_list):
+                    # pRFmap
+                    title = '{roi}_{hemi}_{mask_dir}: pRF map (n={vertex})'.format(roi = roi_text, hemi = hemi, vertex = vertex, mask_dir = mask_dir)
+                    params_pRFmap = param_all
+                    params_pRFmap.update(\
+                                {   'x_range':          (-16, 16),
+                                    'y_range':          (-16, 16),
+                                    'x_label':          'Horizontal coordinate (dva)',
+                                    'y_label':          'Vertical coordinate (dva)',
+                                    'x_source_label':   'x',
+                                    'y_source_label':   'y',
+                                    'x_tick_steps':     4,
+                                    'y_tick_steps':     4,
+                                    'v_hist_bins':      16,
+                                    'main_fig_title':   title})
 
-                    params_pRFecc = param_all
-                    params_pRFecc.update(   
-                               {    'x_range':          (0, 16),
-                                    'x_label':          'Eccentricity (dva)',
-                                    'x_tick_steps':     2,
-                                    'x_source_label':   'ecc',
-                                    'draw_reg':         False})
+                    f_pRFmap = plotter.draw_figure(parameters = params_pRFmap, 
+                                                                plot = 'map')
+                    
+                    # pRFecc
+                    old_main_fig = []
+                    f_pRFecc = []
+                    if fit_model == 'gauss':
+                        type_comp_list = ['Size','R2','Amplitude','Coverage','Baseline']
+                    elif fit_model == 'css':
+                        type_comp_list = ['Size','R2','Non-Linearity','Amplitude','Coverage','Baseline']
 
-                    if type_comp == 'Size':
-                        params_pRFecc.update(
-                                    {   'y_range':          (0, 8),
-                                        'y_label':          'Size (dva)',
-                                        'y_source_label':   'sigma',
-                                        'y_tick_steps':     1,
-                                        'v_hist_bins':      16,
-                                        'draw_reg':         True})
+                    for numData, type_comp in enumerate(type_comp_list):
 
-                    elif type_comp == 'R2':
-                        params_pRFecc.update(
-                                    {   'y_range':          (0, 1),
-                                        'y_label':          'R2',
-                                        'y_source_label':   'rsq',
-                                        'y_tick_steps':     0.2,
-                                        'v_hist_bins':      15})
+                        params_pRFecc = param_all
+                        params_pRFecc.update(   
+                                   {    'x_range':          (0, 16),
+                                        'x_label':          'Eccentricity (dva)',
+                                        'x_tick_steps':     2,
+                                        'x_source_label':   'ecc',
+                                        'draw_reg':         False})
 
-                    elif type_comp == 'Non-Linearity':
-                        params_pRFecc.update(
-                                    {   'y_range':          (0, 1.5),
-                                        'y_label':          'Non-linearity',
-                                        'y_source_label':   'non_lin',
-                                        'y_tick_steps':     0.25,
-                                        'v_hist_bins':      18})
+                        if type_comp == 'Size':
+                            params_pRFecc.update(
+                                        {   'y_range':          (0, 8),
+                                            'y_label':          'Size (dva)',
+                                            'y_source_label':   'sigma',
+                                            'y_tick_steps':     1,
+                                            'v_hist_bins':      16,
+                                            'draw_reg':         True})
 
-                    elif type_comp == 'Amplitude':
-                        params_pRFecc.update(
-                                    {   'y_range':          (-1, 1),
-                                        'y_label':          'Amplitude (z-score)',
-                                        "y_source_label":   'beta',
-                                        'y_tick_steps':     0.5,
-                                        'v_hist_bins':      16})
+                        elif type_comp == 'R2':
+                            params_pRFecc.update(
+                                        {   'y_range':          (0, 1),
+                                            'y_label':          'R2',
+                                            'y_source_label':   'rsq',
+                                            'y_tick_steps':     0.2,
+                                            'v_hist_bins':      15})
 
-                    elif type_comp == 'Coverage':
-                        params_pRFecc.update(
-                                    {   'y_range':          (0, 1),
-                                        'y_label':          'pRF coverage (%)',
-                                        'y_source_label':   'cov',
-                                        'y_tick_steps':     0.2,
-                                        'v_hist_bins':      15})
-                    elif type_comp == 'Baseline':
-                        params_pRFecc.update(
-                                    {   'y_range':          (-1, 1),
-                                        'y_label':          'Baseline (z-score)',
-                                        'y_source_label':   'baseline',
-                                        'y_tick_steps':     0.5,
-                                        'v_hist_bins':      16})
+                        elif type_comp == 'Non-Linearity':
+                            params_pRFecc.update(
+                                        {   'y_range':          (0, 1.5),
+                                            'y_label':          'Non-linearity',
+                                            'y_source_label':   'non_lin',
+                                            'y_tick_steps':     0.25,
+                                            'v_hist_bins':      18})
 
-                    title = '{roi}_{hemi}_{mask_dir}: Eccentricity vs. {type_comp}'.format(roi = roi_text, hemi = hemi, type_comp = type_comp, mask_dir = mask_dir)
-                    params_pRFecc.update({'main_fig_title':   title})
+                        elif type_comp == 'Amplitude':
+                            params_pRFecc.update(
+                                        {   'y_range':          (-1, 1),
+                                            'y_label':          'Amplitude (z-score)',
+                                            "y_source_label":   'beta',
+                                            'y_tick_steps':     0.5,
+                                            'v_hist_bins':      16})
 
-                    out1, old_main_fig  = plotter.draw_figure(  parameters = params_pRFecc,
-                                                                plot = 'ecc',
-                                                                old_main_fig = old_main_fig)
-                    f_pRFecc.append(out1)
-                
+                        elif type_comp == 'Coverage':
+                            params_pRFecc.update(
+                                        {   'y_range':          (0, 1),
+                                            'y_label':          'pRF coverage (%)',
+                                            'y_source_label':   'cov',
+                                            'y_tick_steps':     0.2,
+                                            'v_hist_bins':      15})
+                        elif type_comp == 'Baseline':
+                            params_pRFecc.update(
+                                        {   'y_range':          (-1, 1),
+                                            'y_label':          'Baseline (z-score)',
+                                            'y_source_label':   'baseline',
+                                            'y_tick_steps':     0.5,
+                                            'v_hist_bins':      16})
 
-                # pRF cov
-                # -------
-                params_pRFcov = param_all
-                params_pRFcov.update(
-                            {   'dataMat':          data,
-                                'x_range':          (-16, 16), 
-                                'y_range':          (-16, 16),
-                                'x_label':          'Horizontal coordinate (dva)',
-                                'y_label':          'Vertical coordinate (dva)',
-                                'x_tick_steps':     4,
-                                'y_tick_steps':     4,
-                                'smooth_factor':    15,
-                                'cmap':             'viridis',
-                                'cmap_steps':       10,
-                                'col_offset':       0,
-                                'vmin':             0,
-                                'vmax':             1,
-                                'cb_tick_steps':    0.2,
-                                'condition':        'cov',
-                                'cb_label':         'pRF coverage (norm.)'})
+                        title = '{roi}_{hemi}_{mask_dir}: Eccentricity vs. {type_comp}'.format(roi = roi_text, hemi = hemi, type_comp = type_comp, mask_dir = mask_dir)
+                        params_pRFecc.update({'main_fig_title':   title})
 
-                f_pRFcov = plotter.draw_figure(parameters = params_pRFcov, plot = 'cov')
+                        out1, old_main_fig  = plotter.draw_figure(  parameters = params_pRFecc,
+                                                                    plot = 'ecc',
+                                                                    old_main_fig = old_main_fig)
+                        f_pRFecc.append(out1)
+                    
 
-                # save files
-                if fit_model == 'gauss':
-                    all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
-                                        [f_pRFecc[3],f_pRFecc[4],None]])
-                elif fit_model == 'css':
-                    all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
-                                        [f_pRFecc[3],f_pRFecc[4],f_pRFecc[5]]])
-                
-                exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}_{mask_dir}_pRFecc.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
-                output_file(output_file_html, title='%s pRF analysis'%roi_text)
-                save(all_f1)
+                    # pRF cov
+                    # -------
+                    params_pRFcov = param_all
+                    params_pRFcov.update(
+                                {   'dataMat':          data,
+                                    'x_range':          (-16, 16), 
+                                    'y_range':          (-16, 16),
+                                    'x_label':          'Horizontal coordinate (dva)',
+                                    'y_label':          'Vertical coordinate (dva)',
+                                    'x_tick_steps':     4,
+                                    'y_tick_steps':     4,
+                                    'smooth_factor':    15,
+                                    'cmap':             'viridis',
+                                    'cmap_steps':       10,
+                                    'col_offset':       0,
+                                    'vmin':             0,
+                                    'vmax':             1,
+                                    'cb_tick_steps':    0.2,
+                                    'condition':        'cov',
+                                    'cb_label':         'pRF coverage (norm.)'})
 
-                all_f2 = gridplot([ [f_pRFmap[0],f_pRFcov[0]]])
-                exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}__{mask_dir}_pRFmap.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
-                output_file(output_file_html, title='%s pRF analysis'%roi_text)
-                save(all_f2)        
-            else:
-                print("drawing of {roi}_{hemi}_{mask_dir} figures is not possible as n={vertex}".format(roi = analysis_info['rois'][roi],hemi = hemi,vertex = vertex,mask_dir = mask_dir)) 
+                    f_pRFcov = plotter.draw_figure(parameters = params_pRFcov, plot = 'cov')
+
+                    # save files
+                    if fit_model == 'gauss':
+                        all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
+                                            [f_pRFecc[3],f_pRFecc[4],None]])
+                    elif fit_model == 'css':
+                        all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
+                                            [f_pRFecc[3],f_pRFecc[4],f_pRFecc[5]]])
+                    
+                    exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}_{mask_dir}_pRFecc.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
+                    output_file(output_file_html, title='%s pRF analysis'%roi_text)
+                    save(all_f1)
+
+                    all_f2 = gridplot([ [f_pRFmap[0],f_pRFcov[0]]])
+                    exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}__{mask_dir}_pRFmap.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
+                    output_file(output_file_html, title='%s pRF analysis'%roi_text)
+                    save(all_f2)        
+                else:
+                    print("drawing of {roi}_{hemi}_{mask_dir} figures is not possible as n={vertex}".format(roi = analysis_info['rois'][roi],hemi = hemi,vertex = vertex,mask_dir = mask_dir)) 
 

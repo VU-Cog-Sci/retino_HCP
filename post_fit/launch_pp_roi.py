@@ -33,6 +33,8 @@ import numpy as np
 import matplotlib.pyplot as pl
 import ipdb
 import platform
+import time
+
 opj = os.path.join
 deb = ipdb.set_trace
 
@@ -93,9 +95,12 @@ for subject in subject_list:
 
 # Run pp_roi.py
 # -------------
+num_run = 0
 for subject_fit in subject_fit_list:
-	if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'figs','prf'))==0:
-		session_name = "{subject_fit}_{fit_model}".format(subject_fit = subject_fit, fit_model = fit_model)
-		print("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
-		os.system("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
-		
+	if num_run < 8:
+		if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'figs','roi'))==0:
+			session_name = "{subject_fit}_{fit_model}".format(subject_fit = subject_fit, fit_model = fit_model)
+			print("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
+			os.system("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
+			time.sleep(2)
+			num_run = num_run + 1
