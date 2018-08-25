@@ -1,13 +1,14 @@
 """
 -----------------------------------------------------------------------------------------
-launch_pp_roi.py
+launch_post_pp_roi.py
 -----------------------------------------------------------------------------------------
 Goal of the script:
-run pp_roi codes for each subjects of hcp dataset
+run post_pp_roi codes for each subjects of hcp dataset
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[1]: fit model ('gauss','css')
 sys.argv[2]: max tmux at the time
+sys.argv[3]: do single hemifield plot (1 = YES, 0 = NO)
 -----------------------------------------------------------------------------------------
 Output(s):
 None
@@ -15,7 +16,7 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/launch_pp_roi.py gauss 8
+python post_fit/launch_post_pp_roi.py gauss 8 0
 -----------------------------------------------------------------------------------------
 """
 
@@ -47,6 +48,7 @@ sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_
 # ----------
 fit_model = sys.argv[1]
 max_tmux = int(sys.argv[2])
+draw_hemi = int(sys.argv[3])
 vox_num = 32492
 job_vox = 2500
 
@@ -100,9 +102,9 @@ for subject in subject_list:
 num_run = 0
 for subject_fit in subject_fit_list:
 	if num_run < max_tmux:
-		if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'figs','roi'))==0:
-			session_name = "{subject_fit}_{fit_model}_pp_roi".format(subject_fit = subject_fit, fit_model = fit_model)
-			print("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
-			os.system("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
+		if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'figs','prf'))==0:
+			session_name = "{subject_fit}_{fit_model}_post_pp_roi".format(subject_fit = subject_fit, fit_model = fit_model)
+			print("tmux new-session -d -s {session_name} 'python post_fit/post_pp_roi.py {subject_fit} {fit_model} {draw_hemi}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, draw_hemi = draw_hemi))
+			os.system("tmux new-session -d -s {session_name} 'python post_fit/post_pp_roi.py {subject_fit} {fit_model} {draw_hemi}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, draw_hemi = draw_hemi))
 			time.sleep(2)
 			num_run = num_run + 1

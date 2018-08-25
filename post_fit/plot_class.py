@@ -582,7 +582,8 @@ class PlotOperator(object):
 
         # regression line weighted by r2
         if self.draw_reg:
-            plot_reg                        =   self.get_weighted_regression_line(data_source = data_source, main_fig = main_fig)
+            if self.dataMat.shape[0] > 10:
+                plot_reg                        =   self.get_weighted_regression_line(data_source = data_source, main_fig = main_fig)
         
 
         h_hist                          =   self.create_horizontal_histogram(data_source = data_source, main_fig = main_fig)

@@ -23,14 +23,11 @@ martin_dev branch
 # 0. understand why output of gauss different for baseline and amplitude??
 # 0. make plot of comparison time course and model
 
-# 2. Ran post_pp_roi based on all these regions for suject 999999 => debug it (check how masks work before saving in h5file, how is it possible that with 0 vertex the code ran and bugged)
-
-
-
 # Everyday
 # - transfer data from lisa to aeneas
-# - run launcher of pp_roi
-# - run launcher of post_pp_roi
+# - run launch_submit_fit_jobs on lisa after changing the subject number depending on current jobs running
+# - run launch_pp_roi on aeneas
+# - run launch_post_pp_roi on aeneas
 
 
 
