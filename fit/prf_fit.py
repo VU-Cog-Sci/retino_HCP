@@ -136,7 +136,6 @@ elif fit_model == 'css':
 
 # Fit: define empty estimate and voxel indeces
 estimates = np.zeros((data_file_shape[0], data_file_shape[1], data_file_shape[2], num_est))
-voxel_indices_to_analyse = [(xx, 0, 0) for xx in np.arange(int(start_idx),int(end_idx),1)]
 
 # Define multiprocess bundle
 bundle = utils.multiprocess_bundle( Fit = fit_func,
