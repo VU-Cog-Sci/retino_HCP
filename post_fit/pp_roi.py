@@ -44,14 +44,6 @@ deb = ipdb.set_trace
 import nibabel as nb
 import cortex
 
-# Functions import
-# ----------------
-from utils import set_pycortex_config_file, convert_fit_results, draw_cortex_vertex
-
-# Check system
-# ------------
-sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
-
 # Get inputs
 # ----------
 subject = sys.argv[1]
@@ -59,9 +51,7 @@ fit_model = sys.argv[2]
 job_vox = float(sys.argv[3])
 if fit_model == 'gauss': fit_val = 6
 elif fit_model == 'css': fit_val = 7
-vox_num = 32492
-ts_num = 300 
-base_file_name = 'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries'
+base_file_name = 'RETBAR_ALL_tfMRI_data_sub'
 
 # Define analysis parameters
 # --------------------------
@@ -73,30 +63,30 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
-    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
-    main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 
 # Check if all slices are present
 # -------------------------------
-start_idx =  np.arange(0,vox_num,job_vox)
+maskfn = opj(base_dir,'raw_data','RETBAR_ALL_tfMRI_data_sub_mask.nii.gz')
+data_mask = nb.load(maskfn).get_data()
+start_idx =  np.arange(0,np.sum(data_mask),job_vox)
 end_idx = start_idx+job_vox
-end_idx[-1] = vox_num
+end_idx[-1] = int(np.sum(data_mask))
+
 num_miss_part = 0
-fit_est_files_L = []
-fit_est_files_R = []
-for hemi in ['L','R']:
-    for iter_job in np.arange(0,start_idx.shape[0],1):
-        fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-        if os.path.isfile(fit_est_file):
-            if os.path.getsize(fit_est_file) == 0:
-                num_miss_part += 1 
-            else:
-                exec('fit_est_files_{hemi}.append(fit_est_file)'.format(hemi = hemi))
+fit_est_files = []
+
+for iter_job in np.arange(0,start_idx.shape[0],1):
+    fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_est_%s_to_%s.nii.gz' %(base_file_name,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+    if os.path.isfile(fit_est_file):
+        if os.path.getsize(fit_est_file) == 0:
+            num_miss_part += 1 
         else:
-            num_miss_part += 1
+            fit_est_files.append(fit_est_file)
+    else:
+        num_miss_part += 1
 
 if num_miss_part != 0:
     sys.exit('%i missing files, analysis stopped'%num_miss_part)
