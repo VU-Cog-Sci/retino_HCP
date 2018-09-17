@@ -13,7 +13,7 @@ none
 -----------------------------------------------------------------------------------------
 Exemple:
 # to run from lisa
-cd /Users/martin/Dropbox/GitHub/retino_HCP/ 
+cd /home/szinte/projects/retino_HCP/
 python select_subject/copy_sub.py
 -----------------------------------------------------------------------------------------
 """
@@ -21,10 +21,6 @@ python select_subject/copy_sub.py
 import os
 import glob
 import ipdb
-
-# subs = ['192641','105923','111312','926862','182739','167440','789373','690152','148133','467351',\
-# 		'233326','144226','638049','318637','165436','771354','995174','463040','187345','547046',\
-# 		'150423','167036','104416','536647','397760','552241','169040','973770','116726','130114']
 
 subs = ["135124", "181636", "177746", "239136", "205220", "200614", "185442", "131722", "406836", "732243",\
         "178142", "412528", "146129", "134829", "114823", "140117", "818859", "429040", "191336", "157336",\
@@ -43,24 +39,23 @@ subs = ["135124", "181636", "177746", "239136", "205220", "200614", "185442", "1
         "251833", "562345", "130518", "200311", "177645", "131217", "178243", "115825", "132118", "169444",\
         "365343"] 
 
-files_to_trans = [	'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries_L.func_bla_psc_av.gii',\
-					'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries_R.func_bla_psc_av.gii'	]
+files_to_trans = ['RETBAR_ALL_tfMRI_data_sub.nii.gz']
 
-database_dir = '/home/shared/2018/visual/HCP7TFIXED'
-target_dir = '/home/shared/2018/visual/nprf_hcp/raw_data'
+database_dir = '/home/raw_data/2018/visual/HCP_RETINO_HR'
+target_dir = '/home/shared/2018/visual/subcortical_hcp/raw_data'
 
 copy_cmd_beg = 'rsync -a --no-g --no-p -vzhe ssh --progress'
 
 for sub in subs:
-	for file_to_trans in files_to_trans:
-		from_file = '%s/%s/%s'%(database_dir,sub,file_to_trans)
-		to_file = '%s/%s/'%(target_dir,sub)
+    for file_to_trans in files_to_trans:
+        from_file = '%s/%s/%s'%(database_dir,sub,file_to_trans)
+        to_file = '%s/%s/'%(target_dir,sub)
 
-		try:
-			os.makedirs(to_file)
-		except:
-			pass
-		
-		copy_cmd = '%s %s %s'%(copy_cmd_beg,from_file,to_file)
-		
-		os.system(copy_cmd)
+        try:
+            os.makedirs(to_file)
+        except:
+            pass
+
+        copy_cmd = '%s %s %s'%(copy_cmd_beg,from_file,to_file)
+
+        os.system(copy_cmd)

@@ -50,6 +50,7 @@ end_idx = sys.argv[4]
 data_file = sys.argv[5]
 base_dir = sys.argv[6]
 
+
 # Define analysis parameters
 with open('settings.json') as f:
     json_s = f.read()
@@ -65,7 +66,7 @@ elif 'local' in platform.uname()[1]:
 
 # Define output file path and directories
 base_file_name = os.path.split(data_file)[-1][:-7]
-opfn_est = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.gii' %(start_idx,end_idx))
+opfn_est = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.nii.gz' %(start_idx,end_idx))
 
 try: os.makedirs(opj(base_dir,'pp_data',subject,fit_model,'fit'))
 except: pass
@@ -73,9 +74,18 @@ except: pass
 # Load data
 data = []
 data_file_load = nb.load(data_file)
-data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
-data = np.vstack(data)
-data_to_analyse = data[:,int(start_idx):int(end_idx)]
+data_file_dat = data_file_load.get_data()
+data_file_shape = data_file_load.shape
+
+# load mask
+maskfn = opj(base_dir,'raw_data','RETBAR_ALL_tfMRI_data_sub_mask.nii.gz')
+data_mask = nb.load(maskfn).get_data()
+
+data_file_masked = data_file_dat[data_mask==1.0]
+data_to_analyse = data_file_masked[int(start_idx):int(end_idx),:]
+data_to_analyse_idx = np.where(data_mask==1.0)
+voxel_indices = [(xx, yy, zz) for xx,yy,zz in  zip(data_to_analyse_idx[0][:],data_to_analyse_idx[1][:],data_to_analyse_idx[2][:])]
+voxel_indices = voxel_indices[int(start_idx):int(end_idx)]
 
 # Create stimulus design
 visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','retinotopysmall5.mat'))
@@ -125,36 +135,36 @@ elif fit_model == 'css':
     fit_model_bounds = (x_bound, y_bound, sigma_bound, n_bound, beta_bound, baseline_bound)
 
 # Fit: define empty estimate and voxel indeces
-estimates = np.zeros((num_est,data.shape[1]))
-vertex_indices = [(xx, 0, 0) for xx in np.arange(int(start_idx),int(end_idx),1)]
+estimates = np.zeros((data_file_shape[0], data_file_shape[1], data_file_shape[2], num_est))
+voxel_indices_to_analyse = [(xx, 0, 0) for xx in np.arange(int(start_idx),int(end_idx),1)]
 
 # Define multiprocess bundle
 bundle = utils.multiprocess_bundle( Fit = fit_func,
                                     model = model_func,
-                                    data = data_to_analyse.T,
+                                    data = data_to_analyse,
                                     grids = fit_model_grids, 
                                     bounds = fit_model_bounds, 
-                                    indices = vertex_indices, 
-                                    auto_fit = True, 
-                                    verbose = 1, 
+                                    indices = voxel_indices,
+                                    auto_fit = True,
+                                    verbose = 1,
                                     Ns = 6)
 # Run fitting
 pool = multiprocessing.Pool(processes = N_PROCS)
 output = pool.map(  func = utils.parallel_fit, 
                     iterable = bundle)
 
+# Save estimates data
 for fit in output:
-    estimates[:num_est-1,fit.voxel_index[0]] = fit.estimate
-    estimates[num_est-1,fit.voxel_index[0]] = fit.rsquared
+    # Fill estimates matrix
+    estimates[fit.voxel_index][:num_est-1] = fit.estimate
+    estimates[fit.voxel_index][num_est-1] = fit.rsquared
 
 # Free up memory
 pool.close()
 pool.join()
 
-# Save estimates data
-darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in estimates]
-gii_out = nb.gifti.gifti.GiftiImage(header = data_file_load.header, 
-                                    extra = data_file_load.extra,
-                                    darrays = darrays)
-nb.save(gii_out, opfn_est)
-
+# Save data
+img = nb.Nifti1Image(   dataobj = estimates,
+                        affine = data_file_load.affine,
+                        header = data_file_load.header)
+img.to_filename(opfn_est)

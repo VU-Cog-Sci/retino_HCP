@@ -1,14 +1,17 @@
 ## retino_HCP
 
-martin_dev branch
------------------
+martin_dev_subcortical branch
+-----------------------------
 
 ## Analysis specifics
 ---------------------
-- HCP subjects were first pre-processed and averaged by Tomas
+- HCP subcortical subjects were first pre-processed and averaged by Tomas
 - Best subjects (based on R2 of V1 voxel selected by glasser2016 attlas) were chosen using data
   issued from Benson et al (http://dx.doi.org/10.1101/308247)
 - pRF parameters are extracted using fit/submit_fit_jobs.py on Lisa for css and gaussian model
+
+
+
 - get yeo atlas see others/get_yeo_atlas_gii.txt
 - DMN regions (ANG/MED_PAR/SUP_MED_FR/LAT_TEMP) are put on fsaverage flatmap overlay.svg
 - DMN regions of interest are drawn in inkscape of fsaverage

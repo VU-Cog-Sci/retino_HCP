@@ -7,23 +7,16 @@ create jobscript to run locally, in a cluster (LISA) or server (AENEAS)
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[1]: subject name (e.g. 'sub-001')
-sys.argv[2]: subject hemisphere (e.g. 'L')
-sys.argv[3]: fit model ('gauss','css')
-sys.argv[4]: voxel per jobs (used 400 on lisa)
-sys.argv[5]: job duration requested in hours (used 10h on lisa)
+sys.argv[2]: fit model ('gauss','css')
+sys.argv[3]: job voxel in a job (eg. 2500)
+sys.argv[4]: job duration requested in hours (used 10h on lisa)
 -----------------------------------------------------------------------------------------
 Output(s):
 .sh file to execute in server
 -----------------------------------------------------------------------------------------
 Exemple:
 cd /home/szinte/projects/retino_HCP/
-
-#1: sub 192641 : ran 18/08/2018 at 20:15
-python fit/submit_fit_jobs.py 192641 L gauss 2500 10
-python fit/submit_fit_jobs.py 192641 R gauss 2500 10
-python fit/submit_fit_jobs.py 192641 L css 2500 10
-python fit/submit_fit_jobs.py 192641 R css 2500 10
-
+python fit/submit_fit_jobs.py 999999 gauss 2500 10
 -----------------------------------------------------------------------------------------
 """
 
@@ -41,10 +34,9 @@ opj = os.path.join
 
 # Get subject number and hemisphere to analyse
 subject = sys.argv[1]
-hemi = sys.argv[2]
-fit_model = sys.argv[3]
-job_vox = float(sys.argv[4])
-job_dur_req = float(sys.argv[5])
+fit_model = sys.argv[2]
+job_vox = int(sys.argv[3])
+job_dur_req = float(sys.argv[4])
 
 # Load the analysis parameters from json file
 with open('settings.json') as f:
@@ -80,29 +72,42 @@ except:
 data = []
     
 # Determine data to analyse
-data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*%s.func_bla_psc_av.gii'% hemi)))
-
-# Cut it in small pieces of voxels
+data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'RETBAR_ALL_tfMRI_data_sub.nii.gz')))
 data_file_load = nb.load(data_file[0])
-data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
-data = np.vstack(data)
-data_size = data.shape
+data_file_shape = data_file_load.shape
 
-start_idx =  np.arange(0,data_size[1],job_vox)
+# load or create mask
+maskfn = opj(base_dir,'raw_data','RETBAR_ALL_tfMRI_data_sub_mask.nii.gz')
+if os.path.isfile(maskfn)==False:
+    data_file_dat = data_file_load.get_data()
+    data_mask = np.zeros(data_file_shape[0:3])
+    data_file_tc_std = np.std(data_file_dat,3)
+    data_mask[data_file_tc_std>0] = 1
+
+    img = nb.Nifti1Image(   dataobj = data_mask,
+                            affine = data_file_load.affine,
+                            header = data_file_load.header)
+
+    img.to_filename(maskfn)
+else:
+    data_mask = nb.load(maskfn).get_data()
+
+# get idx of non empty voxels
+start_idx =  np.arange(0,np.sum(data_mask),job_vox)
 end_idx = start_idx+job_vox
-end_idx[-1] = data_size[1]
+end_idx[-1] = int(np.sum(data_mask))
 
 print('%i jobs of %1.1fh each will be run/send to %s'%(start_idx.shape[0],job_dur_req,platform.uname()[1]))
 
-job_input = []
 for iter_job in np.arange(0,start_idx.shape[0],1):
-    job_input = data[:,int(start_idx[iter_job]):int(end_idx[iter_job])]
+    
 
     print('input data vox num: %i to %i'%(int(start_idx[iter_job]),int(end_idx[iter_job])))
 
     # Define output file
     base_file_name = os.path.split(data_file[0])[-1][:-7]
-    opfn = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.gii' %(str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+    opfn = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.nii.gz' %(str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+
 
     if os.path.isfile(opfn):
         if os.path.getsize(opfn) != 0:
@@ -127,7 +132,7 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
     for e in re_dict.keys():
         working_string  =   working_string.replace(e, re_dict[e])
 
-    js_name =  opj(base_dir, 'pp_data', subject, fit_model, 'jobs', '%s_%s_vox_%s_to_%s.sh'%(subject,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+    js_name =  opj(base_dir, 'pp_data', subject, fit_model, 'jobs', '%s_vox_%s_to_%s.sh'%(subject,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
 
     of = open(js_name, 'w')
     of.write(working_string)
