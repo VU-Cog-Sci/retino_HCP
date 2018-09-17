@@ -1038,7 +1038,7 @@ class PlotOperator(object):
         # current_params = self.params 
         # new_params     = current_params.update(parameters)
         # self.params    = new_params.update(parameters)
-            
+
         for k,v in parameters.items():
             setattr(self, k, v)
         
