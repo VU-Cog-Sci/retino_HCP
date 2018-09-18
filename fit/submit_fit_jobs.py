@@ -72,9 +72,11 @@ except:
 data = []
     
 # Determine data to analyse
-data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'RETBAR_ALL_tfMRI_data_sub.nii.gz')))
+deb()
+data_file  =  opj(base_dir,'raw_data',subject,'RETBAR_ALL_tfMRI_data_sub.nii.gz')
 data_file_load = nb.load(data_file[0])
 data_file_shape = data_file_load.shape
+
 
 # load or create mask
 maskfn = opj(base_dir,'raw_data','RETBAR_ALL_tfMRI_data_sub_mask.nii.gz')
@@ -143,7 +145,9 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
 
     if 'lisa' in platform.uname()[1]:
         os.chdir(opj(base_dir,'pp_data',subject,fit_model,'log_outputs'))
-        os.system('qsub ' + js_name)
+        print('qsub ' + js_name)
+
+
 
     elif 'aeneas' in platform.uname()[1]:
         os.system('sh ' + js_name)

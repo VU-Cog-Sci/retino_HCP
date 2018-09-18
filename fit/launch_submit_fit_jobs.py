@@ -76,5 +76,5 @@ subs = analysis_info['subject_list']
 index_start = int(sys.argv[2])
 index_end = int(sys.argv[3])
 for subject in subs[index_start:index_end]:
-	print("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
+	os.system("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
 	
