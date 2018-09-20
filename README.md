@@ -20,16 +20,19 @@ martin_dev branch
 
 # TO DO
 # -----
-# 0. understand why output of gauss different for baseline and amplitude??
-# 0. make plot of comparison time course and model
+# 01. make plot of comparison time course and model (understand why output of gauss different for baseline and amplitude)
+# 02. statistics across participants - ouput correlations values of ecc vs. all per ROI
+# 03. statistics across participants - output laterality index per ROI
+# 04. change code to fit 999999 with more steps of bruteforce and run it
+# 05. change code to fit 999999_16mm and run it
+# 06. change code to draw roi/bokeh plots 999999_16mm
+# 07. include plots of laterality in html files
+# 08. adapt axes of plot to have better view
+# 08. save webgl and make it html for 999999 subject
+# 09. run launch_pp_roi on aeneas
+# 10. run launch_post_pp_roi on aeneas
+# 11. see if new version of pycortex work on i36 and reply email
 
-# Everyday
-# - transfer data from lisa to aeneas
-# - run launch_submit_fit_jobs on lisa after changing the subject number depending on current jobs running
-# - run launch_pp_roi on aeneas
-# - run launch_post_pp_roi on aeneas
-
-
-
-# 6. Check variability of individual subjects with 999999 ROIs
-# 7. Decide what to draw as statistics across participants
+# ORDER
+# thursday: 09/07/
+# friday 04/05

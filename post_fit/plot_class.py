@@ -166,7 +166,6 @@ class PlotOperator(object):
                                                 min_border_top      =   self.min_border_large,                      # define top border space
                                                 y_axis_location     =   'left',                                     # define location of y axis
                                                 x_axis_location     =   'below',                                    # define location of x axis
-                                                title               =   self.main_fig_title,                        # specify title
                                                 toolbar_location    =   None)                                       # specify toolbar location
         
         # determining axis ticker based on histogram orientation
@@ -464,6 +463,7 @@ class PlotOperator(object):
 
         main_fig                        =   self.initialize_main_fig_attributes(main_fig = main_fig)
         
+
         main_fig.add_layout(self.get_span('width'))                                                         # add width span
         main_fig.add_layout(self.get_span('height'))                                                        # add height span
         
@@ -510,6 +510,8 @@ class PlotOperator(object):
         v_hist                          =   self.create_vertical_histogram(data_source = data_source, main_fig = main_fig, colors = True, draw_stim = True)
         leg                             =   self.create_legend_figure()
 
+        
+
         # add a hover tool
         main_fig_tooltips               =   [   ('R2',                  '@rsq{0.00}'),                              # rsq of hover tool
                                                 ('[X,Y]',               '[@x{0.0}, @y{0.00}]'),                     # x,y coord of hover tool
@@ -524,6 +526,16 @@ class PlotOperator(object):
                                                 mode                =   'mouse',                                    # specify mode
                                                 renderers           =   [plot_data])                                # specify renderer
         main_fig.add_tools(main_fig_hover)                                                                          # add hover tool to main plot
+
+                                                
+        # add title
+        title_txt                       =   main_fig.text(
+                                                x                   =   self.x_range[1] - (self.x_range[1]-self.x_range[0])*0.05,
+                                                y                   =   self.y_range[0] + (self.y_range[1]-self.y_range[0])*0.05,
+                                                text                =   [self.main_fig_title],
+                                                text_font_size      =   "8pt",
+                                                text_align          = "right"
+                                                )
 
         # Put figure together
         # -------------------
@@ -607,6 +619,15 @@ class PlotOperator(object):
                                                 renderers           =   [plot_data])                                # specify renderer
         main_fig.add_tools(main_fig_hover)                                                                          # add hover tool to main plot
 
+        # add title
+        title_txt                       =   main_fig.text(
+                                                x                   =   self.x_range[1] - (self.x_range[1]-self.x_range[0])*0.05,
+                                                y                   =   self.y_range[0] + (self.y_range[1]-self.y_range[0])*0.05,
+                                                text                =   [self.main_fig_title],
+                                                text_font_size      =   "8pt",
+                                                text_align          = "right"
+                                                )
+
         # Put figure together
         # -------------------
         f                               =   column(                                                                 # define figures coluns
@@ -614,6 +635,7 @@ class PlotOperator(object):
                                                 row(main_fig, v_hist))                                              # define figure second row
 
         
+
         
         # save figures as .svg files
         # if self.saving_figs and self.condition == 'ecc': 
@@ -913,8 +935,8 @@ class PlotOperator(object):
         # -----------
         
         if not old_main_fig:
-            x_range                         =    self.x_range                                                  # define x range for the first time based on params
-            y_range                         =    self.y_range                                                  # define y range for the first time based on params
+            x_range                         =    self.x_range                                                       # define x range for the first time based on params
+            y_range                         =    self.y_range                                                       # define y range for the first time based on params
         else:
             x_range                         =    old_main_fig.x_range                                               # define x range based on first figure to have shared axis
             y_range                         =    old_main_fig.y_range                                               # define y range based on first figure to have shared axis
@@ -925,20 +947,12 @@ class PlotOperator(object):
         stim_fig_xlim                   =   (self.x_range[0]-5*self.x_tick_steps,self.x_range[1]+5*self.x_tick_steps) # define stimuli max axis
         stim_fig_ylim                   =   (self.y_range[0]-5*self.y_tick_steps,self.y_range[1]+5*self.y_tick_steps) # define stimuli max axis
         
-        # figure settings
-        main_fig                        =   figure(                                                                 # create a figure in bokeh
-                                                plot_width          =   self.p_width,                          # define figure width in pixel
-                                                plot_height         =   self.p_height,                         # define figure height in pixel
-                                                min_border_top      =   self.min_border_large,                 # define top border size
-                                                min_border_right    =   self.min_border_large,                 # define right border size
-                                                toolbar_location    =   None,                                       # define toolbar location
-                                                x_range             =   x_range,                                    # define x limits
-                                                y_range             =   y_range,                                    # define y limits
-                                                tools               =   "pan,wheel_zoom,box_zoom,reset")            # define tools to show
+
+        main_fig,main_source,data_source=   self.initialize_main_fig(old_main_fig)                                                
 
 
-        main_fig.xaxis.axis_label       =   self.x_label                                                       # define x axis label
-        main_fig.yaxis.axis_label       =   self.y_label                                                       # define y axis label
+        main_fig.xaxis.axis_label       =   self.x_label                                                            # define x axis label
+        main_fig.yaxis.axis_label       =   self.y_label                                                            # define y axis label
         main_fig.grid.grid_line_color   =   None                                                                    # define color of the grids for both axis
         main_fig.axis.minor_tick_in     =   False                                                                   # set minor tick in
         main_fig.axis.minor_tick_out    =   False                                                                   # set minor tick out
@@ -1015,7 +1029,17 @@ class PlotOperator(object):
                                                 right               =   1,                                          # define right value
                                                 color               =   colors_val_leg)                             # define color
                                                 
-        
+        # add title
+        title_txt                       =   main_fig.text(
+                                                x                   =   self.x_range[1] - (self.x_range[1]-self.x_range[0])*0.05,
+                                                y                   =   self.y_range[0] + (self.y_range[1]-self.y_range[0])*0.05,
+                                                text                =   [self.main_fig_title],
+                                                text_font_size      =   "8pt",
+                                                text_align          =   "right",
+                                                text_color          =   'white'
+                                                )
+
+
         # up space left
         s1 = Spacer(width=int(self.p_width), height=int(self.p_height/4))
         s2 = Spacer(width=int(self.p_width/4), height=int(self.p_height/4))
@@ -1031,6 +1055,347 @@ class PlotOperator(object):
 
         return (f,main_fig)
 
+    
+
+    def draw_pRFlat(self, params, old_main_fig =[]):
+        """
+        -----------------------------------------------------------------------------------------
+        draw_pRFlat(params,old_main_fig =[])
+        -----------------------------------------------------------------------------------------
+        Goal of the script:
+        Create a graph with pRF laterality index
+        -----------------------------------------------------------------------------------------
+        Input(s):
+        params: dict containing a set of parameters for the figure
+        old_main_fig: handle to the central figure to conserve same axis property across plots
+        -----------------------------------------------------------------------------------------
+        Output(s):
+        none
+        -----------------------------------------------------------------------------------------
+        """
+        
+        def convert_on_axis(val_in,min_val,max_val,min_axis,max_axis):
+            range_val = max_val - min_val
+            range_axis = max_axis - min_axis
+            val_out = (val_in/range_axis)*range_val + min_val
+            return val_out
+
+        # figure parameters
+        min_val, max_val = 1, 2                                                                                     # drawn maximum and minimum
+        min_axis, max_axis = self.vmin, self.vmax                                                                   # axis minimum and maximum
+        axis_tick_num = 5                                                                                           # axis tick number
+        bin_num = 24                                                                                                # annular histogram bin number
+        hemi_col_L,hemi_col_R = '#ff6a00','#009dff'                                                                 # colors of hemisphere data
+        bg_col = tuple([250,250,250])                                                                               # colors of center of the plot
+        weighted_data = self.weighted_data
+        
+
+        # get data
+        rsq_idx, polar_real_idx, polar_imag_idx, x_idx, hemi_idx = 1, 3, 4, 10, 12
+        dataMat = self.dataMat
+        data = dataMat[~np.isnan(dataMat[:,rsq_idx]),:]
+
+        if weighted_data == False:
+            data[:,rsq_idx] = np.ones((data.shape[0]))
+
+        # figure settings
+        main_fig                        =   figure(                                                                 # create a figure in bokeh
+                                                plot_width          =   self.p_width,                               # define figure width in pixel
+                                                plot_height         =   self.p_height,                              # define figure height in pixel
+                                                x_range             =   self.x_range,                               # define x limits
+                                                y_range             =   self.y_range,                               # define y limits
+                                                min_border_left     =   self.min_border_large,                      # define left border size
+                                                min_border_right    =   self.min_border_large,                      # define right border size
+                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
+                                                min_border_top      =   self.min_border_large,                      # define top border space
+                                                x_axis_type         =   None,                                       # no main x axis
+                                                y_axis_type         =   None,                                       # no main y axis
+                                                outline_line_color  =   "white",                                    # ?
+                                                tools               =   "pan,wheel_zoom,box_zoom,reset")            # define tools to show
+
+        # figure background
+        cmap =  self.cmap
+        cmap_steps = self.cmap_steps
+        col_offset = 1/14.0
+        base = cortex.utils.get_cmap(cmap)
+        val = np.fmod(np.linspace(0+col_offset, 1+col_offset,cmap_steps,endpoint=False),1.0)
+        colmap = colors.LinearSegmentedColormap.from_list('my_colmap',base(val),N = cmap_steps)
+        vmin, vmax = 0, 2*np.pi
+        data_col = np.linspace(vmin,vmax,cmap_steps)
+        vrange = float(vmax) - float(vmin)
+        norm_data = ((data_col-float(vmin))/vrange)*cmap_steps
+        col_mat_rgb = colmap(norm_data.astype(int)) * 255.0
+        colors_val_rgb = ["#%02x%02x%02x" % (int(r), int(g), int(b)) for r, g, b in zip(col_mat_rgb[:,0], col_mat_rgb[:,1], col_mat_rgb[:,2])]
+
+        wedge_ang = np.linspace(0,2*np.pi,cmap_steps+1) + 2*np.pi/cmap_steps/2 + np.pi
+        wedge_ang = wedge_ang[:-1]
+        wedge_ang_step = wedge_ang[1]-wedge_ang[0]
+
+        bg_wedge                        =   main_fig.annular_wedge(
+                                                x                   =   0,                                          # wedge center x
+                                                y                   =   0,                                          # wedge center y
+                                                inner_radius        =   min_val,                                    # wedge inner radius val
+                                                outer_radius        =   max_val,                                    # wedge outer radius val
+                                                start_angle         =   wedge_ang - wedge_ang_step/2,               # wedge starting angles
+                                                end_angle           =   wedge_ang + wedge_ang_step/2,               # wedge ending angles
+                                                direction           =   'anticlock',                                # wedge direction
+                                                fill_color          =   colors_val_rgb,                             # wedges colors
+                                                fill_alpha          =   0.25,                                       # wedge colors fill alpha
+                                                line_color          =   None)                                       # wedge line colors
+        
+        
+        # histogram ticks
+        ticks_axis = np.linspace(min_axis,max_axis,axis_tick_num)
+        ticks_val = convert_on_axis(ticks_axis,min_val,max_val,min_axis,max_axis)
+        main_fig.circle(                        x                   =   0,
+                                                y                   =   0,
+                                                radius              =   ticks_val,
+                                                fill_color          =   None,
+                                                line_color          =   'black',
+                                                line_width          =   0.5,
+                                                line_dash           =   'dashed')
+
+        # minor axes
+        for angLine_minor in np.arange(0,2*np.pi,2*np.pi/cmap_steps):
+            line_x0_min,line_y0_min = min_val * np.cos(angLine_minor), min_val * np.sin(angLine_minor)
+            line_x1_min,line_y1_min = max_val * np.cos(angLine_minor), max_val * np.sin(angLine_minor)
+            main_fig.segment(                       x0                  =   line_x0_min,
+                                                    y0                  =   line_y0_min,
+                                                    x1                  =   line_x1_min,
+                                                    y1                  =   line_y1_min,
+                                                    line_color          =   'black',
+                                                    line_width          =   0.5,
+                                                    line_dash           =   'dashed')
+                    
+            tick_val = 0.05
+            line_x0_min,line_y0_min = max_val * np.cos(angLine_minor), max_val * np.sin(angLine_minor)
+            line_x1_min,line_y1_min = (max_val+tick_val) * np.cos(angLine_minor), (max_val+tick_val) * np.sin(angLine_minor)
+            main_fig.segment(                       x0                  =   line_x0_min,
+                                                    y0                  =   line_y0_min,
+                                                    x1                  =   line_x1_min,
+                                                    y1                  =   line_y1_min,
+                                                    line_color          =   'black',
+                                                    line_width          =   0.5)
+
+        # major axes
+        for angLine_major in np.arange(0,2*np.pi,np.pi/2):
+            line_x0_maj,line_y0_maj = min_val * np.cos(angLine_major), min_val * np.sin(angLine_major)
+            line_x1_maj,line_y1_maj = (max_val+tick_val) * np.cos(angLine_major), (max_val+tick_val) * np.sin(angLine_major)
+            main_fig.segment(                       x0                  =   line_x0_maj,
+                                                    y0                  =   line_y0_maj,
+                                                    x1                  =   line_x1_maj,
+                                                    y1                  =   line_y1_maj,
+                                                    line_color          =   "black")
+
+        # angular histogram
+        bins = self.ang_bins
+        bin_angle = 2*np.pi/bins
+
+        if self.hemi == 'L' or self.hemi == 'LR':
+            data_L = data[data[:,hemi_idx]== 1,:]
+            weights_val_L = data_L[:,rsq_idx]
+            pol_comp_num_L = data_L[:,polar_real_idx] + 1j * data_L[:,polar_imag_idx]
+            polar_ang_L = np.angle(pol_comp_num_L)
+            
+            hist_L, bin_edges_L = np.histogram( a = polar_ang_L,
+                                                range = (-np.pi-bin_angle/2,np.pi-bin_angle/2),
+                                                bins = bins,
+                                                weights = weights_val_L)
+            hist_perc_L = hist_L/np.nansum(hist_L)
+            hist_percent_L = hist_perc_L*100
+            
+            hist_val_L = convert_on_axis(hist_perc_L,min_val,max_val,min_axis,max_axis)
+            start_angle_hist_L = bin_edges_L[:-1]
+            end_angle_hist_L = bin_edges_L[1:]
+
+            start_angle_hist_deg_L = np.degrees(start_angle_hist_L)
+            end_angle_hist_deg_L = np.degrees(end_angle_hist_L)
+            
+            hist_data_source_L = {  'hist_L': hist_L,
+                                    'hist_percent_L': hist_percent_L,
+                                    'hist_val_L': hist_val_L,
+                                    'start_angle_L': start_angle_hist_L,
+                                    'end_angle_L': end_angle_hist_L,
+                                    'start_angle_deg_L': start_angle_hist_deg_L,
+                                    'end_angle_deg_L': end_angle_hist_deg_L}
+            hist_source_L = ColumnDataSource(data = hist_data_source_L)
+            
+            an_wedges_L = main_fig.annular_wedge(   x                   =   0,
+                                                    y                   =   0,
+                                                    inner_radius        =   min_val,
+                                                    outer_radius        =   'hist_val_L',
+                                                    start_angle         =   'start_angle_L',
+                                                    end_angle           =   'end_angle_L',
+                                                    fill_color          =   hemi_col_L,
+                                                    source              =   hist_source_L,
+                                                    line_width          =   0.5,
+                                                    direction           =   'anticlock',
+                                                    line_color          =   'black',
+                                                    fill_alpha          =   0.6,
+                                                    hover_fill_color    =   'black',
+                                                    hover_line_color    =   'black',
+                                                    hover_fill_alpha    =   0.5,
+                                                    hover_line_alpha    =   0.5)
+            
+            hist_tooltips_L = [ ('LH vertex', 'n = @hist_L{0}'),
+                                ('Prop.', '@hist_percent_L{0.0}%'),
+                                ('Edges','(@start_angle_deg_L{0} deg,@end_angle_deg_L{0} deg)')]
+            hist_hover_L = HoverTool(               tooltips            =   hist_tooltips_L,
+                                                    mode                = 'mouse',
+                                                    renderers           =   [an_wedges_L])
+            main_fig.add_tools(hist_hover_L)
+
+        if self.hemi == 'R' or self.hemi == 'LR':
+            data_R = data[data[:,hemi_idx] == 2,:]
+            weights_val_R = data_R[:,rsq_idx]
+            pol_comp_num_R = data_R[:,polar_real_idx] + 1j * data_R[:,polar_imag_idx]
+            polar_ang_R = np.angle(pol_comp_num_R)
+            
+            hist_R, bin_edges_R = np.histogram( a = polar_ang_R,
+                                                range = (-np.pi-bin_angle/2,np.pi-bin_angle/2),
+                                                bins = bins,
+                                                weights = weights_val_R)
+
+            hist_perc_R = hist_R/np.nansum(hist_R)
+            hist_percent_R = hist_perc_R*100
+
+            hist_val_R = convert_on_axis(hist_perc_R,min_val,max_val,min_axis,max_axis)
+            start_angle_hist_R = bin_edges_R[:-1]
+            end_angle_hist_R = bin_edges_R[1:]
+
+            start_angle_hist_deg_R = np.degrees(start_angle_hist_R)
+            end_angle_hist_deg_R = np.degrees(end_angle_hist_R)
+
+            hist_data_source_R = {  'hist_R': hist_R,
+                                    'hist_percent_R': hist_percent_R,
+                                    'hist_val_R': hist_val_R,
+                                    'start_angle_R': start_angle_hist_R,
+                                    'end_angle_R': end_angle_hist_R,
+                                    'start_angle_deg_R': start_angle_hist_deg_R,
+                                    'end_angle_deg_R': end_angle_hist_deg_R}
+            hist_source_R = ColumnDataSource(data = hist_data_source_R)
+            
+            an_wedges_R = main_fig.annular_wedge(          x                   =   0,
+                                                    y                   =   0,
+                                                    inner_radius        =   min_val,
+                                                    outer_radius        =   'hist_val_R',
+                                                    start_angle         =   'start_angle_R',
+                                                    end_angle           =   'end_angle_R',
+                                                    fill_color          =   hemi_col_R,
+                                                    source              =   hist_source_R,
+                                                    line_width          =   0.5,
+                                                    direction           =   'anticlock',
+                                                    line_color          =   'black',
+                                                    fill_alpha          =   0.6,
+                                                    hover_fill_color    =   'black',
+                                                    hover_line_color    =   'black',
+                                                    hover_fill_alpha    =   0.5,
+                                                    hover_line_alpha    =   0.5)
+            
+            hist_tooltips_R = [ ('RH vertex', 'n = @hist_R{0}'),
+                                ('Prop.', '@hist_percent_R{0.0}%'),
+                                ('Edges','(@start_angle_deg_R{0} deg,@end_angle_deg_R{0} deg)')]
+            hist_hover_R = HoverTool( tooltips = hist_tooltips_R,
+                                mode = 'mouse',
+                                renderers = [an_wedges_R])
+
+            main_fig.add_tools(hist_hover_R)
+    
+
+        # major axis values
+        main_fig.text(x = 0.125,y = ticks_val , text = np.round(ticks_axis*100), text_font_size = "8pt", text_align = "center", text_baseline = "bottom")
+
+        # axis label
+        main_fig.text(x = -0.12, y = (max_val-min_val)/2+min_val, text = ['Prop. (%)'],angle = np.pi/2, text_font_size = "8pt", text_align = "center")
+
+        # central plot
+        main_fig.circle(   x = 0,y = 0,radius = min_val,line_width = 0.5,fill_color = bg_col,line_color = 'black')
+        main_fig.circle(   x = 0,y = 0,radius = max_val,fill_color = None,line_color = 'black',line_width = 0.5)
+
+        # central plot axis
+        tick_val = 0.05
+        bar_height = 1
+        bar_width = 0.3
+        bar_ctr = [0,0]
+
+        # y axis
+        main_fig.segment(bar_ctr[0]-bar_width,bar_ctr[1]-bar_height/2,bar_ctr[0]-bar_width,bar_ctr[1]+bar_height/2,line_color = 'black',line_width = 1)
+        main_fig.segment(bar_ctr[0]-bar_width,bar_ctr[1]-bar_height/2,bar_ctr[0]-bar_width-tick_val,bar_ctr[1]-bar_height/2,line_color = 'black',line_width = 1)
+        main_fig.segment(bar_ctr[0]-bar_width,bar_ctr[1],bar_ctr[0]-bar_width-tick_val,bar_ctr[1],line_color = 'black',line_width = 1)
+        main_fig.segment(bar_ctr[0]-bar_width,bar_ctr[1]+bar_height/2,bar_ctr[0]-bar_width-tick_val,bar_ctr[1]+bar_height/2,line_color = 'black',line_width = 1)
+        main_fig.text(bar_ctr[0]-bar_width-0.2,bar_ctr[1],['Contra-laterality'],angle = np.pi/2,text_font_size = "8pt", text_align = "center")
+        main_fig.text(bar_ctr[0]-bar_width-0.075,bar_ctr[1],['index (%)'],angle = np.pi/2,text_font_size = "8pt", text_align = "center")
+
+        # x axis
+        main_fig.segment(bar_ctr[0]-bar_width,bar_ctr[1]-bar_height/2,bar_ctr[0]+bar_width,bar_ctr[1]-bar_height/2,line_color = 'black',line_width = 1)
+        main_fig.segment(bar_ctr[0]-bar_width,bar_ctr[1]-bar_height/2,bar_ctr[0]-bar_width,bar_ctr[1]-bar_height/2-tick_val,line_color = 'black',line_width = 1)
+        main_fig.segment(bar_ctr[0],bar_ctr[1]-bar_height/2,bar_ctr[0],bar_ctr[1]-bar_height/2-tick_val,line_color = 'black',line_width = 1)
+        main_fig.segment(bar_ctr[0]+bar_width,bar_ctr[1]-bar_height/2,bar_ctr[0]+bar_width,bar_ctr[1]-bar_height/2-tick_val,line_color = 'black',line_width = 1)
+        main_fig.text(bar_ctr[0]-bar_width/2,bar_ctr[1]-bar_height/2-0.2,['RH'],text_font_size = "8pt",text_align = "center")
+        main_fig.text(bar_ctr[0]+bar_width/2,bar_ctr[1]-bar_height/2-0.2,['LH'],text_font_size = "8pt",text_align = "center")
+
+        # plots
+        if self.hemi == 'R' or self.hemi == 'LR':
+            val_R = np.sum(data_R[data_R[:,x_idx] < 0,rsq_idx])/np.sum(data_R[:,rsq_idx])
+            val_text_R = '%1.1f %%'%(val_R*100)
+            main_fig.quad( left = bar_ctr[0]-bar_width, 
+                    right = bar_ctr[0], 
+                    top = bar_ctr[1]-bar_height/2+val_R*bar_height, 
+                    bottom = bar_ctr[1]-bar_height/2,
+                    fill_color = hemi_col_R, 
+                    line_width = 1,
+                    line_color = 'black',
+                    fill_alpha = 0.8)
+            main_fig.text(x = bar_ctr[0]-bar_width/2,
+                   y = bar_ctr[1]-bar_height/2 +(val_R*bar_height*0.5),
+                   text = [val_text_R],
+                    angle = np.pi/2,
+                   text_font_size = "8pt",
+                   text_align = "center",
+                   text_baseline = "middle",
+                   text_color = 'black')
+
+        if self.hemi == 'L' or self.hemi == 'LR':
+            val_L = np.sum(data_L[data_L[:,x_idx] > 0,rsq_idx])/np.sum(data_L[:,rsq_idx])
+            val_text_L = '%1.1f %%'%(val_L*100)
+            main_fig.quad( left = bar_ctr[0], 
+                    right = bar_ctr[0]+bar_width, 
+                    top = bar_ctr[1]-bar_height/2+val_L*bar_height, 
+                    bottom = bar_ctr[1]-bar_height/2,
+                    fill_color = hemi_col_L, 
+                    line_width = 1,
+                    line_color = 'black',
+                    fill_alpha = 0.8)
+            main_fig.text(x = bar_ctr[0]+bar_width/2,
+                   y = bar_ctr[1]-bar_height/2 +(val_L*bar_height*0.5),
+                   text = [val_text_L],
+                   angle = np.pi/2,
+                   text_font_size = "8pt",
+                   text_align = "center",
+                   text_baseline = "middle",
+                   text_color = 'black')
+
+
+        # title
+        title_txt                       =   main_fig.text(
+                                                x                   =   self.x_range[1] - (self.x_range[1]-self.x_range[0])*0.05,
+                                                y                   =   self.y_range[0] + (self.y_range[1]-self.y_range[0])*0.05,
+                                                text                =   [self.main_fig_title],
+                                                text_font_size      =   "8pt",
+                                                text_align          =   "right",
+                                                )
+        # up space
+        s1 = Spacer(width=int(self.p_width), height=int(self.p_height/4))
+
+
+
+
+        # Put figure together
+        # -------------------
+        f                               =   column(                                                                 # define figures coluns
+                                                row(main_fig))                                                  # define figure second row
+
+        return (f,main_fig)
 
     def draw_figure(self, parameters, plot, old_main_fig = []):
         
@@ -1048,6 +1413,8 @@ class PlotOperator(object):
             f, main_fig = self.draw_pRFecc(params = parameters, old_main_fig = old_main_fig)
         elif plot == 'cov':
             f, main_fig = self.draw_pRFcov(params = parameters, old_main_fig = old_main_fig)
+        elif plot == 'lat':
+            f, main_fig = self.draw_pRFlat(params = parameters, old_main_fig = old_main_fig)
         
         return (f, main_fig)
 
