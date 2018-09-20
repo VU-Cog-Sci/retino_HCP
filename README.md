@@ -26,8 +26,6 @@ martin_dev branch
 # 04. change code to fit 999999 with more steps of bruteforce and run it
 # 05. change code to fit 999999_16mm and run it
 # 06. change code to draw roi/bokeh plots 999999_16mm
-# 07. include plots of laterality in html files
-# 08. adapt axes of plot to have better view
 # 08. save webgl and make it html for 999999 subject
 # 09. run launch_pp_roi on aeneas
 # 10. run launch_post_pp_roi on aeneas

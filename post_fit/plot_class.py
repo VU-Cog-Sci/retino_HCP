@@ -429,10 +429,16 @@ class PlotOperator(object):
             x_range                     =    self.x_range                                                   # define x range for the first time based on self.params
             y_range                     =    self.y_range                                                   # define y range for the first time based on self.params
         else:
-            x_range                     =    old_main_fig.x_range                                           # define x range based on first figure to have shared axis
-            y_range                     =    self.y_range
-            # y_range                     =    old_main_fig.y_range                                           # define y range based on first figure to have shared axis
-        
+            if self.link_x == True and self.link_y == False:
+                x_range                     =    old_main_fig.x_range                                       # define x range based on first figure to have shared axis
+                y_range                     =    self.y_range                                               # define y range based on last give value
+            elif self.link_x == False and self.link_y == True:
+                x_range                     =    self.x_range                                               # define x range based on last give value
+                y_range                     =    old_main_fig.y_range                                       # define y range based on first figure to have shared axis
+            elif self.link_y == True and self.link_y == True:
+                x_range                     =    old_main_fig.x_range                                       # define x range based on first figure to have shared axis
+                y_range                     =    old_main_fig.y_range                                       # define y range based on first figure to have shared axis
+            
         data_source                     =   self.data_source
         if colors:
             color                       =   self.get_colors(data = data_source['colors_ref'])               # get the colors
@@ -646,242 +652,6 @@ class PlotOperator(object):
         
         return (f,main_fig)
 
-
-    def draw_pRFroi(self, params, old_main_fig = [], condition = 'roi'):
-        """
-        -----------------------------------------------------------------------------------------
-        draw_pRFroi(self.params)
-        -----------------------------------------------------------------------------------------
-        Goal of the script:
-        Create a graph with parameters as a function of ROI
-        -----------------------------------------------------------------------------------------
-        Input(s):
-        self.params: dict containing a set of parameters for the figure
-        -----------------------------------------------------------------------------------------
-        Output(s):
-        none
-        -----------------------------------------------------------------------------------------
-        """
-        # Additional imports
-        # ------------------
-        from bokeh.transform import dodge
-        from bokeh.models import ColumnDataSource, Whisker
-        self.condition                  = 'roi'
-
-        # Main figure
-        # -----------
-        y_range                         =    self.y_range                                                      # define y range for the first time based on self.params
-        x_range                         =    self.x_range                                                      # define x range for the first time based on self.params
-        rois                            =    self.rois
-        y_source_label                  =    self.y_source_label
-        self.stim_fig_ylim              =   (self.y_range[0] - 5 * self.y_tick_steps, self.y_range[1] + 5 * self.y_tick_steps) # define stimuli max axis
-
-
-        # define main data source
-        data_source                     =   get_data_source_dict(data = self.dataMat, condition = self.condition)
-
-
-        if y_source_label in ['retinal_x_gain', 'screen_x_gain', 'retinal_gain_index', 'amplitude_change', 'y_change']:
-            upper       = [x+e for x,e in zip(data_source['%s'%self.y_source_label], data_source['%s_std'%self.y_source_label])]
-            lower       = [x-e for x,e in zip(data_source['%s'%self.y_source_label], data_source['%s_std'%self.y_source_label])]
-            data        = { 'rois' : rois,
-                            y_source_label  : data_source[y_source_label],
-                            '%s_std'%y_source_label : data_source['%s_std'%self.y_source_label],
-                            'upper': upper,
-                            'lower': lower}
-        else:
-            if self.y_source_label == 'voxel':
-                upper_left  = []
-                lower_left  = []
-                upper_right = []
-                lower_right = []
-                data        = {'voxel_left_std'  : [],
-                               'voxel_right_std' : []}
-            else:
-                upper_left  = [x+e for x,e in zip(data_source['%s_left'%self.y_source_label], data_source['%s_left_std'%self.y_source_label])]
-                lower_left  = [x-e for x,e in zip(data_source['%s_left'%self.y_source_label], data_source['%s_left_std'%self.y_source_label])]
-                upper_right = [x+e for x,e in zip(data_source['%s_right'%self.y_source_label], data_source['%s_right_std'%self.y_source_label])]
-                lower_right = [x-e for x,e in zip(data_source['%s_right'%self.y_source_label], data_source['%s_right_std'%self.y_source_label])]
-                data        = {'%s_left_std' : data_source['%s_left_std'%self.y_source_label],
-                               '%s_right_std' : data_source['%s_right_std'%self.y_source_label]}
-
-            data.update(      { 'rois' : rois,
-                                '%s_left'%y_source_label  : data_source['%s_left'%y_source_label],
-                                '%s_right'%y_source_label : data_source['%s_right'%y_source_label],
-                                'upper_left' : upper_left,
-                                'lower_left' : lower_left,
-                                'upper_right': upper_right,
-                                'lower_right': lower_right})
-        
-
-        # # define data source
-        # data_source.update({'xs':          [[x1,x2] for x1, x2 in zip(data_source['x_left'], data_source['x_right'])], #dataMat_gazeLeft[:,0],dataMat_gazeRight[:,0])],   # list of list of xLeft/xRight
-        #                     'ys':          [[y1,y2] for y1, y2 in zip(data_source['y_left'], data_source['y_right'])]})
-        # # plot data
-        # plot_data_line                  =   main_fig.multi_line(                                                    # create lines between gazeLeft/Right pRF
-        #                                         xs                  =   self.xs,                               # list of list of x coord.
-        #                                         ys                  =   self.ys,                               # list of list of y coord.
-        #                                         line_color          =   'gray',                                    # define fill color
-        #                                         line_alpha          =   0.2,                                        # define line alpha
-        #                                         source              =   main_source,                                # define datasources
-        #                                         hover_line_color    =   'black',                                    # specify hover line color
-        #                                         hover_line_alpha    =   1                                           # define hover line alpha
-        #                                         )
-
-        # if self.y_source_label == 'gaze_gain':
-        #     upper_gain = [x+e for x,e in zip(data_source[self.y_source_label], data_source['%s_std'%self.y_source_label])]
-        #     lower_gain = [x-e for x,e in zip(data_source[self.y_source_label], data_source['%s_std'%self.y_source_label])]
-        # elif self.y_source_label == 'voxel':
-        #     upper_left = []
-        #     lower_left = []
-        #     upper_right = []
-        #     lower_right = []
-        # else:
-        #     upper_left = [x+e for x,e in zip(data_source['%s_left'%self.y_source_label], data_source['%s_left_std'%self.y_source_label])]
-        #     lower_left = [x-e for x,e in zip(data_source['%s_left'%self.y_source_label], data_source['%s_left_std'%self.y_source_label])]
-        #     upper_right = [x+e for x,e in zip(data_source['%s_right'%self.y_source_label], data_source['%s_right_std'%self.y_source_label])]
-        #     lower_right = [x-e for x,e in zip(data_source['%s_right'%self.y_source_label], data_source['%s_right_std'%self.y_source_label])]
-
-            # data_source.update(dict(upper_left              =   upper_left,
-            #                         lower_left              =   lower_left,
-            #                         upper_right             =   upper_right,
-            #                         lower_right             =   lower_right))
-
-
-        # if self.y_source_label == 'retinal_x_gain':
-        #     data_source.update({self.y_source_label : self.dataMat[-1][:,-5]})
-        # elif self.y_source_label == 'screen_x_gain':
-        #     data_source.update({self.y_source_label : self.dataMat[-1][:,-4]})
-        # elif self.y_source_label == 'retinal_gain_index':
-        #     data_source.update({self.y_source_label : self.dataMat[-1][:,-3]})
-        # elif self.y_source_label == 'amplitude_change':
-        #     data_source.update({self.y_source_label : self.dataMat[-1][:,-2]})
-        # elif self.y_source_label == 'y_change':
-        #     data_source.update({self.y_source_label : self.dataMat[-1][:,-1]})
-
-       
-        source      =  ColumnDataSource(data = data)
-            
-        # figure settings
-        main_fig                        =   figure(                                                        # create a figure in bokeh
-                                                plot_width          =   self.p_width,                          # define figure width in pixel
-                                                plot_height         =   self.p_height,                         # define figure height in pixel
-                                                min_border_left     =   self.min_border_large,                 # define left border size
-                                                min_border_top      =   self.min_border_large,                 # define top border size
-                                                min_border_right    =   self.min_border_large,                 # define right border size
-                                                toolbar_location    =   None,                                  # define toolbar location
-                                                x_range             =   rois,                          # define x limits
-                                                y_range             =   y_range,                               # define y limits
-                                                title               =   self.main_fig_title,                   # specify title
-                                                tools               =   "")                                    # define tools
-        main_fig                        =   self.initialize_main_fig_attributes(main_fig)
-            
-
-        if y_source_label in ['retinal_x_gain', 'screen_x_gain', 'retinal_gain_index', 'amplitude_change', 'y_change']:
-            
-            avg_data_all                    =   main_fig.vbar(
-                                                    x                   =   'rois',                                 # define x value
-                                                    top                 =   y_source_label,                       # define top value
-                                                    bottom              =   0,                                      # define bottom value
-                                                    width               =   self.bar_width_gain,                    # define bar widht
-                                                    source              =   source,                                 # specify data source
-                                                    fill_color          =   '#B774C1',                              # define fill color
-                                                    line_color          =   'black',                                # define line color
-                                                    fill_alpha          =   0.5,                                    # define fill alpha
-                                                    line_alpha          =   1,                                      # define line alpha
-                                                    hover_fill_color    =   'black',                                # specify hover fill color 
-                                                    hover_line_color    =   'black',                                # specify hover line color
-                                                    hover_fill_alpha    =   0.5,                                    # specify hover fill alpha
-                                                    hover_line_alpha    =   1)                                      # specify hover line alpha
-            # import ipdb ; ipdb.set_trace()
-            renderers                       =   [avg_data_all]
-
-            if self.across_subjects:
-                main_fig_tooltips               =   [('%s'%self.tootips_txt, '@%s'%y_source_label+'{0.00}'+' %s'%self.tootips_end),
-                                                     ('Std:', '@%s_std'%y_source_label+'{0.00}'+' %s'%self.tootips_end)]
-            else:
-                main_fig_tooltips               =   [('%s'%self.tootips_txt, '@%s'%y_source_label+'{0.00}'+' %s'%self.tootips_end)]
-        
-        else:
-
-            avg_data_left                   =   main_fig.vbar(
-                                                x                   =   dodge('rois',-0.125,range=main_fig.x_range), # define x value
-                                                top                 =   '%s_left'%y_source_label,     # define top value
-                                                width               =   self.bar_width,                    # define bar widht
-                                                source              =   source,                            # specify data source
-                                                fill_color          =   '#FF4136',                              # define fill color
-                                                line_color          =   'black',                                # define line color
-                                                fill_alpha          =   0.5,                                    # define fill alpha
-                                                line_alpha          =   1,                                    # define line alpha
-                                                legend              =   'gaze left',                           # define legend
-                                                hover_fill_color    =   'black',                                # specify hover fill color 
-                                                hover_line_color    =   'black',                                # specify hover line color
-                                                hover_fill_alpha    =   0.5,                                    # specify hover fill alpha
-                                                hover_line_alpha    =   1)                                    # specify hover line alpha
-        
-            avg_data_right                  =   main_fig.vbar(
-                                                x                   =   dodge('rois', 0.125,range=main_fig.x_range), # define x value
-                                                top                 =   '%s_right'%y_source_label,    # define top value
-                                                width               =   self.bar_width,                    # define bar widht
-                                                source              =   source,                            # specify data source
-                                                fill_color          =   '#0074D9',                              # define fill color
-                                                line_color          =   'black',                                # define line color
-                                                fill_alpha          =   0.5,                                      # define fill alpha
-                                                line_alpha          =   1,                                    # define line alpha
-                                                legend              =   'gaze right',                          # define legend
-                                                hover_fill_color    =   'black',                                # specify hover fill color 
-                                                hover_line_color    =   'black',                                # specify hover line color
-                                                hover_fill_alpha    =   0.5,                                    # specify hover fill alpha
-                                                hover_line_alpha    =   1)                                    # specify hover line alpha
-        
-            renderers                       =   [avg_data_left,avg_data_right]
-
-            if self.across_subjects:
-                main_fig_tooltips           =   [ ('Left: %s'%self.tootips_txt, '@%s_left'%y_source_label+'{0.00}'+' %s'%self.tootips_end), 
-                                                  ('Right: %s'%self.tootips_txt, '@%s_right'%y_source_label+'{0.00}'+' %s'%self.tootips_end),
-                                                  ('Std Left:', '@%s_left_std'%y_source_label+'{0.00}'+' %s'%self.tootips_end),
-                                                  ('Std Right:','@%s_right_std'%y_source_label+'{0.00}'+' %s'%self.tootips_end)]
-            else:
-                main_fig_tooltips           =   [ ('Left: %s'%self.tootips_txt, '@%s_left'%y_source_label+'{0.00}'+' %s'%self.tootips_end), 
-                                                  ('Right: %s'%self.tootips_txt, '@%s_right'%y_source_label+'{0.00}'+' %s'%self.tootips_end)]
-        # add some span
-        hor_center_main_fig             =   Span(location            =   0,                                          # define location
-                                                 dimension           =   'width',                                    # define dimension
-                                                 line_alpha          =   0.5,                                        # define alpha of the line
-                                                 line_color          =   'black',                                    # define color of the line
-                                                 line_width          =   1)                                          # define width of the line
-        main_fig.add_layout(hor_center_main_fig)                                                                    # add the horizontal line span to the figure
-        main_fig.legend.border_line_alpha  = 0                                                                      # make legend box line transparent
-        main_fig.legend.background_fill_alpha = 0                                                                   # make legend box background transparent
-
-        if self.across_subjects:
-            if y_source_label in ['retinal_x_gain', 'screen_x_gain', 'retinal_gain_index', 'amplitude_change', 'y_change']:
-                main_fig.add_layout(Whisker(source=source, base="rois", upper="upper", lower="lower", level="overlay"))
-            else:
-                main_fig.add_layout(Whisker(source=source, base=dodge('rois',-0.125,range=main_fig.x_range), upper="upper_left", lower="lower_left", level="overlay"))
-                main_fig.add_layout(Whisker(source=source, base=dodge('rois', 0.125,range=main_fig.x_range), upper="upper_right",lower="lower_right",level="overlay"))
-
-
-
-        # add a hover tool
-        main_fig_hover                  =   HoverTool(                                                              # create hover tool
-                                                tooltips            =   main_fig_tooltips,                          # specify content
-                                                mode                =   'mouse',                                    # specify mode
-                                                renderers           =   renderers)                                  # specify renderer
-        main_fig.add_tools(main_fig_hover)                                                                          # add hover tool to main plot
-
-
-        # Put figure together
-        # -------------------
-        f                               =   column(row(main_fig))                                                   # define figure second row
-        
-        #import ipdb ; ipdb.set_trace()
-        # save figures as .svg files
-        if self.saving_figs: self.save_figures_svg(main_fig = main_fig)
-
-        return (f,main_fig)
-
-
     def draw_pRFcov(self, params, old_main_fig =[]):
         """
         -----------------------------------------------------------------------------------------
@@ -950,7 +720,6 @@ class PlotOperator(object):
 
         main_fig,main_source,data_source=   self.initialize_main_fig(old_main_fig)                                                
 
-
         main_fig.xaxis.axis_label       =   self.x_label                                                            # define x axis label
         main_fig.yaxis.axis_label       =   self.y_label                                                            # define y axis label
         main_fig.grid.grid_line_color   =   None                                                                    # define color of the grids for both axis
@@ -963,7 +732,7 @@ class PlotOperator(object):
         main_fig.xaxis.ticker           =   np.linspace(self.y_range[0], self.y_range[1], (-self.y_range[0]+self.y_range[1])/self.y_tick_steps+1)     # define y axis ticks
 
         
-        main_fig.background_fill_color  =   self.bg_color                                                           # define backgroud color
+        main_fig.background_fill_color  =   colors_val_leg[0]                                                       # define backgroud color
         main_fig.axis.axis_label_standoff = 10                                                                      # set space between axis and label
         main_fig.axis.axis_label_text_font_style = 'normal' 
 
