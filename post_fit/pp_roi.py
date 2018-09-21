@@ -120,6 +120,16 @@ convert_fit_results(prf_filename = prf_filename,
 
 # Compute masked data
 # -------------------
+for mask_dir in ['all','pos','neg']:
+    exec('derivfn = opj(deriv_dir,"{mask_dir}","prf_deriv_{mask_dir}.nii.gz"))'.format(mask_dir = mask_dir))
+    prf_deriv_load = nb.load(prf_filename)
+    prf_deriv = prf_data_load.get_data()
+
+    # threshold with R2
+
+    # threshold with cov
+
+    # threhsold with cov and R2
 
 
 
