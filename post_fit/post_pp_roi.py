@@ -158,14 +158,14 @@ for roi_num, roi in enumerate(analysis_info['rois']):
             in_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
             folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
             
-            
             mask_gii_2_hdf5(in_file = in_file,
                             mask_file = mask_file,
                             hdf5_file = h5_file,
                             folder_alias = folder_alias,
                             roi_num = roi_num)
-            
 
+
+deb()
 # Draw main analysis figure
 # -------------------------
 print('creating bokeh plots')
