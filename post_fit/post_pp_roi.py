@@ -383,7 +383,7 @@ for roi in analysis_info['rois']:
                         f_pRFcov = plotter.draw_figure(parameters = params_pRFcov, plot = 'cov',old_main_fig = old_main_fig1)
 
                         # pRF lat
-                        # --------------
+                        # -------
                         params_pRFlat = param_all
                         params_pRFlat.update(
                                     {   'p_width':          500, 
@@ -402,6 +402,7 @@ for roi in analysis_info['rois']:
                         title = '{roi}{hemi} {mask_dir}: pRF laterality histogram'.format(roi = roi_text, hemi = hemi, type_comp = type_comp, mask_dir = mask_dir)
                         params_pRFcov.update({'main_fig_title':   title})
                         f_pRFlat = plotter.draw_figure(parameters = params_pRFlat, plot = 'lat')
+
 
                         # save files
                         if fit_model == 'gauss':
