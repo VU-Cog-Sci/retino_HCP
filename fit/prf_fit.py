@@ -62,6 +62,7 @@ elif 'aeneas' in platform.uname()[1]:
     N_PROCS = 31
 elif 'local' in platform.uname()[1]:
     N_PROCS = 8
+Ns = analysis_info["fit_step"]
 
 # Define output file path and directories
 base_file_name = os.path.split(data_file)[-1][:-7]
@@ -137,7 +138,7 @@ bundle = utils.multiprocess_bundle( Fit = fit_func,
                                     indices = vertex_indices, 
                                     auto_fit = True, 
                                     verbose = 1, 
-                                    Ns = 6)
+                                    Ns = Ns)
 # Run fitting
 pool = multiprocessing.Pool(processes = N_PROCS)
 output = pool.map(  func = utils.parallel_fit, 

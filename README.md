@@ -23,9 +23,7 @@ martin_dev branch
 # 01. make plot of comparison time course and model (understand why output of gauss different for baseline and amplitude)
 # 02. statistics across participants - ouput correlations values of ecc vs. all per ROI
 # 03. statistics across participants - output laterality index per ROI
-# 04. change code to fit 999999 with more steps of bruteforce and run it
-# 05. change code to fit 999999_16mm and run it
-# 06. change code to draw roi/bokeh plots 999999_16mm
+# 06. change code in pp_roi post_pp_roi to draw 999999_16mm
 # 08. save webgl and make it html for 999999 subject
 # 09. run launch_pp_roi on aeneas
 # 10. run launch_post_pp_roi on aeneas
