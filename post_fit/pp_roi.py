@@ -59,9 +59,9 @@ fit_model = sys.argv[2]
 job_vox = float(sys.argv[3])
 if fit_model == 'gauss': fit_val = 6
 elif fit_model == 'css': fit_val = 7
-vox_num = 32492
-ts_num = 300 
+
 base_file_name = 'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries'
+
 
 # Define analysis parameters
 # --------------------------
@@ -78,6 +78,14 @@ elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
+
+# determine number of vertex and time_serie
+data = []
+data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*.func_bla_psc_av.gii')))
+data_file_load = nb.load(data_file[0])
+data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
+data = np.vstack(data) 
+ts_num,vox_num = data.shape[0],data.shape[1]
 
 # Check if all slices are present
 # -------------------------------
@@ -128,6 +136,8 @@ for hemi in ['L','R']:
                         stim_radius = analysis_info['stim_radius'],
                         hemi = hemi,
                         fit_model = fit_model)
+
+deb()
 
 # Resample gii to fsaverage
 # -------------------------
