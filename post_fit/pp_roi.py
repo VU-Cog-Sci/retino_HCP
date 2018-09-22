@@ -126,6 +126,7 @@ for hemi in ['L','R']:
     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_est_hemi)'.format(hemi=hemi))
     exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
+
 # Compute derived measures from prfs
 # ----------------------------------
 print('extracting pRF derivatives')
@@ -137,7 +138,6 @@ for hemi in ['L','R']:
                         hemi = hemi,
                         fit_model = fit_model)
 
-deb()
 
 # Resample gii to fsaverage
 # -------------------------
@@ -145,9 +145,9 @@ print('converting derivative files to fsaverage')
 resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
 for hemi in ['L','R']:
 
-    current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
+    current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.{num_vox_k}k_fs_LR.surf.gii'.format(hemi=hemi, num_vox_k = int(np.round(vox_num/1000))))
     new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-    current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
+    current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.{num_vox_k}k_fs_LR.shape.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
     new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
 
     for mask_dir in ['all','pos','neg']:
@@ -227,7 +227,7 @@ for mask_dir in ['all','pos','neg']:
     
     # Size
     size_data = deriv_mat[size_idx,:]
-    param_size = {'data': size_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 15, 'cbar': 'discrete'}
+    param_size = {'data': size_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 10, 'cbar': 'discrete'}
     vertex_names.append('size')
 
     # Amplitude

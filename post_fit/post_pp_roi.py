@@ -82,6 +82,15 @@ h5_dir = opj(base_dir,'pp_data',subject,fit_model,'h5')
 try: os.makedirs(roi_masks_dir)
 except OSError: pass
 
+# Determine number of vertex and time_serie
+# -----------------------------------------
+data = []
+data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*.func_bla_psc_av.gii')))
+data_file_load = nb.load(data_file[0])
+data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
+data = np.vstack(data) 
+ts_num,vox_num = data.shape[0],data.shape[1]
+
 # Check system
 # ------------
 sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
@@ -123,9 +132,9 @@ resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_
 for hemi in ['L','R']:
 
     current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-    new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.32k_fs_LR.surf.gii'.format(hemi=hemi))
+    new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.{num_vox_k}k_fs_LR.surf.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
     current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
-    new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.32k_fs_LR.shape.gii'.format(hemi=hemi))
+    new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.{num_vox_k}k_fs_LR.shape.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
 
     metric_in = opj(roi_masks_dir,"masks_{hemi}_fsaverage.func.gii".format(hemi = hemi))
     metric_out = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
@@ -164,8 +173,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                             folder_alias = folder_alias,
                             roi_num = roi_num)
 
-
-deb()
 # Draw main analysis figure
 # -------------------------
 print('creating bokeh plots')
