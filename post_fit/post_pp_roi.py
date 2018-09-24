@@ -237,7 +237,6 @@ for roi in analysis_info['rois']:
                                         'x':                data[:,x_idx],
                                         'y':                data[:,y_idx],
                                         'colors_ref':       data[:,ecc_idx]}
-
                         
                         param_all = {   'roi_t':            roi_text, 
                                         'p_width':          400, 

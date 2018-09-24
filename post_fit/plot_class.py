@@ -1172,6 +1172,82 @@ class PlotOperator(object):
 
         return (f,main_fig)
 
+    def draw_pRFtc(self, params, old_main_fig =[]):
+        """
+        -----------------------------------------------------------------------------------------
+        draw_pRFtc(self, params,old_main_fig =[])
+        -----------------------------------------------------------------------------------------
+        Goal of the script:
+        Create a graph with pRF timecourse
+        -----------------------------------------------------------------------------------------
+        Input(s):
+        params: dict containing a set of parameters for the figure
+        old_main_fig: handle to the central figure to conserve same axis property across plots
+        -----------------------------------------------------------------------------------------
+        Output(s):
+        none
+        -----------------------------------------------------------------------------------------
+        """
+        
+        # figure settings
+        high_param_tc_fig              =   figure(                                                                  # create a figure in bokeh
+                                                plot_width          =   self.p_width,                               # define figure width in pixel
+                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
+                                                x_range             =   self.x_range,                               # define x limits
+                                                y_range             =   self.y_range,                               # define y limits
+                                                min_border_left     =   self.min_border_large,                      # define left border size
+                                                min_border_right    =   self.min_border_large,                      # define right border size
+                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
+                                                min_border_top      =   self.min_border_large,                      # define top border space
+                                                tools               =   "")                                         # define tools to show
+
+        high_param_map_fig              =   figure(                                                                 # create a figure in bokeh
+                                                plot_width          =   self.p_height/2,                            # define figure width in pixel
+                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
+                                                x_range             =   self.x_range,                               # define x limits
+                                                y_range             =   self.y_range,                               # define y limits
+                                                min_border_left     =   self.min_border_large,                      # define left border size
+                                                min_border_right    =   self.min_border_large,                      # define right border size
+                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
+                                                min_border_top      =   self.min_border_large,                      # define top border space
+                                                tools               =   "")                                         # define tools to show
+
+        low_param_tc_fig              =   figure(                                                                   # create a figure in bokeh
+                                                plot_width          =   self.p_width,                               # define figure width in pixel
+                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
+                                                x_range             =   self.x_range,                               # define x limits
+                                                y_range             =   self.y_range,                               # define y limits
+                                                min_border_left     =   self.min_border_large,                      # define left border size
+                                                min_border_right    =   self.min_border_large,                      # define right border size
+                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
+                                                min_border_top      =   self.min_border_large,                      # define top border space
+                                                tools               =   "")                                         # define tools to show
+
+        low_param_map_fig              =   figure(                                                                  # create a figure in bokeh
+                                                plot_width          =   self.p_height/2,                            # define figure width in pixel
+                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
+                                                x_range             =   self.x_range,                               # define x limits
+                                                y_range             =   self.y_range,                               # define y limits
+                                                min_border_left     =   self.min_border_large,                      # define left border size
+                                                min_border_right    =   self.min_border_large,                      # define right border size
+                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
+                                                min_border_top      =   self.min_border_large,                      # define top border space
+                                                tools               =   "")                                         # define tools to show
+
+        # up space
+        s1 = Spacer(width=int(self.p_width), height=int(self.p_height/4))
+        s2 = Spacer(width=int(self.p_height), height=int(self.p_height/4))
+
+        # Put figure together
+        # -------------------
+        f                               =   column(                                                                 # define figures coluns
+                                                row(s1,s2),                                                         # define figure first row
+                                                row(high_param_tc_fig,high_param_map_fig),                          # define figure second row
+                                                row(low_param_tc_fig,low_param_map_fig))                           # define figure second row
+        
+
+        return (f,low_param_tc_fig)
+
     def draw_figure(self, parameters, plot, old_main_fig = []):
         
         # update params and atttributes to include plot specific params
@@ -1190,6 +1266,8 @@ class PlotOperator(object):
             f, main_fig = self.draw_pRFcov(params = parameters, old_main_fig = old_main_fig)
         elif plot == 'lat':
             f, main_fig = self.draw_pRFlat(params = parameters, old_main_fig = old_main_fig)
+        elif plot == 'tc':
+            f, main_fig = self.draw_pRFtc(params = parameters, old_main_fig = old_main_fig)
         
         return (f, main_fig)
 

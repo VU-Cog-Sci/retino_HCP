@@ -23,12 +23,7 @@ martin_dev branch
 # 01. make plot of comparison time course and model (understand why output of gauss different for baseline and amplitude)
 # 02. statistics across participants - ouput correlations values of ecc vs. all per ROI
 # 03. statistics across participants - output laterality index per ROI
-# 06. change code in pp_roi post_pp_roi to draw 999999_16mm
-# 08. save webgl and make it html for 999999 subject
-# 09. run launch_pp_roi on aeneas
-# 10. run launch_post_pp_roi on aeneas
-# 11. see if new version of pycortex work on i36 and reply email
-
-# ORDER
-# thursday: 09/07/
-# friday 04/05
+# 04. save webgl and make it html for 999999 subject
+# 05. run launch_pp_roi on aeneas
+# 06. run launch_post_pp_roi on aeneas
+# 07. see if new version of pycortex work on i36 and reply email
