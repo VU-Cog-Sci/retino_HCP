@@ -27,3 +27,4 @@ martin_dev branch
 # 05. run launch_pp_roi on aeneas
 # 06. run launch_post_pp_roi on aeneas
 # 07. see if new version of pycortex work on i36 and reply email
+# 08. exclude size below 0.1 deg

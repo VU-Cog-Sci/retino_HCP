@@ -1172,10 +1172,12 @@ class PlotOperator(object):
 
         return (f,main_fig)
 
-    def draw_pRFtc(self, params, old_main_fig =[]):
+    
+
+    def draw_pRFtc(self, params):
         """
         -----------------------------------------------------------------------------------------
-        draw_pRFtc(self, params,old_main_fig =[])
+        draw_pRFtc(self, params)
         -----------------------------------------------------------------------------------------
         Goal of the script:
         Create a graph with pRF timecourse
@@ -1188,65 +1190,406 @@ class PlotOperator(object):
         none
         -----------------------------------------------------------------------------------------
         """
+        sign_idx, rsq_idx, ecc_idx, polar_real_idx, polar_imag_idx , size_idx, \
+            non_lin_idx, amp_idx, baseline_idx, cov_idx, x_idx, y_idx = 0,1,2,3,4,5,6,7,8,9,10,11
+
         
-        # figure settings
-        high_param_tc_fig              =   figure(                                                                  # create a figure in bokeh
-                                                plot_width          =   self.p_width,                               # define figure width in pixel
-                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
-                                                x_range             =   self.x_range,                               # define x limits
-                                                y_range             =   self.y_range,                               # define y limits
-                                                min_border_left     =   self.min_border_large,                      # define left border size
-                                                min_border_right    =   self.min_border_large,                      # define right border size
-                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
-                                                min_border_top      =   self.min_border_large,                      # define top border space
-                                                tools               =   "")                                         # define tools to show
+        def get_prediction(fit_model,num_vertex):
+            
 
-        high_param_map_fig              =   figure(                                                                 # create a figure in bokeh
-                                                plot_width          =   self.p_height/2,                            # define figure width in pixel
-                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
-                                                x_range             =   self.x_range,                               # define x limits
-                                                y_range             =   self.y_range,                               # define y limits
-                                                min_border_left     =   self.min_border_large,                      # define left border size
-                                                min_border_right    =   self.min_border_large,                      # define right border size
-                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
-                                                min_border_top      =   self.min_border_large,                      # define top border space
-                                                tools               =   "")                                         # define tools to show
+            # get data time course
+            tc_data_mat = self.tc_mat[num_vertex,:]
+            
 
-        low_param_tc_fig              =   figure(                                                                   # create a figure in bokeh
-                                                plot_width          =   self.p_width,                               # define figure width in pixel
-                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
-                                                x_range             =   self.x_range,                               # define x limits
-                                                y_range             =   self.y_range,                               # define y limits
-                                                min_border_left     =   self.min_border_large,                      # define left border size
-                                                min_border_right    =   self.min_border_large,                      # define right border size
-                                                min_border_bottom   =   self.min_border_large,                      # define bottom border space
-                                                min_border_top      =   self.min_border_large,                      # define top border space
-                                                tools               =   "")                                         # define tools to show
+            # # get model time course
+            if fit_model == 'gauss':
+                tc_model_mat = self.model_func.generate_prediction( 
+                                                    x = self.deriv_mat[num_vertex,x_idx], 
+                                                    y = self.deriv_mat[num_vertex,y_idx], 
+                                                    sigma = self.deriv_mat[num_vertex,size_idx],
+                                                    beta = self.deriv_mat[num_vertex,amp_idx], 
+                                                    baseline = self.deriv_mat[num_vertex,baseline_idx])
 
+            elif fit_model == 'css':
+                tc_model_mat = self.model_func.generate_prediction( 
+                                                    x = self.deriv_mat[num_vertex,x_idx], 
+                                                    y = self.deriv_mat[num_vertex,y_idx], 
+                                                    sigma = self.deriv_mat[num_vertex,size_idx],
+                                                    beta = self.deriv_mat[num_vertex,amp_idx], 
+                                                    n = self.deriv_mat[num_vertex,non_lin_idx], 
+                                                    baseline = self.deriv_mat[num_vertex,baseline_idx])
+        
+            deriv_model_mat = self.deriv_mat[num_vertex,:]
+
+            return (tc_data_mat, tc_model_mat,deriv_model_mat)
+
+        # Time course - high parameter
+        # ---------------------------
+
+        # get model and data time course
+        if self.num_vertex[1] != -1:
+            tc_data_mat,tc_model_mat,deriv_model_mat = get_prediction(fit_model = self.fit_model,num_vertex = self.num_vertex[1])
+            low_val = np.nanpercentile(tc_data_mat,5)*1.5
+            if np.round(low_val,0): low_val_dec_round = 1
+            elif np.round(low_val,1): low_val_dec_round = 2
+            high_val = np.nanpercentile(tc_data_mat,95)*1.5
+            if np.round(high_val,0): high_val_dec_round = 1
+            elif np.round(high_val,1): high_val_dec_round = 2
+            y_range_tc = (np.round(low_val,low_val_dec_round),np.round(high_val,high_val_dec_round))
+        
+            # get data
+            x_data = np.arange(1,tc_data_mat.shape[0]+1,1)*self.tr_dur
+            y_data = tc_data_mat
+            x_model = np.arange(1,tc_model_mat.shape[0]+1,1)*self.tr_dur
+            y_model = tc_model_mat
+
+            high_param_tc_data_source = { 'x_data':x_data,
+                                          'y_data':y_data,
+                                          'x_model':x_model,
+                                          'y_model':y_model}
+            high_param_tc_source = ColumnDataSource(data = high_param_tc_data_source)
+        else:
+            y_range_tc = (-1,5)
+
+        high_param_tc_fig              =   figure(
+                                                plot_width          =   self.p_width,
+                                                plot_height         =   int(self.p_height*0.42),
+                                                x_range             =   self.x_range_tc,
+                                                y_range             =   y_range_tc,
+                                                min_border_left     =   self.min_border_large,
+                                                min_border_right    =   self.min_border_large,
+                                                min_border_bottom   =   self.min_border_large,
+                                                min_border_top      =   self.min_border_large,
+                                                toolbar_location    =   None,
+                                                tools               =   "")
+        high_param_tc_fig.xaxis.axis_label       =   ''
+        high_param_tc_fig.yaxis.axis_label       =   self.y_label_tc
+        high_param_tc_fig.grid.grid_line_color   =   None
+        high_param_tc_fig.axis.minor_tick_in     =   False
+        high_param_tc_fig.axis.minor_tick_out    =   False
+        high_param_tc_fig.axis.major_tick_in     =   False
+        high_param_tc_fig.outline_line_alpha     =   0
+        high_param_tc_fig.xaxis.ticker           =   np.arange(self.x_range_tc[0],self.x_range_tc[1] + self.x_tick_tc, self.x_tick_tc)
+        high_param_tc_fig.background_fill_color  =   self.bg_color
+        high_param_tc_fig.axis.axis_label_standoff = 10
+        high_param_tc_fig.axis.axis_label_text_font_style = 'normal'
+        high_param_tc_fig.xaxis.major_label_text_font_size = '0pt'
+
+        # span
+        high_param_tc_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
+
+        if self.num_vertex[1] != -1:
+            # plot data
+            high_param_tc_fig.circle(x = 'x_data', y = 'y_data',fill_color = 'black',line_color = 'black',line_width = 1,size = 2,source=high_param_tc_source, legend = "data")
+
+            # plot data model
+            high_param_tc_plot_model = high_param_tc_fig.line(x = 'x_model', y = 'y_model', line_width = 2, line_color = self.model_line_color, source = high_param_tc_source, legend = "model")
+
+            # data hover
+            high_param_tc_fig_tooltips = [  ('data: ',  ' @x_data{0} s, @y_data{0.0} %'),
+                                            ('model: ',  '@x_model{0} s, @y_model{0.0} %')
+                                        ]                               # coverage
+            high_param_tc_fig_hover = HoverTool(tooltips = high_param_tc_fig_tooltips,
+                                                mode = 'vline',
+                                                renderers = [high_param_tc_plot_model])
+            high_param_tc_fig.add_tools(high_param_tc_fig_hover)
+
+            # legend
+            high_param_tc_fig.legend.location = "top_right"
+            high_param_tc_fig.legend.click_policy="hide"
+            high_param_tc_fig.legend.background_fill_alpha = 0
+            high_param_tc_fig.legend.label_text_font = '8pt'
+            high_param_tc_fig.legend.margin = 5
+            high_param_tc_fig.legend.padding = 5
+            high_param_tc_fig.legend.spacing = -5
+            high_param_tc_fig.legend.glyph_width = 10
+            high_param_tc_fig.legend.glyph_height = 10
+            high_param_tc_fig.legend.label_text_baseline = 'bottom'
+
+        # text
+        x_text = self.x_range_tc[0] + (self.x_range_tc[1]-self.x_range_tc[0])*0.03
+        y_text = y_range_tc[1] - (y_range_tc[1]-y_range_tc[0])*0.11
+        
+        text = '{val_r2} r2 + High {params}: {title}'.format(val_r2 = self.r2_level, params = self.params,title = self.title)
+        high_param_tc_fig.text(x=x_text,y=y_text,text = [text],text_font_size = '8pt',text_font_style = 'bold')
+
+        # pRF map - low parameter
+        # -----------------------
+        high_param_map_fig              =   figure(
+                                                plot_width          =   int(self.p_height/2),
+                                                plot_height         =   int(self.p_height*0.42),
+                                                x_range             =   self.x_range_map,
+                                                y_range             =   self.y_range_map,
+                                                min_border_left     =   self.min_border_large,
+                                                min_border_right    =   self.min_border_large,
+                                                min_border_bottom   =   self.min_border_large,
+                                                min_border_top      =   self.min_border_large,
+                                                toolbar_location    =   None,
+                                                tools               =   "")
+
+        high_param_map_fig.xaxis.axis_label       =   ''
+        high_param_map_fig.yaxis.axis_label       =   self.y_label_map
+        high_param_map_fig.grid.grid_line_color   =   None
+        high_param_map_fig.axis.minor_tick_in     =   False
+        high_param_map_fig.axis.minor_tick_out    =   False
+        high_param_map_fig.axis.major_tick_in     =   False
+        high_param_map_fig.outline_line_alpha     =   0
+        high_param_map_fig.yaxis.ticker           =   np.arange(self.y_range_map[0],self.y_range_map[1] + self.y_tick_map, self.y_tick_map)
+        high_param_map_fig.xaxis.ticker           =   np.arange(self.x_range_map[0],self.x_range_map[1] + self.x_tick_map, self.x_tick_map)
+        high_param_map_fig.background_fill_color  =   self.bg_color
+        high_param_map_fig.axis.axis_label_standoff = 10
+        high_param_map_fig.axis.axis_label_text_font_style = 'normal'
+        high_param_map_fig.xaxis.major_label_text_font_size = '0pt'
+
+        if self.num_vertex[1] != -1:
+            # stimulus circle
+            high_param_map_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
+
+            # spans
+            high_param_map_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
+            high_param_map_fig.add_layout(Span(location = 0, dimension = 'height', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
+
+            # plot rf
+            high_param_map_fig.circle(  x                   =   deriv_model_mat[x_idx],
+                                        y                   =   deriv_model_mat[y_idx],
+                                        radius              =   deriv_model_mat[size_idx],
+                                        fill_color          =   self.model_fill_color,
+                                        line_color          =   'black',
+                                        fill_alpha          =   1,
+                                        line_alpha          =   1)
+
+            # text
+            x_text1 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.05
+            x_text2 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.55
+            y_text = self.y_range_map[1] - (self.y_range_map[1]-self.y_range_map[0])*0.025
+            if self.fit_model == 'gauss':
+                text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(
+                                                                                                deriv_model_mat[rsq_idx],
+                                                                                                deriv_model_mat[ecc_idx],
+                                                                                                deriv_model_mat[size_idx],
+                                                                                                 )
+                text2 = 'Cov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(   deriv_model_mat[cov_idx]*100,
+                                                                        deriv_model_mat[amp_idx],
+                                                                        )
+
+            elif self.fit_model == 'css':
+                text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(   deriv_model_mat[rsq_idx],
+                                                                                                deriv_model_mat[ecc_idx],
+                                                                                                deriv_model_mat[size_idx],
+                                                                                                 )
+                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(  deriv_model_mat[non_lin_idx],
+                                                                                        deriv_model_mat[cov_idx]*100,
+                                                                                        deriv_model_mat[amp_idx],
+                                                                        )
+
+            high_param_map_fig.text(x=x_text1,y=y_text,text = [text1],text_font_size = '8pt',text_baseline = 'top')
+            high_param_map_fig.text(x=x_text2,y=y_text,text = [text2],text_font_size = '8pt',text_baseline = 'top')
+
+
+        # Time course - low parameter
+        # ----------------------------
+
+        # get model and data time course        
+        if self.num_vertex[0] != -1:
+            tc_data_mat,tc_model_mat,deriv_model_mat = get_prediction(fit_model = self.fit_model,num_vertex = self.num_vertex[0])
+            low_val = np.nanpercentile(tc_data_mat,5)*1.5
+            if np.round(low_val,0): low_val_dec_round = 1
+            elif np.round(low_val,1): low_val_dec_round = 2
+            high_val = np.nanpercentile(tc_data_mat,95)*1.5
+            if np.round(high_val,0): high_val_dec_round = 1
+            elif np.round(high_val,1): high_val_dec_round = 2
+            y_range_tc = (np.round(low_val,low_val_dec_round),np.round(high_val,high_val_dec_round))
+
+            # get data
+            x_data = np.arange(1,tc_data_mat.shape[0]+1,1)*self.tr_dur
+            y_data = tc_data_mat
+            x_model = np.arange(1,tc_model_mat.shape[0]+1,1)*self.tr_dur
+            y_model = tc_model_mat
+
+            low_param_tc_data_source = {  'x_data':x_data,
+                                          'y_data':y_data,
+                                          'x_model':x_model,
+                                          'y_model':y_model}
+            low_param_tc_source = ColumnDataSource(data = low_param_tc_data_source)
+        
+        else:
+            y_range_tc = (-1,5)
+
+        low_param_tc_fig              =   figure(
+                                                plot_width          =   self.p_width,
+                                                plot_height         =   int(self.p_height/2),
+                                                x_range             =   self.x_range_tc,
+                                                y_range             =   y_range_tc,
+                                                min_border_left     =   self.min_border_large,
+                                                min_border_right    =   self.min_border_large,
+                                                min_border_bottom   =   self.min_border_large,
+                                                min_border_top      =   self.min_border_large,
+                                                toolbar_location    =   None,
+                                                tools               =   "")
+
+        low_param_tc_fig.xaxis.axis_label       =   self.x_label_tc
+        low_param_tc_fig.yaxis.axis_label       =   self.y_label_tc
+        low_param_tc_fig.grid.grid_line_color   =   None
+        low_param_tc_fig.axis.minor_tick_in     =   False
+        low_param_tc_fig.axis.minor_tick_out    =   False
+        low_param_tc_fig.axis.major_tick_in     =   False
+        low_param_tc_fig.outline_line_alpha     =   0
+        low_param_tc_fig.xaxis.ticker           =   np.arange(self.x_range_tc[0],self.x_range_tc[1] + self.x_tick_tc, self.x_tick_tc)
+        low_param_tc_fig.background_fill_color  =   self.bg_color
+        low_param_tc_fig.axis.axis_label_standoff = 10
+        low_param_tc_fig.axis.axis_label_text_font_style = 'normal'
+        low_param_tc_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
+
+        if self.num_vertex[0] != -1:
+            # plot data
+            low_param_tc_fig.circle(x = 'x_data', y = 'y_data', fill_color = 'black', line_color = 'black', line_width = 1, size = 2, source = low_param_tc_source, legend="data" )
+
+            # plot data model
+            low_param_tc_plot_model = low_param_tc_fig.line(x = 'x_model', y = 'y_model', line_width = 2, line_color = self.model_line_color, source = low_param_tc_source, legend="model")
+
+
+            # data hover
+            low_param_tc_fig_tooltips = [   ('data: ',  ' @x_data{0} s, @y_data{0.0} %'),
+                                            ('model: ',  '@x_model{0} s, @y_model{0.0} %')
+                                        ]                               # coverage
+            low_param_tc_fig_hover = HoverTool(tooltips = low_param_tc_fig_tooltips,
+                                                mode = 'vline',
+                                                renderers = [low_param_tc_plot_model])
+            low_param_tc_fig.add_tools(low_param_tc_fig_hover)
+
+            # legend
+            low_param_tc_fig.legend.location = "top_right"
+            low_param_tc_fig.legend.click_policy="hide"
+            low_param_tc_fig.legend.background_fill_alpha = 0
+            low_param_tc_fig.legend.label_text_font = '8pt'
+            low_param_tc_fig.legend.margin = 5
+            low_param_tc_fig.legend.padding = 5
+            low_param_tc_fig.legend.spacing = -5
+            low_param_tc_fig.legend.glyph_width = 10
+            low_param_tc_fig.legend.glyph_height = 10
+            low_param_tc_fig.legend.label_text_baseline = 'bottom'
+
+        # text
+        x_text = self.x_range_tc[0] + (self.x_range_tc[1]-self.x_range_tc[0])*0.03
+        y_text = y_range_tc[1] - (y_range_tc[1]-y_range_tc[0])*0.11
+        text = '{val_r2} r2 + Low {params}: {title}'.format(val_r2 = self.r2_level, params = self.params,title = self.title)
+        low_param_tc_fig.text(x=x_text,y=y_text,text = [text],text_font_size = '8pt',text_font_style = 'bold')
+
+        # pRF map - low parameter
+        # -----------------------
         low_param_map_fig              =   figure(                                                                  # create a figure in bokeh
-                                                plot_width          =   self.p_height/2,                            # define figure width in pixel
-                                                plot_height         =   self.p_height/2,                            # define figure height in pixel
-                                                x_range             =   self.x_range,                               # define x limits
-                                                y_range             =   self.y_range,                               # define y limits
+                                                plot_width          =   int(self.p_height/2),                            # define figure width in pixel
+                                                plot_height         =   int(self.p_height/2),                            # define figure height in pixel
+                                                x_range             =   self.x_range_map,                               # define x limits
+                                                y_range             =   self.y_range_map,                               # define y limits
                                                 min_border_left     =   self.min_border_large,                      # define left border size
                                                 min_border_right    =   self.min_border_large,                      # define right border size
                                                 min_border_bottom   =   self.min_border_large,                      # define bottom border space
                                                 min_border_top      =   self.min_border_large,                      # define top border space
+                                                toolbar_location    =   None,
                                                 tools               =   "")                                         # define tools to show
 
-        # up space
-        s1 = Spacer(width=int(self.p_width), height=int(self.p_height/4))
-        s2 = Spacer(width=int(self.p_height), height=int(self.p_height/4))
+        low_param_map_fig.xaxis.axis_label       =   self.x_label_map
+        low_param_map_fig.yaxis.axis_label       =   self.y_label_map
+        low_param_map_fig.grid.grid_line_color   =   None
+        low_param_map_fig.axis.minor_tick_in     =   False
+        low_param_map_fig.axis.minor_tick_out    =   False
+        low_param_map_fig.axis.major_tick_in     =   False
+        low_param_map_fig.outline_line_alpha     =   0
+        low_param_map_fig.yaxis.ticker           =   np.arange(self.y_range_map[0],self.y_range_map[1] + self.y_tick_map, self.y_tick_map)
+        low_param_map_fig.xaxis.ticker           =   np.arange(self.x_range_map[0],self.x_range_map[1] + self.x_tick_map, self.x_tick_map)
+        low_param_map_fig.background_fill_color  =   self.bg_color
+        low_param_map_fig.axis.axis_label_standoff = 10
+        low_param_map_fig.axis.axis_label_text_font_style = 'normal'
+
+        if self.num_vertex[0] != -1:
+            # stimulus circle
+            low_param_map_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
+
+            # spans
+            low_param_map_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
+            low_param_map_fig.add_layout(Span(location = 0, dimension = 'height', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
+
+
+
+            # plot rf
+            low_param_map_fig.circle(   x                   =   deriv_model_mat[x_idx],
+                                        y                   =   deriv_model_mat[y_idx],
+                                        radius              =   deriv_model_mat[size_idx],
+                                        fill_color          =   self.model_fill_color,
+                                        line_color          =   'black',
+                                        fill_alpha          =   1,
+                                        line_alpha          =   1)
+
+
+            # text
+            x_text1 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.05
+            x_text2 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.55
+            y_text = self.y_range_map[1] - (self.y_range_map[1]-self.y_range_map[0])*0.025
+            if self.fit_model == 'gauss':
+                text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(
+                                                                                                deriv_model_mat[rsq_idx],
+                                                                                                deriv_model_mat[ecc_idx],
+                                                                                                deriv_model_mat[size_idx],
+                                                                                                 )
+                text2 = 'Cov.: \t{:1.0f} %\nAmp.: \t{:1.1f}'.format(   deriv_model_mat[cov_idx]*100,
+                                                                       deriv_model_mat[amp_idx],
+                                                                        )
+
+            elif self.fit_model == 'css':
+                text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.2f} dva'.format(   deriv_model_mat[rsq_idx],
+                                                                                                deriv_model_mat[ecc_idx],
+                                                                                                deriv_model_mat[size_idx],
+                                                                                                 )
+                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(  deriv_model_mat[non_lin_idx],
+                                                                                        deriv_model_mat[cov_idx]*100,
+                                                                                        deriv_model_mat[amp_idx],
+                                                                        )
+
+            low_param_map_fig.text(x=x_text1,y=y_text,text = [text1],text_font_size = '8pt',text_baseline = 'top')
+            low_param_map_fig.text(x=x_text2,y=y_text,text = [text2],text_font_size = '8pt',text_baseline = 'top')
+
+
+        # Time course stimuli legend
+        # --------------------------
+        time_leg_fig              =   figure(   plot_width          =   self.p_width,
+                                                plot_height         =   int(self.p_height/8),
+                                                x_range             =   self.x_range_tc,
+                                                y_range             =   (0,1),
+                                                x_axis_type         =   None,
+                                                y_axis_type         =   None,
+                                                outline_line_color  =   "white",
+                                                min_border_left     =   self.min_border_large,
+                                                min_border_right    =   self.min_border_large,
+                                                min_border_bottom   =   self.min_border_large,
+                                                min_border_top      =   self.min_border_large,
+                                                toolbar_location    =   None)
+
+        stim_on = ([16,47],[48,79],[80,111],[112,143],[156,187],[188,219],[220,251],[252,283])
+        stim_off = ([0,15],[144,155],[284,299])
+        stim_dir = (['right'],['up'],['left'],['down'],['up\nright'],['up\nleft'],['down\nleft'],['down\nright'])
+
+        for t_stim_on in np.arange(0,len(stim_on),1):
+            time_leg_fig.quad(left=stim_on[t_stim_on][0], right=stim_on[t_stim_on][1], top=1, bottom=0, fill_color="black",line_color = 'white',line_width = 1)
+            x_dir_txt = (stim_on[t_stim_on][1]+stim_on[t_stim_on][0])/2.0
+            time_leg_fig.text(x = x_dir_txt, y=0.5,text = ['{text}'.format(text = stim_dir[t_stim_on][0])],text_align = 'center',text_font_size = '8pt',text_color = 'white',text_baseline = 'middle')
+
+        for t_stim_off in np.arange(0,len(stim_off),1):
+            time_leg_fig.quad(left=stim_off[t_stim_off][0], right=stim_off[t_stim_off][1], top=1, bottom=0, fill_color=self.bg_color,line_color = 'white',line_width = 1)
+
+        # up-right space
+        s2 = Spacer(width=int(self.p_height/2), height=int(self.p_height/10))
+
 
         # Put figure together
         # -------------------
-        f                               =   column(                                                                 # define figures coluns
-                                                row(s1,s2),                                                         # define figure first row
-                                                row(high_param_tc_fig,high_param_map_fig),                          # define figure second row
-                                                row(low_param_tc_fig,low_param_map_fig))                           # define figure second row
-        
+        f   =   column( row(time_leg_fig,s2),
+                        row(high_param_tc_fig,high_param_map_fig),
+                        row(low_param_tc_fig,low_param_map_fig))
+        main_fig = high_param_tc_fig
 
-        return (f,low_param_tc_fig)
+        
+        return (f,main_fig)
 
     def draw_figure(self, parameters, plot, old_main_fig = []):
         
@@ -1267,7 +1610,7 @@ class PlotOperator(object):
         elif plot == 'lat':
             f, main_fig = self.draw_pRFlat(params = parameters, old_main_fig = old_main_fig)
         elif plot == 'tc':
-            f, main_fig = self.draw_pRFtc(params = parameters, old_main_fig = old_main_fig)
+            f, main_fig = self.draw_pRFtc(params = parameters)
         
         return (f, main_fig)
 
