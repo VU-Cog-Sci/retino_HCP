@@ -23,8 +23,9 @@ martin_dev branch
 
 # TO DO
 # -----
-# 02. make statistics plot across participants
-# 04. save webgl and make it html for 999999 subject
-# 05. run launch_pp_roi on aeneas
-# 06. run launch_post_pp_roi on aeneas
-# 07. see if new version of pycortex work on i36 and reply email
+# 01. make statistics plot across participants
+# 02. save webgl and make it html for 999999 subject
+# 03. run launch_pp_roi on aeneas
+# 04. run launch_post_pp_roi on aeneas
+# 05. see if new version of pycortex work on i36 and reply email
+# 06. adapt scale of baseline and amplitude in bokeh eccentricity correction plots
