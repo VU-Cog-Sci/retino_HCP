@@ -18,6 +18,7 @@ import matplotlib.colors as colors
 import scipy as sy
 import numpy as np
 import ipdb
+from decimal import Decimal
 deb = ipdb.set_trace
 
 from popeye.spinach import generate_og_receptive_fields
@@ -1232,10 +1233,13 @@ class PlotOperator(object):
             low_val = np.nanpercentile(tc_data_mat,5)*1.5
             if np.round(low_val,0): low_val_dec_round = 1
             elif np.round(low_val,1): low_val_dec_round = 2
+            else: low_val_dec_round = 0
+
             high_val = np.nanpercentile(tc_data_mat,95)*1.5
             if np.round(high_val,0): high_val_dec_round = 1
             elif np.round(high_val,1): high_val_dec_round = 2
-            y_range_tc = (np.round(low_val,low_val_dec_round),np.round(high_val,high_val_dec_round))
+            else: high_val_dec_round = 0
+            y_range_tc = (round(Decimal(low_val),low_val_dec_round),round(Decimal(high_val),high_val_dec_round))
         
             # get data
             x_data = np.arange(1,tc_data_mat.shape[0]+1,1)*self.tr_dur
@@ -1391,15 +1395,20 @@ class PlotOperator(object):
 
         # get model and data time course        
         if self.num_vertex[0] != -1:
+            
             tc_data_mat,tc_model_mat,deriv_model_mat = get_prediction(fit_model = self.fit_model,num_vertex = self.num_vertex[0])
             low_val = np.nanpercentile(tc_data_mat,5)*1.5
             if np.round(low_val,0): low_val_dec_round = 1
             elif np.round(low_val,1): low_val_dec_round = 2
+            else: low_val_dec_round = 0
+
             high_val = np.nanpercentile(tc_data_mat,95)*1.5
             if np.round(high_val,0): high_val_dec_round = 1
             elif np.round(high_val,1): high_val_dec_round = 2
-            y_range_tc = (np.round(low_val,low_val_dec_round),np.round(high_val,high_val_dec_round))
-
+            else: high_val_dec_round = 0
+            y_range_tc = (round(Decimal(low_val),low_val_dec_round),round(Decimal(high_val),high_val_dec_round))
+            
+            
             # get data
             x_data = np.arange(1,tc_data_mat.shape[0]+1,1)*self.tr_dur
             y_data = tc_data_mat

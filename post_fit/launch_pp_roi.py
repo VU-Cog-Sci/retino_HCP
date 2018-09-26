@@ -35,6 +35,7 @@ import matplotlib.pyplot as pl
 import ipdb
 import platform
 import time
+import nibabel as nb
 
 opj = os.path.join
 deb = ipdb.set_trace
@@ -47,7 +48,6 @@ sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_
 # ----------
 fit_model = sys.argv[1]
 max_tmux = int(sys.argv[2])
-vox_num = 32492
 job_vox = 2500
 
 # Define analysis parameters
@@ -64,6 +64,8 @@ elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
 base_file_name = 'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries'
 
+
+
 # Get subject list
 # ----------------
 subject_list = analysis_info['subject_list']
@@ -73,6 +75,14 @@ subject_list = analysis_info['subject_list']
 subject_fit_list = []
 
 for subject in subject_list:
+
+	# determine number of vertex and time_serie
+	data = []
+	data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*.func_bla_psc_av.gii')))
+	data_file_load = nb.load(data_file[0])
+	data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
+	data = np.vstack(data) 
+	ts_num,vox_num = data.shape[0],data.shape[1]
 	
 	if os.path.isdir(opj(base_dir,'pp_data',subject,fit_model,'fit')):
 		start_idx =  np.arange(0,vox_num,job_vox)

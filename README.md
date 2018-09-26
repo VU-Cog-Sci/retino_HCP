@@ -12,19 +12,19 @@ martin_dev branch
 - get yeo atlas see others/get_yeo_atlas_gii.txt
 - DMN regions (ANG/MED_PAR/SUP_MED_FR/LAT_TEMP) are put on fsaverage flatmap overlay.svg
 - DMN regions of interest are drawn in inkscape of fsaverage
-- pRF derivatives of subject 999999 are analysed and drawn on fsaverage using pp_roi.py
-- Vision regions of interest (V1/V2/V3/VO/DO/LO/SUP_PAR/TPJ/sPCS/iPCS/mPCS/INS/DLPFC) are drawn for fsaverage in inkscape
-- PRF derivatives summary for DMN and Vision ROI are plotted with bokeh using post_pp_roi.py for subject 999999
+- pRF derivatives of subject 999999 are analysed and drawn on fsaverage pycortex map using pp_roi.py
+- Vision regions of interest (V1/V2/V3/VO/DO/LO/SUP_PAR/TPJ/sPCS/iPCS/mPCS/INS/DLPFC) are drawn manually for fsaverage in inkscape
+- PRF derivatives summary for each ROI are put in h5 files with post_pp_roi.py
+- roi plots for DMN and Vision ROI are plotted with bokeh using roi_plots.py for subject 999999
 - pRF derivatives of all others subject are analysed using pp_roi.py and drawn using fsaverage and ROI of 999999
-- PRF derivatives summary of all others subject for DMN and Vision ROI are plotted with bokeh using post_pp_roi.py
+- roi plots for of all others subject for DMN and Vision ROI are plotted with bokeh using roi_plots.py
+- summary statistics across participants are extracted in extract_sum.py
+- summary statistics per participants are extracted in extract_sum.py
 
 # TO DO
 # -----
-# 01. make plot of comparison time course and model (understand why output of gauss different for baseline and amplitude)
-# 02. statistics across participants - ouput correlations values of ecc vs. all per ROI
-# 03. statistics across participants - output laterality index per ROI
+# 02. make statistics plot across participants
 # 04. save webgl and make it html for 999999 subject
 # 05. run launch_pp_roi on aeneas
 # 06. run launch_post_pp_roi on aeneas
 # 07. see if new version of pycortex work on i36 and reply email
-# 08. exclude size below 0.1 deg

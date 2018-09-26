@@ -1,12 +1,14 @@
 """
 -----------------------------------------------------------------------------------------
-launch_post_pp_roi.py
+launch_roi_plots.py
 -----------------------------------------------------------------------------------------
 Goal of the script:
-run post_pp_roi codes for each subjects of hcp dataset
+run roi_plots codes for each subjects of hcp dataset
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[1]: fit model ('gauss','css')
+sys.argv[2]: max tmux at the time
+sys.argv[3]: do single hemifield plot (1 = YES, 0 = NO)
 -----------------------------------------------------------------------------------------
 Output(s):
 None
@@ -14,7 +16,8 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/launch_post_pp_roi.py gauss
+python post_fit/launch_roi_plots.py gauss 8 0
+python post_fit/launch_roi_plots.py gauss 8 1
 -----------------------------------------------------------------------------------------
 """
 
@@ -34,17 +37,14 @@ import matplotlib.pyplot as pl
 import ipdb
 import platform
 import time
-
 opj = os.path.join
 deb = ipdb.set_trace
-
-# Check system
-# ------------
-sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
 
 # Get inputs
 # ----------
 fit_model = sys.argv[1]
+max_tmux = int(sys.argv[2])
+draw_hemi = int(sys.argv[3])
 
 # Define analysis parameters
 # --------------------------
@@ -69,14 +69,17 @@ subject_list = analysis_info['subject_list']
 subject_fit_list = []
 
 for subject in subject_list:
-	if os.path.isdir(opj(base_dir,'pp_data',subject,fit_model,'figs','roi')):
+	if os.path.isdir(opj(base_dir,'pp_data',subject,fit_model,'h5')):
 		subject_fit_list.append(subject)
 
-# Run post_pp_roi.py
-# ------------------
+# Run roi_plots.py
+# -------------
+num_run = 0
 for subject_fit in subject_fit_list:
-	if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'h5'))==0:
-		print("python post_fit/post_pp_roi.py {subject_fit} {fit_model}".format(subject_fit = subject_fit, fit_model = fit_model))
-		os.system("python post_fit/post_pp_roi.py {subject_fit} {fit_model}".format(subject_fit = subject_fit, fit_model = fit_model))
-		time.sleep(2)
-		
+	if num_run < max_tmux:
+		if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'figs','prf'))==0:
+			session_name = "{subject_fit}_{fit_model}_post_pp_roi".format(subject_fit = subject_fit, fit_model = fit_model)
+			print("tmux new-session -d -s {session_name} 'python post_fit/roi_plots.py {subject_fit} {fit_model} {draw_hemi}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, draw_hemi = draw_hemi))
+			os.system("tmux new-session -d -s {session_name} 'python post_fit/roi_plots.py {subject_fit} {fit_model} {draw_hemi}'".format(session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, draw_hemi = draw_hemi))
+			time.sleep(2)
+			num_run = num_run + 1
