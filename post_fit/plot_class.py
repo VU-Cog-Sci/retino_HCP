@@ -574,7 +574,7 @@ class PlotOperator(object):
         main_fig,main_source,data_source=   self.initialize_main_fig(old_main_fig)
         self.left_hist_lim              =   0
         
-        # plot stimulus circle
+        # plot stimulus area
         plot_stim                       =   main_fig.quad(                                                          # create a quad glyph of the stimulus
                                                 bottom              =   self.stim_fig_ylim[0],                      # define bottom value
                                                 left                =   0,                                          # define left value
@@ -1305,10 +1305,13 @@ class PlotOperator(object):
             high_param_tc_fig.legend.label_text_font = '8pt'
             high_param_tc_fig.legend.margin = 5
             high_param_tc_fig.legend.padding = 5
-            high_param_tc_fig.legend.spacing = -5
+            high_param_tc_fig.legend.spacing = -2
             high_param_tc_fig.legend.glyph_width = 10
-            high_param_tc_fig.legend.glyph_height = 10
-            high_param_tc_fig.legend.label_text_baseline = 'bottom'
+            high_param_tc_fig.legend.label_text_baseline = 'middle'
+            high_param_tc_fig.legend.border_line_color = None
+
+            
+
 
         # text
         x_text = self.x_range_tc[0] + (self.x_range_tc[1]-self.x_range_tc[0])*0.03
@@ -1473,10 +1476,10 @@ class PlotOperator(object):
             low_param_tc_fig.legend.label_text_font = '8pt'
             low_param_tc_fig.legend.margin = 5
             low_param_tc_fig.legend.padding = 5
-            low_param_tc_fig.legend.spacing = -5
+            low_param_tc_fig.legend.spacing = -2
             low_param_tc_fig.legend.glyph_width = 10
-            low_param_tc_fig.legend.glyph_height = 10
-            low_param_tc_fig.legend.label_text_baseline = 'bottom'
+            low_param_tc_fig.legend.label_text_baseline = 'middle'
+            low_param_tc_fig.legend.border_line_color = None
 
         # text
         x_text = self.x_range_tc[0] + (self.x_range_tc[1]-self.x_range_tc[0])*0.03
