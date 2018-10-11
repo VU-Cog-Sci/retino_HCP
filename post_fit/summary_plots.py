@@ -9,6 +9,7 @@ Input(s):
 sys.argv[1]: subject number
 sys.argv[2]: fit model ('gauss','css')
 sys.argv[3]: error-bar = 'std', '95ci' or 'sem'
+sys.argv[4]: save_svg (1 = YES, 0 = NO)
 -----------------------------------------------------------------------------------------
 Output(s):
 None
@@ -16,8 +17,8 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/summary_plots.py 999999 css 95ci
-python post_fit/summary_plots.py 999999 gauss 95ci
+python post_fit/summary_plots.py 999999 css 95ci 0
+python post_fit/summary_plots.py 999999 gauss 95ci 0
 -----------------------------------------------------------------------------------------
 """
 
@@ -37,7 +38,6 @@ import ipdb
 import platform
 import h5py
 from scipy.optimize import curve_fit
-from sklearn.metrics import r2_score
 opj = os.path.join
 deb = ipdb.set_trace
 
@@ -79,13 +79,14 @@ elif 'local' in platform.uname()[1]:
 
 # Define figure parameters
 # ------------------------
-es_rsq_idx, es_slop_idx, es_intercept_idx, lat_idx, median_rsq_idx, mean_rsq_idx = 0, 1, 2, 3, 4, 5
+es_r_idx, es_slop_idx, es_intercept_idx, lat_idx, median_rsq_idx, mean_rsq_idx = 0, 1, 2, 3, 4, 5
 subject = sys.argv[1]
 fit_model = sys.argv[2]
 subject_all = '000000'
 subject = sys.argv[1]
 fit_model = sys.argv[2]
 eb = sys.argv[3]
+save_svg = int(sys.argv[4])
 avg = '_mean' # or '_median'
 
 num_sum_val = 6
@@ -172,11 +173,11 @@ linear_function = lambda x, a, b: a * x + b
 es_fig_all = []
 for type_fig in ['early_vis','late_vis','dmn']:
     if type_fig == 'early_vis':
-        title = '{sub}: early vision ROIs: pRF sign [+]'.format(sub = subject)
+        title = '{sub}: Low level vision ROIs: pRF sign [+]'.format(sub = subject)
     elif type_fig == 'late_vis':
-        title = '{sub}: late vision ROIs: pRF sign [+]'.format(sub = subject)
+        title = '{sub}: High level vision ROIs: pRF sign [+]'.format(sub = subject)
     elif type_fig == 'dmn':
-        title = '{sub}: Default Mode Network ROIs: pRF sign [-]'.format(sub = subject)
+        title = '{sub}: Default Network ROIs: pRF sign [-]'.format(sub = subject)
     exec('col = col_{type_fig}'.format(type_fig = type_fig))
     list_roi = analysis_info['{type_fig}_rois'.format(type_fig = type_fig)]
         
@@ -221,7 +222,7 @@ for type_fig in ['early_vis','late_vis','dmn']:
             
 
         # get values
-        rsq_es = summary_mat[roi_num,es_rsq_idx]
+        rsq_es = summary_mat[roi_num,es_r_idx]
         slope_es = summary_mat[roi_num,es_slop_idx]
         intercept_es = summary_mat[roi_num,es_intercept_idx]
         y_es = linear_function(x_es,slope_es,intercept_es)
@@ -229,13 +230,13 @@ for type_fig in ['early_vis','late_vis','dmn']:
         # draw error bar areas
         if avg_subject:
             # bottom
-            rsq_es_bot = summary_eb_bot[roi_num,es_rsq_idx]
+            rsq_es_bot = summary_eb_bot[roi_num,es_r_idx]
             slope_es_bot = summary_eb_bot[roi_num,es_slop_idx]
             intercept_es_bot = summary_eb_bot[roi_num,es_intercept_idx]
             y_es_bot = linear_function(x_es,slope_es_bot,intercept_es_bot)
 
             # top
-            rsq_es_top = summary_eb_top[roi_num,es_rsq_idx]
+            rsq_es_top = summary_eb_top[roi_num,es_r_idx]
             slope_es_top = summary_eb_top[roi_num,es_slop_idx]
             intercept_es_top = summary_eb_top[roi_num,es_intercept_idx]
             y_es_top = linear_function(x_es,slope_es_top,intercept_es_top)
@@ -245,13 +246,13 @@ for type_fig in ['early_vis','late_vis','dmn']:
             y_eb = [y_es_bot[0],y_es_bot[1],y_es_top[1],y_es_top[0]]
 
             if eb == '95ci':
-                legend_txt = '{roi} (R2: {:1.2g} +/- [{:1.2g},{:1.2g}])'.format(rsq_es,rsq_es_bot,rsq_es_top,roi = roi)
+                legend_txt = '{roi} (r: {:1.2g} +/- [{:1.2g},{:1.2g}])'.format(rsq_es,rsq_es_bot,rsq_es_top,roi = roi)
             else:
                 rsq_eb = rsq_es_top - rsq_es
-                legend_txt = '{roi} (R2: {:1.2g} +/- {:1.2g})'.format(rsq_es, rsq_eb, roi = roi)
+                legend_txt = '{roi} (r: {:1.2g} +/- {:1.2g})'.format(rsq_es, rsq_eb, roi = roi)
             es_fig.patch(x_eb,y_eb,line_color = None, fill_color = col[roi_num], fill_alpha = 0.1,legend=legend_txt)
         else:
-            legend_txt = '{roi} (R2: {:1.2g})'.format(rsq_es, roi = roi)
+            legend_txt = '{roi} (r: {:1.2g})'.format(rsq_es, roi = roi)
             
         # draw line
         es_fig.line(x_es,y_es,line_color=col[roi_num],legend=legend_txt,line_width = 2)
@@ -271,7 +272,7 @@ for type_fig in ['early_vis','late_vis','dmn']:
 
 f1 = column( row(es_fig_all[0],es_fig_all[1],es_fig_all[2]))
 
-# Ecc/size r2 vs. ROI figures
+# Ecc/size r vs. ROI figures
 # ---------------------------
 es_roi_fig_all = []
 for type_fig in ['early_vis','late_vis','dmn']:
@@ -282,7 +283,7 @@ for type_fig in ['early_vis','late_vis','dmn']:
     x_tick_steps_es_roi = 1
     y_tick_steps_es_roi = 0.25
     x_label_es_roi = 'ROI'
-    y_label_es_roi = 'Ecc. vs. Size R2'
+    y_label_es_roi = 'Ecc. vs. Size r'
     
     exec('col = col_{type_fig}'.format(type_fig = type_fig))
     
@@ -333,7 +334,7 @@ for type_fig in ['early_vis','late_vis','dmn']:
         y_mat = []
         for roi_num,roi in enumerate(list_roi):
             x_mat.append([roi_num,roi_num])
-            y_mat.append([summary_eb_bot[roi_num,es_rsq_idx],summary_eb_top[roi_num,es_rsq_idx]])
+            y_mat.append([summary_eb_bot[roi_num,es_r_idx],summary_eb_top[roi_num,es_r_idx]])
 
         es_roi_fig.multi_line(x_mat, y_mat,line_color = col,line_width = 2)
     
@@ -344,7 +345,7 @@ for type_fig in ['early_vis','late_vis','dmn']:
         exec('summary_mat = summary_mat_{type_fig}'.format(type_fig = type_fig))
         exec('col = col_{type_fig}'.format(type_fig = type_fig))
         x_circle[roi_num] = roi_num
-        y_circle[roi_num] = summary_mat[roi_num,es_rsq_idx]
+        y_circle[roi_num] = summary_mat[roi_num,es_r_idx]
 
     es_roi_fig.circle(x = x_circle,y = y_circle, size = 10, fill_color = 'white', line_color = col,line_width = 2)
 
@@ -447,3 +448,37 @@ else:
 output_file(output_file_html, title="Subject: {subject} | Figures: Summary".format(subject = subject))
 print('saving {subject} summary figure'.format(subject=subject))
 save(all_f)
+
+
+# save in svg
+# -----------
+if save_svg == 1:
+    from bokeh.io import export_svgs
+    import os
+    import time
+    opj = os.path.join
+
+    svg_folder = opj(base_dir,"pp_data",subject,fit_model,"figs","svg","summary")
+    try: os.makedirs(opj(svg_folder))
+    except: pass
+
+    fig_dict = {'es_fig_all_early':         es_fig_all[0], 
+                'es_fig_all_late':          es_fig_all[1], 
+                'es_fig_all_dmn':           es_fig_all[2],
+                'es_roi_fig_all_early':     es_roi_fig_all[0], 
+                'es_roi_fig_all_late':      es_roi_fig_all[1],
+                'es_roi_fig_all_dmn':       es_roi_fig_all[2],
+                'lat_roi_fig_all_early':    lat_roi_fig_all[0],
+                'lat_roi_fig_all_late':     lat_roi_fig_all[1],
+                'lat_roi_fig_all_dmn':      lat_roi_fig_all[2],
+                }
+
+
+    # save figure
+    for fig in fig_dict:
+        fig_dict[fig].output_backend = 'svg'
+        output_file_svg = opj(svg_folder,"{fig}.svg".format(fig = fig))
+        
+        export_svgs(fig_dict[fig], filename = output_file_svg)
+        
+

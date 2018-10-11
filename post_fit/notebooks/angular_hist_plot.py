@@ -19,7 +19,7 @@ import cortex
 import matplotlib.colors as colors
 
 mask_dir = 'pos'
-roi_text = 'SUP_PAR'
+roi_text = 'V1'
 
 data_hemi = []
 val_hemi = 0
@@ -53,7 +53,7 @@ axis_tick_num = 5                                # axis tick number
 bin_num = 24                                     # annular histogram bin number
 hemi_col_L,hemi_col_R = '#ff6a00','#009dff'      # colors of hemisphere data
 bg_col = tuple([250,250,250])                     # colors of center of the plot
-weighted_data = False
+weighted_data = True
 
 data = data[:,~np.isnan(data[rsq_idx,:])]
 weighted_text = 'R2-weighted '

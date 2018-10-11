@@ -81,9 +81,9 @@ for subject_fit in analysed_subject:
 	if subject == '000000':
 		for eb in ['std','sem','95ci']:
 			# print("python post_fit/summary_plots.py {subject_fit} {fit_model} {eb}".format(subject_fit = subject_fit, fit_model = fit_model, eb = eb))
-			os.system("python post_fit/summary_plots.py {subject_fit} {fit_model} {eb}".format(subject_fit = subject_fit, fit_model = fit_model, eb = eb))
+			os.system("python post_fit/summary_plots.py {subject_fit} {fit_model} {eb} 0".format(subject_fit = subject_fit, fit_model = fit_model, eb = eb))
 	else:
 		# print("python post_fit/summary_plots.py {subject_fit} {fit_model} std".format(subject_fit = subject_fit, fit_model = fit_model))
-		os.system("python post_fit/summary_plots.py {subject_fit} {fit_model} std".format(subject_fit = subject_fit, fit_model = fit_model))
+		os.system("python post_fit/summary_plots.py {subject_fit} {fit_model} std 0".format(subject_fit = subject_fit, fit_model = fit_model))
 	
 	

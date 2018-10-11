@@ -51,36 +51,6 @@ class PlotOperator(object):
         return fig_span
         
 
-    def save_figures_svg(self, main_fig, h_hist = None, v_hist = None, leg = None):
-        from bokeh.io import export_svgs
-        import os
-        
-        # Create folders to save the svg files in
-        basedir                         =   os.path.join(self.svg_folder, self.roi_t, self.condition)
-        hemi_dir                        =   os.path.join(basedir, self.hemisphere) if self.hemisphere != 'lrh' else basedir
-        try:   os.makedirs(hemi_dir)
-        except OSError: pass
-        
-        # save figures in dict to loop over them
-        figures         = dict( main_fig =  main_fig,
-                                h_hist   =  h_hist,
-                                v_hist   =  v_hist,
-                                leg      =  leg)
-
-        # save figure
-        for fig in ['main_fig', 'h_hist', 'v_hist', 'leg']:
-            if figures[fig] != None:
-                
-                figures[fig].output_backend = 'svg'
-                condition                   = self.condition if self.typeData == None else '{cond}_{typeData}'.\
-                                                                                            format(cond = self.condition, typeData = self.typeData)
-                fName                       = os.path.join(hemi_dir,'pRF_{condition}_{fig}.svg'.\
-                                                                 format(condition = condition, fig = fig))
-                export_svgs(figures[fig], filename = fName)
-
-        return None
-
-
     def get_colors(self, data):
         import cortex
         import numpy as np
@@ -550,8 +520,23 @@ class PlotOperator(object):
                                                 row(h_hist,   leg),              # define figure first row
                                                 row(main_fig, v_hist))                                              # define figure second row
         
-        # save figures as .svg files
-        if self.saving_figs: self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = leg)
+        # save in svg
+        # -----------
+        if self.save_svg == 1:
+            from bokeh.io import export_svgs
+            import os
+            opj = os.path.join
+                  
+            try:   os.makedirs(opj(self.svg_folder,self.svg_filename))
+            except: pass
+        
+            fig_dict = {'h_hist': h_hist, 'leg': leg, 'main_fig':main_fig, 'v_hist':v_hist}
+            # save figure
+            for fig in fig_dict:
+                fig_dict[fig].output_backend = 'svg'
+                output_file_svg = opj(self.svg_folder,self.svg_filename,"{svg_filename}_{fig}.svg".format(svg_filename = self.svg_filename, fig = fig))
+                export_svgs(fig_dict[fig], filename = output_file_svg)
+
 
         return (f,main_fig)
 
@@ -642,15 +627,23 @@ class PlotOperator(object):
                                                 row(main_fig, v_hist))                                              # define figure second row
 
         
-
+        # save in svg
+        # -----------
+        if self.save_svg == 1:
+            from bokeh.io import export_svgs
+            import os
+            opj = os.path.join
+                  
+            try:   os.makedirs(opj(self.svg_folder,self.svg_subfolder,self.svg_filename))
+            except: pass
         
-        # save figures as .svg files
-        # if self.saving_figs and self.condition == 'ecc': 
-        #     self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = leg)
-        # else:
-        #     self.save_figures_svg(main_fig = main_fig, h_hist = h_hist, v_hist = v_hist, leg = None)
+            fig_dict = {'h_hist': h_hist, 'leg': leg, 'main_fig':main_fig, 'v_hist':v_hist}
+            # save figure
+            for fig in fig_dict:
+                fig_dict[fig].output_backend = 'svg'
+                output_file_svg = opj(self.svg_folder,self.svg_subfolder,self.svg_filename,"{svg_filename}_{fig}.svg".format(svg_filename = self.svg_filename, fig = fig))
+                export_svgs(fig_dict[fig], filename = output_file_svg)
 
-        
         return (f,main_fig)
 
     def draw_pRFcov(self, params, old_main_fig =[]):
@@ -712,8 +705,6 @@ class PlotOperator(object):
             x_range                         =    old_main_fig.x_range                                               # define x range based on first figure to have shared axis
             y_range                         =    old_main_fig.y_range                                               # define y range based on first figure to have shared axis
         
-
-
         # define stimuli settings
         stim_fig_xlim                   =   (self.x_range[0]-5*self.x_tick_steps,self.x_range[1]+5*self.x_tick_steps) # define stimuli max axis
         stim_fig_ylim                   =   (self.y_range[0]-5*self.y_tick_steps,self.y_range[1]+5*self.y_tick_steps) # define stimuli max axis
@@ -820,8 +811,23 @@ class PlotOperator(object):
                                                 row(s1, s2),                                                        # define figure second row
                                                 row(main_fig, colorbar_fig))                                        # define figure second row
 
-        # save figures as .svg files
-        # if self.saving_figs: self.save_figures_svg(main_fig = main_fig, h_hist = None, v_hist = None, leg = colorbar_fig)
+
+        # save in svg
+        # -----------
+        if self.save_svg == 1:
+            from bokeh.io import export_svgs
+            import os
+            opj = os.path.join
+                  
+            try:   os.makedirs(opj(self.svg_folder,self.svg_filename))
+            except: pass
+        
+            fig_dict = {'main_fig': main_fig, 'colorbar_fig': colorbar_fig}
+            # save figure
+            for fig in fig_dict:
+                fig_dict[fig].output_backend = 'svg'
+                output_file_svg = opj(self.svg_folder,self.svg_filename,"{svg_filename}_{fig}.svg".format(svg_filename = self.svg_filename, fig = fig))
+                export_svgs(fig_dict[fig], filename = output_file_svg)
 
         return (f,main_fig)
 
@@ -1170,6 +1176,23 @@ class PlotOperator(object):
         # -------------------
         f                               =   column(                                                                 # define figures coluns
                                                 row(main_fig))                                                  # define figure second row
+
+        # save in svg
+        # -----------
+        if self.save_svg == 1:
+            from bokeh.io import export_svgs
+            import os
+            opj = os.path.join
+                  
+            try:   os.makedirs(opj(self.svg_folder,self.svg_filename))
+            except: pass
+        
+            fig_dict = {'main_fig': main_fig}
+            # save figure
+            for fig in fig_dict:
+                fig_dict[fig].output_backend = 'svg'
+                output_file_svg = opj(self.svg_folder,self.svg_filename,"{svg_filename}_{fig}.svg".format(svg_filename = self.svg_filename, fig = fig))
+                export_svgs(fig_dict[fig], filename = output_file_svg)
 
         return (f,main_fig)
 
@@ -1600,7 +1623,28 @@ class PlotOperator(object):
                         row(low_param_tc_fig,low_param_map_fig))
         main_fig = high_param_tc_fig
 
-        
+        # save in svg
+        # -----------
+        if self.save_svg == 1:
+            from bokeh.io import export_svgs
+            import os
+            import time
+            opj = os.path.join
+                  
+            try: os.makedirs(opj(self.svg_folder,self.svg_subfolder,self.svg_filename))
+            except: pass
+
+            fig_dict = {'time_leg_fig': time_leg_fig, 'high_param_tc_fig': high_param_tc_fig, 'high_param_map_fig':high_param_map_fig,
+                        'low_param_tc_fig': low_param_tc_fig, 'low_param_map_fig': low_param_map_fig}
+
+            # save figure
+            for fig in fig_dict:
+                fig_dict[fig].output_backend = 'svg'
+                output_file_svg = opj(self.svg_folder,self.svg_subfolder,self.svg_filename,"{svg_filename}_{fig}.svg".format(svg_filename = self.svg_filename, fig = fig))
+                
+                try: export_svgs(fig_dict[fig], filename = output_file_svg)
+                except: pass
+
         return (f,main_fig)
 
     def draw_figure(self, parameters, plot, old_main_fig = []):

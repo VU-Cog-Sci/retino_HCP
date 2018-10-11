@@ -290,7 +290,7 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
 
 def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps = 255,\
                         alpha = None,depth = 1,thick = 1,height = 1024,sampler = 'nearest',\
-                        with_curvature = True,with_labels = True,with_colorbar = False,\
+                        with_curvature = True,with_labels = False,with_colorbar = False,\
                         with_borders = False,curv_brightness = 0.95,curv_contrast = 0.05,add_roi = False,\
                         roi_name = 'empty',col_offset = 0):
     """

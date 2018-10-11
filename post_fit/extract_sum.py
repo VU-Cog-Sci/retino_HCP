@@ -37,7 +37,6 @@ import platform
 import h5py
 import scipy
 from scipy.optimize import curve_fit
-from sklearn.metrics import r2_score
 opj = os.path.join
 deb = ipdb.set_trace
 
@@ -89,6 +88,17 @@ except:
     pass
 h5file = h5py.File(summary_hdf5_file, "a")
 
+
+# Define r pearson weighted by fit rsquare
+# ----------------------------------------
+def m(x, w):
+    return np.sum(x * w) / np.sum(w)
+
+def cov(x, y, w):
+    return np.sum(w * (x - m(x, w)) * (y - m(y, w))) / np.sum(w)
+
+def weighted_corr(x, y, w):
+    return cov(x, y, w) / np.sqrt(cov(x, x, w) * cov(y, y, w))
 
 # Get summary values
 # ------------------
@@ -151,11 +161,11 @@ for subject in analysed_subject_plus:
                                                     sigma = weight_data)
                         size_fit = linear_function(ecc_data, coeffs[0], coeffs[1])
 
-                        ecc_size_r2 = r2_score(y_true=size_data,y_pred=size_fit)
+                        ecc_size_r = weighted_corr(ecc_data,size_data,weight_data)
                         ecc_size_slope = coeffs[0]
                         ecc_size_intercept = coeffs[0]
                     else:
-                        ecc_size_r2 = np.nan
+                        ecc_size_r = np.nan
                         ecc_size_slope = np.nan
                         ecc_size_intercept = np.nan
 
@@ -170,7 +180,7 @@ for subject in analysed_subject_plus:
                     median_fit_r2 = np.nanmedian(deriv_mat[:,rsq_idx])
                     mean_fit_r2   = np.nanmean(deriv_mat[:,rsq_idx])
                     
-                    summary_mat = np.array([ecc_size_r2,ecc_size_slope,ecc_size_intercept,contra_lat,median_fit_r2,mean_fit_r2])
+                    summary_mat = np.array([ecc_size_r,ecc_size_slope,ecc_size_intercept,contra_lat,median_fit_r2,mean_fit_r2])
             else:
                 summary_mat = np.array([np.nan,np.nan,np.nan,np.nan,np.nan,np.nan])        
 

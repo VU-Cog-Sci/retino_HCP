@@ -9,6 +9,7 @@ Input(s):
 sys.argv[1]: subject number
 sys.argv[2]: fit model ('gauss','css')
 sys.argv[3]: do single hemifield plot (1 = YES, 0 = NO)
+sys.argv[4]: save svg (1 = YES, 0 = NO)
 -----------------------------------------------------------------------------------------
 Output(s):
 None
@@ -16,8 +17,8 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/roi_plots.py 999999 css 1
-python post_fit/roi_plots.py 999999 gauss 1
+python post_fit/roi_plots.py 999999 css 1 0
+python post_fit/roi_plots.py 999999 gauss 0 1
 -----------------------------------------------------------------------------------------
 """
 
@@ -67,6 +68,7 @@ import popeye.og as og
 subject = sys.argv[1]
 fit_model = sys.argv[2]
 draw_hemi = int(sys.argv[3])
+save_svg = int(sys.argv[4])
 
 # Define analysis parameters
 # --------------------------
@@ -145,6 +147,13 @@ for roi_num, roi in enumerate(analysis_info['rois']):
             exec('fig_bokeh_dir_{mask_dir}_{hemi} = opj(base_dir,"pp_data",subject,fit_model,"figs","prf","{mask_dir}","{hemi}")'.format(mask_dir=mask_dir, hemi = hemi))
             try: exec('os.makedirs(fig_bokeh_dir_{mask_dir}_{hemi})'.format(mask_dir=mask_dir,hemi = hemi))
             except: pass
+
+            if save_svg == 1:
+                # figure svg main folder
+                exec('fig_bokeh_dir_svg_{mask_dir}_{hemi} = opj(base_dir,"pp_data",subject,fit_model,"figs","svg","{mask_dir}","{hemi}")'.format(mask_dir=mask_dir, hemi = hemi))
+                exec('svg_folder = fig_bokeh_dir_svg_{mask_dir}_{hemi}'.format(mask_dir=mask_dir,hemi=hemi))
+                try: os.makedirs(svg_folder)
+                except: pass
             
             # load data
             if hemi == 'LR':
@@ -237,8 +246,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'vmin':             0,
                                         'vmax':             8,
                                         'leg_xy_max_ratio': 1.8,
-                                        'saving_figs':      False,
-                                        'svg_folder':       'fig_bokeh_dir_{mask_dir}'.format(mask_dir=mask_dir),
                                         'dataMat':          data,
                                         'data_source':      data_source,
                                         'hist_range':       (0,0.5),
@@ -246,7 +253,12 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'h_hist_bins':      16,
                                         'link_x':           False,
                                         'link_y':           False,
+                                        'save_svg':         save_svg
                                         }
+
+                        if save_svg == 1:
+                            param_all.update({
+                                        'svg_folder':       svg_folder})
 
                         plotter = PlotOperator(**param_all)
 
@@ -264,9 +276,12 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'y_tick_steps':     4,
                                         'v_hist_bins':      16,
                                         'main_fig_title':   title})
+                        if save_svg == 1:
+                            params_pRFmap.update(
+                                    {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFmap'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
 
-                        f_pRFmap,old_main_fig1 = plotter.draw_figure(parameters = params_pRFmap, 
-                                                                    plot = 'map')
+                        f_pRFmap,old_main_fig1 = plotter.draw_figure(   parameters = params_pRFmap, 
+                                                                        plot = 'map')
                         
                         # pRFecc
                         old_main_fig = []
@@ -286,6 +301,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                             'x_source_label':   'ecc',
                                             'draw_reg':         False,
                                             'link_x':           True})
+                            if save_svg == 1:
+                                params_pRFecc.update(
+                                            {   'svg_subfolder':    '{roi}_{hemi}_{mask_dir}_pRFecc'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
 
                             if type_comp == 'Size':
                                 params_pRFecc.update(
@@ -295,6 +313,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 'y_tick_steps':     2,
                                                 'v_hist_bins':      20,
                                                 'draw_reg':         True})
+                                if save_svg == 1:
+                                    params_pRFecc.update(
+                                            {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFecc_size'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
 
                             elif type_comp == 'R2':
                                 params_pRFecc.update(
@@ -303,6 +324,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 'y_source_label':   'rsq',
                                                 'y_tick_steps':     0.2,
                                                 'v_hist_bins':      15})
+                                if save_svg == 1:
+                                    params_pRFecc.update(
+                                            {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFecc_rsq'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
 
                             elif type_comp == 'Non-Linearity':
                                 params_pRFecc.update(
@@ -311,6 +335,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 'y_source_label':   'non_lin',
                                                 'y_tick_steps':     0.25,
                                                 'v_hist_bins':      18})
+                                if save_svg == 1:
+                                    params_pRFecc.update(
+                                            {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFecc_non_lin'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
 
                             elif type_comp == 'Amplitude':
                                 params_pRFecc.update(
@@ -319,6 +346,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 "y_source_label":   'beta',
                                                 'y_tick_steps':     0.5,
                                                 'v_hist_bins':      16})
+                                if save_svg == 1:
+                                    params_pRFecc.update(
+                                            {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFecc_amp'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
 
                             elif type_comp == 'Coverage':
                                 params_pRFecc.update(
@@ -327,6 +357,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 'y_source_label':   'cov',
                                                 'y_tick_steps':     0.2,
                                                 'v_hist_bins':      15})
+                                if save_svg == 1:
+                                    params_pRFecc.update(
+                                            {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFecc_cov'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
+
                             elif type_comp == 'Baseline':
                                 params_pRFecc.update(
                                             {   'y_range':          (-1, 1),
@@ -334,6 +368,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 'y_source_label':   'baseline',
                                                 'y_tick_steps':     0.5,
                                                 'v_hist_bins':      16})
+                                if save_svg == 1:
+                                    params_pRFecc.update(
+                                            {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFecc_baseline'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
 
                             title = '{roi}{hemi} {mask_dir}: Eccentricity vs. {type_comp}'.format(roi = roi_text, hemi = hemi, type_comp = type_comp, mask_dir = mask_dir)
                             params_pRFecc.update({'main_fig_title':   title})
@@ -366,6 +403,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'cb_label':         'pRF coverage (norm.)',
                                         'link_x':           True,
                                         'link_y':           True})
+                        if save_svg == 1:
+                            params_pRFcov.update(
+                                    {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFcov'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
                         title = '{roi}{hemi} {mask_dir}: pRF density map'.format(roi = roi_text, hemi = hemi, type_comp = type_comp, mask_dir = mask_dir)
                         params_pRFcov.update({'main_fig_title':   title})
                         f_pRFcov = plotter.draw_figure(parameters = params_pRFcov, plot = 'cov',old_main_fig = old_main_fig1)
@@ -387,6 +427,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'cmap_steps':       16,
                                         'ang_bins':         36,
                                         'hemi':             hemi})
+                        if save_svg == 1:
+                            params_pRFlat.update(
+                                    {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFlat'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
                         title = '{roi}{hemi} {mask_dir}: pRF laterality histogram'.format(roi = roi_text, hemi = hemi, type_comp = type_comp, mask_dir = mask_dir)
                         params_pRFcov.update({'main_fig_title':   title})
                         f_pRFlat = plotter.draw_figure(parameters = params_pRFlat, plot = 'lat')
@@ -412,6 +455,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'model_fill_color': tuple([254,51,10])
                                     })
 
+                        if save_svg == 1:
+                            params_pRFtc.update(
+                                        {   'svg_subfolder':    '{roi}_{hemi}_{mask_dir}_pRFtc'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
+
                         f_pRFtc = []
 
                         # get index matrices
@@ -426,12 +473,8 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                             exec('prct_{param} = np.nanpercentile(a = data[:,{param}_idx],q = step_params)'.format(param = param))
                             exec('idx_{param} = []'.format(param = param))
                             
-
-
                             for param_step in np.arange(0,len(step_params)-1,2):
                                 exec('idx_{param}.append(np.logical_and(data[:,{param}_idx]>=prct_{param}[param_step],data[:,{param}_idx]<=prct_{param}[param_step+1]))'.format(param = param))
-
-
 
                             exec('num_{param} = []'.format(param = param))
                             exec('num_{param} = []'.format(param = param))
@@ -465,6 +508,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                     'mask_dir':             mask_dir,
                                                     'title':                '{roi} {hemi} {sign}'.format(sign = mask_dir,hemi=hemi,roi = roi_text)
                                                 })
+                                if save_svg == 1:
+                                    params_pRFtc.update(
+                                                    {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFtc_rsq_{r2_level}_{param}'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text,r2_level = r2_level, param = param)})
 
                                 out4,main_fig4  = plotter.draw_figure(    parameters =    params_pRFtc,
                                                                 plot =          'tc')
