@@ -241,7 +241,7 @@ for mask_dir in ['all','pos','neg']:
     # Baseline
     baseline_data = deriv_mat[baseline_idx,:]
     param_baseline = {'data': baseline_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -0.5, 'vmax': 0.5,\
-                       'curv_brightness': 0.05, 'curv_contrast': 0.1,'cbar': 'discrete'}
+                      'curv_brightness': 0.05, 'curv_contrast': 0.1,'cbar': 'discrete'}
     vertex_names.append('baseline')
     
     # Non-linearity

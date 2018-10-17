@@ -351,7 +351,8 @@ def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps 
                                     green = mat[...,1],
                                     blue = mat[...,2],
                                     alpha = alpha,
-                                    subject = subject)
+                                    subject = subject,
+                                    )
     
     vertex_rgb_fig = cortex.quickflat.make_figure(  braindata = vertex_rgb,
                                                     depth = depth,
