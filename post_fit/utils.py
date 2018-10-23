@@ -6,6 +6,7 @@ import scipy as sp
 from scipy.signal import savgol_filter
 from skimage.transform import rotate
 from math import *
+import cortex
 
 def set_pycortex_config_file(project_folder):
 
@@ -454,4 +455,154 @@ def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps 
                                 curvature_contrast = curv_contrast)
     
     return vertex_rgb
+
+def zoom_to_roi(subject, roi, hem, margin=1.0):
+    """
+    -----------------------------------------------------------------------------------------
+    zoom_to_roi(subject, roi, hem, margin=1.0):
+    -----------------------------------------------------------------------------------------
+    Goal of the script:
+    Draw a zoon on roi
+    -----------------------------------------------------------------------------------------
+    Input(s):
+    subject: subject name
+    roi: roi name
+    hem: hemifield
+    margin: mm out of ROI
+    -----------------------------------------------------------------------------------------
+    Output(s):
+    None
+    -----------------------------------------------------------------------------------------
+    """
+
     
+    roi_verts = cortex.get_roi_verts(subject, roi)[roi]
+    roi_map = cortex.Vertex.empty(subject)
+    roi_map.data[roi_verts] = 1
+
+    (lflatpts, lpolys), (rflatpts, rpolys) = cortex.db.get_surf(subject, "flat",
+                                                                nudge=True)
+    sel_pts = dict(left=lflatpts, right=rflatpts)[hem]
+    roi_pts = sel_pts[np.nonzero(getattr(roi_map, hem))[0],:2]
+    
+    xmin, ymin = roi_pts.min(0) - margin
+    xmax, ymax = roi_pts.max(0) + margin
+    zoom_width = roi_pts.max(0)[0]- roi_pts.min(0)[0]
+    zoom_height = roi_pts.max(0)[1]- roi_pts.min(0)[1]
+    sqr_zoom_size = np.round(np.max([zoom_width,zoom_height]))*1.1
+    zoom_ctr_x = np.mean([roi_pts.max(0)[0],roi_pts.min(0)[0]])
+    zoom_ctr_y = np.mean([roi_pts.max(0)[1],roi_pts.min(0)[1]])
+    mat = [zoom_ctr_x-sqr_zoom_size/2.0,zoom_ctr_x+sqr_zoom_size/2.0,zoom_ctr_y-sqr_zoom_size/2.0,zoom_ctr_y+sqr_zoom_size/2.0]
+    zoom_plot = pl.axis(mat)
+    
+    return None
+
+def roi_coord_mask(roi,hem,subject = 'fsaverage'):
+    """
+    -----------------------------------------------------------------------------------------
+    roi_coord_mask(roi,hem,subject = 'fsaverage')
+    -----------------------------------------------------------------------------------------
+    Goal of the script:
+    Ger ROI pts coordinates and mask
+    -----------------------------------------------------------------------------------------
+    Input(s):
+    subject: subject name
+    roi: roi name
+    hem: hemifield
+    margin: mm out of ROI
+    -----------------------------------------------------------------------------------------
+    Output(s):
+    roi_pts: pts coordinates on flat map
+    roi_mask: roi mask
+    -----------------------------------------------------------------------------------------
+    """
+
+    # get data
+    roi_verts = cortex.get_roi_verts(subject, roi)[roi]
+    roi_map = cortex.Vertex.empty(subject)
+    roi_map.data[roi_verts] = 1
+    (lflatpts, lpolys), (rflatpts, rpolys) = cortex.db.get_surf(subject, "flat",nudge=True)
+    sel_pts = dict(left=lflatpts, right=rflatpts)[hem]
+    roi_pts = sel_pts[np.nonzero(getattr(roi_map, hem))[0],:2]
+    if hem == 'left':
+        roi_mask = np.hstack([roi_map.left[:],roi_map.right[:]*0])
+    elif hem == 'right':
+        roi_mask = np.hstack([roi_map.left[:]*0,roi_map.right[:]])
+    roi_mask = roi_mask==1
+    
+    return(roi_pts,roi_mask)
+
+def get_colors(data,cmap,cmap_steps,col_offset,vmin,vmax):
+    """
+    -----------------------------------------------------------------------------------------
+    get_colors(data,cmap,cmap_steps,col_offset,vmin,vmax)
+    -----------------------------------------------------------------------------------------
+    Goal of the script:
+    Return for a given dataset the corresponding colors in Bokeh
+    -----------------------------------------------------------------------------------------
+    Input(s):
+    data: data from which to get colors on colormaps
+    cmap: colromap
+    cmpas: steps for the colormap
+    col_offset: color offset on the colormap scale
+    vmin: minimum corresponding value on the colormap
+    vmax: maximum corresponding value on the colormap
+    -----------------------------------------------------------------------------------------
+    Output(s):
+    colors_val_rgb: matrix of colors for bokeh
+    -----------------------------------------------------------------------------------------
+    """
+    import matplotlib.colors as colors
+    base = cortex.utils.get_cmap(cmap)
+    val = np.fmod(np.linspace(0 + col_offset, 1 + col_offset, cmap_steps + 1, endpoint = False), 1.0)
+    colmap = colors.LinearSegmentedColormap.from_list('my_colmap', base(val), N = cmap_steps)
+    vrange = float(vmax) - float(vmin)
+    norm_data = (( data - float(vmin) ) / vrange) * cmap_steps 
+    col_mat_rgb = colmap(norm_data.astype(int)) * 255.0
+    colors_val_rgb = ["#%02x%02x%02x" % (int(r), int(g), int(b)) for r, g, b in zip(col_mat_rgb[:,0], col_mat_rgb[:,1], col_mat_rgb[:,2])]
+    return colors_val_rgb
+
+def rotate_pts(pts,orig,rot_deg):
+    """
+    -----------------------------------------------------------------------------------------
+    rotate_pts(pts,orig,rot_deg)
+    -----------------------------------------------------------------------------------------
+    Goal of the script:
+    rotate pts aroud an origin
+    -----------------------------------------------------------------------------------------
+    Input(s):
+    pts: coordinates to rotate
+    rot_deg: rotation amount
+    -----------------------------------------------------------------------------------------
+    Output(s):
+    rot_pts: rotated points
+    -----------------------------------------------------------------------------------------
+    """
+    rot = np.radians(rot_deg)
+    qx = orig[0] + np.cos(rot) * (pts[0] - orig[0]) + np.sin(rot) * (pts[1] - orig[1])
+    qy = orig[1] + -np.sin(rot) * (pts[0] - orig[0]) + np.cos(rot) * (pts[1] - orig[1])
+    rot_pts = [qx,qy]
+    return rot_pts
+
+def rot_coord(coord,rot_deg):
+    """
+    -----------------------------------------------------------------------------------------
+    rot_coord(coord,rot_deg)
+    -----------------------------------------------------------------------------------------
+    Goal of the script:
+    Rotate complex numbers with rotation matrix
+    -----------------------------------------------------------------------------------------
+    Input(s):
+    coord: complex numbers coordinate set
+    rot_deg: rotation in degrees
+    -----------------------------------------------------------------------------------------
+    Output(s):
+    coord_rot: rotated coordinates
+    -----------------------------------------------------------------------------------------
+    """
+    theta = np.radians(rot_deg)
+    c, s = np.cos(theta), np.sin(theta)
+    R = np.matrix([[c, -s], [s, c]])
+    coord_rot = np.array(np.dot(coord,R))
+    
+    return coord_rot

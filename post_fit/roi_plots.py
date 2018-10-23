@@ -93,7 +93,7 @@ except OSError: pass
 
 # Create stimulus design and define model
 # ---------------------------------------
-visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','retinotopysmall5.mat'))
+visual_dm_file = scipy.1.loadmat(opj(base_dir,'raw_data','retinotopysmall5.mat'))
 visual_dm = visual_dm_file['stim']
 
 stimulus = VisualStimulus(  stim_arr = visual_dm,
@@ -126,7 +126,6 @@ elif fit_model == 'css':
     num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
     
 model_func.hrf_delay = 0
-
 
 # Draw main analysis figure
 # -------------------------

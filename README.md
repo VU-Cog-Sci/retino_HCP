@@ -20,8 +20,15 @@ martin_dev branch
 - roi plots for of all others subject for DMN and Vision ROI are plotted with bokeh using roi_plots.py
 - summary statistics across participants are extracted in extract_sum.py
 - summary statistics per participants are extracted in extract_sum.py
+- polar angle plot for ANG using polar_plot.py
 
 # TO DO
 # -----
-# 02. adapt scale of baseline and amplitude in bokeh eccentricity correction plots + run all subjects
-# 04. make polar progression figure for subject 999999
+# 00. make sketches of figure for paper = DONE
+# 01. code launch polar progression plot
+# 02. check summary plot use average weighted and see what is going on without threhsold on fit rsq
+# 03. change colormap scale of eccentricity and size of roi flatmap to eye ball any progression
+# 04. change ecc plots to not have baseline and amplitude incorporated for all subjects
+# 05. change map plot to have crosses instead of circles of different size
+# 06. save individual viewers with colors changed directly to include the r2 in colors not transparency
+# 07. make average of subject fit and plot every data of '000000'

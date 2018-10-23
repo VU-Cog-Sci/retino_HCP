@@ -50,7 +50,7 @@ from utils import set_pycortex_config_file, convert_fit_results, draw_cortex_ver
 
 # Check system
 # ------------
-# sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
+sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
 
 # Get inputs
 # ----------
