@@ -66,15 +66,16 @@ import matplotlib.image as mpimg
 subject = sys.argv[1]
 fit_model = sys.argv[2]
 save_svg = int(sys.argv[3])
-rot_left = -10
-rot_right = -10
-nbins = 10
+rot_left = 10
+rot_right = 20
+nbins = 20
 small_size_dot = 5
 big_size_dot = small_size_dot*3
 
+
 # Functions import
 # ----------------
-from utils import set_pycortex_config_file, zoom_to_roi, draw_cortex_vertex, rotate_pts, get_colors, roi_coord_mask, rot_coord
+from utils import set_pycortex_config_file, draw_cortex_vertex, rotate_pts, get_colors, roi_coord_mask, rot_coord
 
 # Check system
 # ------------
@@ -96,6 +97,11 @@ elif 'local' in platform.uname()[1]:
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
+if save_svg == 1:
+    svg_folder = opj(base_dir,"pp_data",subject,fit_model,"figs","svg","neg","LR","ANG_LR_neg_pRFpol")
+    try: os.makedirs(svg_folder)
+    except: pass
+
 
 # Change cortex database folder
 # -----------------------------
@@ -136,26 +142,20 @@ pol_comp_num = real_num + 1j * imag_num
 polar_ang = np.angle(pol_comp_num)
 ang_norm = (polar_ang + np.pi) / (np.pi * 2.0)
 
-
 cmap_steps = 255
 param_polar = {'data': ang_norm.T, 'cmap': cmap_polar, 'alpha': alpha.T, 'vmin': 0, 'vmax': 1, 'cmap_steps': cmap_steps,\
                        'curv_brightness': 0.05, 'curv_contrast': 0.1, 'cbar': 'polar', 'col_offset': col_offset,\
-                        'subject': 'fsaverage','add_roi': False}
+                        'subject': 'fsaverage','add_roi': False, 'zoom_roi': 'ANG', 'zoom_hem': 'left', 'zoom_margin': 1.0}
 vertex_polar = draw_cortex_vertex(**param_polar)
+plt.savefig(opj(svg_folder,'ANG_left_polar.png'),bbox_inches = 'tight')
+plt.savefig(opj(svg_folder,'ANG_left_polar.pdf'),bbox_inches = 'tight')
 
-plot_in = cortex.quickshow(vertex_polar, depth = 1,thick = 0,height = 1024,sampler = 'nearest',\
-                        with_curvature = True,with_labels = False,with_colorbar = False,\
-                        with_borders = False,curv_brightness = 0.95,curv_contrast = 0.05)
-zoom_to_roi('fsaverage', roi, 'left')
-plt.close(plot_in)
-plot_in.savefig(opj(base_dir,'pp_data',subject,fit_model,'figs','roi','neg','ANG_left.png'),bbox_inches = 'tight')
-
-plot_in = cortex.quickshow(vertex_polar, depth = 1,thick = 0,height = 1024,sampler = 'nearest',\
-                        with_curvature = True,with_labels = False,with_colorbar = False,\
-                        with_borders = False,curv_brightness = 0.95,curv_contrast = 0.05)
-zoom_to_roi('fsaverage', roi, 'right')
-plt.close(plot_in)
-plot_in.savefig(opj(base_dir,'pp_data',subject,fit_model,'figs','roi','neg','ANG_right.png'),bbox_inches = 'tight')
+param_polar = {'data': ang_norm.T, 'cmap': cmap_polar, 'alpha': alpha.T, 'vmin': 0, 'vmax': 1, 'cmap_steps': cmap_steps,\
+                       'curv_brightness': 0.05, 'curv_contrast': 0.1, 'cbar': 'polar', 'col_offset': col_offset,\
+                        'subject': 'fsaverage','add_roi': False, 'zoom_roi': 'ANG', 'zoom_hem': 'right', 'zoom_margin': 1.0}
+vertex_polar = draw_cortex_vertex(**param_polar)
+plt.savefig(opj(svg_folder,'ANG_right_polar.png'),bbox_inches = 'tight')
+plt.savefig(opj(svg_folder,'ANG_right_polar.pdf'),bbox_inches = 'tight')
 
 # -----------------
 # Zoom ROI in bokeh
@@ -178,15 +178,14 @@ x_label_zoom = 'ROI short axis (norm.)'
 y_label_zoom = 'ROI long axis (norm.)'
 
 # Load images
-left_filename = opj(base_dir,'pp_data',subject,fit_model,'figs','roi','neg','ANG_left.png')
+left_filename = opj(svg_folder,'ANG_left_polar.png')
 img_left = mpimg.imread(left_filename)
 img_left = img_left*255.0
 img_left = np.flipud(img_left)
-right_filename = opj(base_dir,'pp_data',subject,fit_model,'figs','roi','neg','ANG_right.png')
+right_filename = opj(svg_folder,'ANG_right_polar.png')
 img_right = mpimg.imread(right_filename)
 img_right = img_right*255.0
 img_right = np.flipud(img_right)
-
 
 # Left ANG
 # --------
@@ -232,8 +231,8 @@ zoom_left.axis.axis_label_text_font_style = 'normal'
 zoom_left.image_rgba(image=[img_left.astype('uint8')], x=-0.05, y=-0.06, dw=1.1,dh=1.1)
 
 # Draw arrow
-arrow_start_left = rotate_pts(arrow_start,arrow_ctr,rot_left)
-arrow_end_left = rotate_pts(arrow_end,arrow_ctr,rot_left)
+arrow_start_left = rotate_pts(arrow_start,arrow_ctr,-rot_left)
+arrow_end_left = rotate_pts(arrow_end,arrow_ctr,-rot_left)
 zoom_left.add_layout(Arrow(end = NormalHead(size = 10,fill_color = 'black', line_color = 'black',line_width = 6), 
                             x_start = arrow_start_left[0], y_start = arrow_start_left[1],
                             x_end = arrow_end_left[0], y_end = arrow_end_left[1], line_color = 'black',line_width = 6))
@@ -288,8 +287,8 @@ zoom_right.axis.axis_label_text_font_style = 'normal'
 zoom_right.image_rgba(image=[img_right.astype('uint8')], x=-0.05, y=-0.06, dw=1.1,dh=1.1)
 
 # Draw arrow
-arrow_start_right = rotate_pts(arrow_start,arrow_ctr,rot_right)
-arrow_end_right = rotate_pts(arrow_end,arrow_ctr,rot_right)
+arrow_start_right = rotate_pts(arrow_start,arrow_ctr,-rot_right)
+arrow_end_right = rotate_pts(arrow_end,arrow_ctr,-rot_right)
 zoom_right.add_layout(Arrow(end = NormalHead(size = 10,fill_color = 'black', line_color= 'black',line_width=6), 
                             x_start = arrow_start_right[0], y_start = arrow_start_right[1],
                             x_end = arrow_end_right[0], y_end = arrow_end_right[1],line_color = 'black',line_width=6))
@@ -330,8 +329,8 @@ ang_coord_right = ang_coord_right[~np.isnan(alpha_right)]
 ang_coord_rot_right = rot_coord(ang_coord_right,rot_right)
 alpha_right = alpha_right[~np.isnan(alpha_right)]
 
-# Polar angle computation
-# -----------------------
+# Polar angle progression computation
+# -----------------------------------
 
 # ANG Left
 # --------
@@ -357,7 +356,7 @@ for tbin,bin_val in enumerate(roi_long_axis):
     bin_left[tbin] = wquantiles.quantile(data = roi_long_left, weights = weights_left, quantile = bin_val)
 
 bin_rsq_left, bin_roi_long_left, bin_angle_left, bin_angle_norm_left = np.zeros(nbins), np.zeros(nbins), np.zeros(nbins), np.zeros(nbins)
-bin_angle_left_ebx, bin_angle_left_std, bin_angle_left_95ci = [],[],[]
+bin_angle_left_ebx, bin_angle_left_std = [],[]
 for bin_left_num in np.arange(0,nbins,1):
     val2pick = np.logical_and(roi_long_left >= bin_left[bin_left_num],roi_long_left <= bin_left[bin_left_num+1])
     # Average
@@ -412,7 +411,7 @@ for tbin,bin_val in enumerate(roi_long_axis):
     bin_right[tbin] = wquantiles.quantile(data = roi_long_right, weights = weights_right, quantile = bin_val)
 
 bin_rsq_right, bin_roi_long_right, bin_angle_right, bin_angle_norm_right = np.zeros(nbins), np.zeros(nbins), np.zeros(nbins), np.zeros(nbins)
-bin_angle_right_ebx, bin_angle_right_std, bin_angle_right_95ci = [],[],[]
+bin_angle_right_ebx, bin_angle_right_std = [],[]
 for bin_right_num in np.arange(0,nbins,1):
     val2pick = np.logical_and(roi_long_right >= bin_right[bin_right_num],roi_long_right <= bin_right[bin_right_num+1])
     
@@ -470,7 +469,7 @@ pp_left.background_fill_color = bg_color
 pp_left.axis.axis_label_standoff = 10
 pp_left.axis.axis_label_text_font_style = 'normal'
 dict_label = {}
-txt_label = ['pi','pi/2','0','-pi/2','-pi']
+txt_label = ['-pi','-pi/2','0','pi/2','pi']
 for val_num, val in enumerate(y_axis_ticker):
     dict_label.update({val: txt_label[val_num]})
 pp_left.yaxis.major_label_overrides = dict_label
@@ -501,7 +500,7 @@ pp_right.background_fill_color = bg_color
 pp_right.axis.axis_label_standoff = 10
 pp_right.axis.axis_label_text_font_style = 'normal'
 dict_label = {}
-txt_label = ['pi','pi/2','0','-pi/2','-pi']
+txt_label = ['-pi','-pi/2','0','pi/2','pi']
 for val_num, val in enumerate(y_axis_ticker):
     dict_label.update({val: txt_label[val_num]})
 pp_right.yaxis.major_label_overrides = dict_label
@@ -522,11 +521,6 @@ fig_bokeh_dir_neg_LR = opj(base_dir,"pp_data",subject,fit_model,"figs","prf","ne
 try: os.makedirs(fig_bokeh_dir_neg)
 except: pass
 output_file_html = opj(fig_bokeh_dir_neg_LR,"ANG_LR_neg_pRFpol.html")
-
-if save_svg == 1:
-    svg_folder = opj(base_dir,"pp_data",subject,fit_model,"figs","svg","neg","LR","ANG_LR_neg_pRFpol")
-    try: os.makedirs(svg_folder)
-    except: pass
 
 output_file(output_file_html, title='Subject: %s | ROI: ANG | Hemisphere: LR | Sign: neg | Figures: pRF polar progression'%subject)
 save(f)

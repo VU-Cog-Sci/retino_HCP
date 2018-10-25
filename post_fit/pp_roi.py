@@ -214,8 +214,7 @@ for mask_dir in ['all','pos','neg']:
 
     # Eccentricity
     ecc_data = deriv_mat[ecc_idx,:]
-    param_ecc = {'data': ecc_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 10,'curv_brightness': 0.05,\
-                 'curv_contrast': 0.1,'cbar': 'ecc'}
+    param_ecc = {'data': ecc_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 8,'cbar': 'ecc'}
     vertex_names.append('ecc')
 
     # Sign
@@ -225,7 +224,7 @@ for mask_dir in ['all','pos','neg']:
     
     # Size
     size_data = deriv_mat[size_idx,:]
-    param_size = {'data': size_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 10, 'cbar': 'discrete'}
+    param_size = {'data': size_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 8, 'cbar': 'discrete'}
     vertex_names.append('size')
 
     # Amplitude

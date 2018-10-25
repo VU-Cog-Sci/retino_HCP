@@ -293,7 +293,7 @@ def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps 
                         alpha = None,depth = 1,thick = 1,height = 1024,sampler = 'nearest',\
                         with_curvature = True,with_labels = False,with_colorbar = False,\
                         with_borders = False,curv_brightness = 0.95,curv_contrast = 0.05,add_roi = False,\
-                        roi_name = 'empty',col_offset = 0):
+                        roi_name = 'empty',col_offset = 0, zoom_roi = None, zoom_hem = None, zoom_margin = 0.0):
     """
     Plot brain data onto a previously saved flatmap.
 
@@ -320,6 +320,9 @@ def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps 
     add_roi             : add roi -image- to overlay.svg
     roi_name            : roi name
     col_offset          : colormap offset between 0 and 1
+    zoom_roi            : name of the roi on which to zoom on
+    zoom_hem            : hemifield fo the roi zoom
+    zoom_margin         : margin in mm around the zoom
 
     Returns
     -------
@@ -355,147 +358,127 @@ def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps 
                                     subject = subject,
                                     )
     
-    vertex_rgb_fig = cortex.quickflat.make_figure(  braindata = vertex_rgb,
-                                                    depth = depth,
-                                                    thick = thick,
-                                                    height = height,
-                                                    sampler = sampler,
-                                                    with_curvature = with_curvature,
-                                                    with_labels = with_labels,
-                                                    with_colorbar = with_colorbar,
-                                                    with_borders = with_borders,
-                                                    curvature_brightness = curv_brightness,
-                                                    curvature_contrast = curv_contrast)
+    vertex_rgb_fig = cortex.quickshow(  braindata = vertex_rgb,
+                                        depth = depth,
+                                        thick = thick,
+                                        height = height,
+                                        sampler = sampler,
+                                        with_curvature = with_curvature,
+                                        with_labels = with_labels,
+                                        with_colorbar = with_colorbar,
+                                        with_borders = with_borders,
+                                        curvature_brightness = curv_brightness,
+                                        curvature_contrast = curv_contrast)
     
-    # Color bars
-    if cbar == 'polar':
+    zoom_plot = []
+    if zoom_roi != None:
+        roi_verts = cortex.get_roi_verts(subject, zoom_roi)[zoom_roi]
+        roi_map = cortex.Vertex.empty(subject)
+        roi_map.data[roi_verts] = 1
 
-        # Polar angle color bar
-        colorbar_location = [0.5, 0.07, 0.8, 0.2]
-        n = 200
-        cbar_axis = vertex_rgb_fig.add_axes(colorbar_location, projection='polar')
-        norm = mpl.colors.Normalize(0, 2*np.pi)
-
-        # Plot a color mesh on the polar plot
-        # with the color set by the angle
-        t = np.linspace(2*np.pi,0,n)
-        r = np.linspace(1,0,2)
-        rg, tg = np.meshgrid(r,t)
-        c = tg
-        im = cbar_axis.pcolormesh(t, r, c.T,norm= norm, cmap = colmap)
-        cbar_axis.set_theta_zero_location("W")
-        cbar_axis.set_yticklabels([])
-        cbar_axis.set_xticklabels([])
-        cbar_axis.spines['polar'].set_visible(False)
-
-    elif cbar == 'ecc':
-    
-        # Ecc color bar
-        colorbar_location = [0.5, 0.07, 0.8, 0.2]
-        n = 200
-        cbar_axis = vertex_rgb_fig.add_axes(colorbar_location, projection='polar')
-
-        t = np.linspace(0,2*np.pi, n)
-        r = np.linspace(0,1, n)
-        rg, tg = np.meshgrid(r,t)
-        c = tg
+        (lflatpts, lpolys), (rflatpts, rpolys) = cortex.db.get_surf(subject, "flat", nudge=True)
+        sel_pts = dict(left=lflatpts, right=rflatpts)[zoom_hem]
+        roi_pts = sel_pts[np.nonzero(getattr(roi_map, zoom_hem))[0],:2]
         
-        im = cbar_axis.pcolormesh(t, r, c, norm = mpl.colors.Normalize(0, 2*np.pi), cmap = colmap)
-        cbar_axis.tick_params(pad = 1,labelsize = 15)
-        cbar_axis.spines['polar'].set_visible(False)
+        xmin, ymin = roi_pts.min(0) - zoom_margin
+        xmax, ymax = roi_pts.max(0) + zoom_margin
+        zoom_width = roi_pts.max(0)[0]- roi_pts.min(0)[0]
+        zoom_height = roi_pts.max(0)[1]- roi_pts.min(0)[1]
+        sqr_zoom_size = np.round(np.max([zoom_width,zoom_height]))*1.1
+        zoom_ctr_x = np.mean([roi_pts.max(0)[0],roi_pts.min(0)[0]])
+        zoom_ctr_y = np.mean([roi_pts.max(0)[1],roi_pts.min(0)[1]])
+        mat = [zoom_ctr_x-sqr_zoom_size/2.0,zoom_ctr_x+sqr_zoom_size/2.0,zoom_ctr_y-sqr_zoom_size/2.0,zoom_ctr_y+sqr_zoom_size/2.0]
+        zoom_plot = pl.axis(mat)
+    else:
         
-        # superimpose new axis for dva labeling
-        box = cbar_axis.get_position()
-        cbar_axis.set_yticklabels([])
-        cbar_axis.set_xticklabels([])
-        axl = vertex_rgb_fig.add_axes(  [1.8*box.xmin,
-                                    0.5*(box.ymin+box.ymax),
-                                    box.width/600,
-                                    box.height*0.5],
-                                    axisbg = None)
-        axl.spines['top'].set_visible(False)
-        axl.spines['right'].set_visible(False)
-        axl.spines['bottom'].set_visible(False)
-        axl.yaxis.set_ticks_position('right')
-        axl.xaxis.set_ticks_position('none')
-        axl.set_xticklabels([])
-        axl.set_yticklabels(np.linspace(vmin,vmax,3),size = 'x-large')
-        axl.set_ylabel('$dva$\t\t', rotation = 0, size = 'x-large')
-        axl.yaxis.set_label_coords(box.xmax+30,0.4)
-        axl.patch.set_alpha(0.5)
+        if cbar == 'polar':
 
-    elif cbar == 'discrete':
+            # Polar angle color bar
+            colorbar_location = [0.5, 0.07, 0.8, 0.2]
+            n = 200
+            cbar_axis = vertex_rgb_fig.add_axes(colorbar_location, projection='polar')
+            norm = mpl.colors.Normalize(0, 2*np.pi)
 
-        # Discrete color bars
-        # -------------------
-        colorbar_location= [0.9, 0.05, 0.03, 0.25]
-        cmaplist = [colmap(i) for i in range(colmap.N)]
+            # Plot a color mesh on the polar plot
+            # with the color set by the angle
+            t = np.linspace(2*np.pi,0,n)
+            r = np.linspace(1,0,2)
+            rg, tg = np.meshgrid(r,t)
+            c = tg
+            im = cbar_axis.pcolormesh(t, r, c.T,norm= norm, cmap = colmap)
+            cbar_axis.set_theta_zero_location("W")
+            cbar_axis.set_yticklabels([])
+            cbar_axis.set_xticklabels([])
+            cbar_axis.spines['polar'].set_visible(False)
 
-        # define the bins and normalize
-        bounds = np.linspace(vmin, vmax, cmap_steps + 1)
-        bounds_label = np.linspace(vmin, vmax, 3)
-        norm = mpl.colors.BoundaryNorm(bounds, colmap.N)
+        elif cbar == 'ecc':
         
-        cbar_axis = vertex_rgb_fig.add_axes(colorbar_location)
-        cb = mpl.colorbar.ColorbarBase(cbar_axis,cmap = colmap,norm = norm,ticks = bounds_label,boundaries = bounds)
+            # Ecc color bar
+            colorbar_location = [0.5, 0.07, 0.8, 0.2]
+            n = 200
+            cbar_axis = vertex_rgb_fig.add_axes(colorbar_location, projection='polar')
 
-    # add to overalt
-    if add_roi == True:
-        cortex.utils.add_roi(   data = vertex_rgb,
-                                name = roi_name,
-                                open_inkscape = False,
-                                add_path = False,
-                                depth = depth,
-                                thick = thick,
-                                sampler = sampler,
-                                with_curvature = with_curvature,
-                                with_colorbar = with_colorbar,
-                                with_borders = with_borders,
-                                curvature_brightness = curv_brightness,
-                                curvature_contrast = curv_contrast)
-    
+            t = np.linspace(0,2*np.pi, n)
+            r = np.linspace(0,1, n)
+            rg, tg = np.meshgrid(r,t)
+            c = tg
+            
+            im = cbar_axis.pcolormesh(t, r, c, norm = mpl.colors.Normalize(0, 2*np.pi), cmap = colmap)
+            cbar_axis.tick_params(pad = 1,labelsize = 15)
+            cbar_axis.spines['polar'].set_visible(False)
+            
+            # superimpose new axis for dva labeling
+            box = cbar_axis.get_position()
+            cbar_axis.set_yticklabels([])
+            cbar_axis.set_xticklabels([])
+            axl = vertex_rgb_fig.add_axes(  [1.8*box.xmin,
+                                        0.5*(box.ymin+box.ymax),
+                                        box.width/600,
+                                        box.height*0.5],
+                                        axisbg = None)
+            axl.spines['top'].set_visible(False)
+            axl.spines['right'].set_visible(False)
+            axl.spines['bottom'].set_visible(False)
+            axl.yaxis.set_ticks_position('right')
+            axl.xaxis.set_ticks_position('none')
+            axl.set_xticklabels([])
+            axl.set_yticklabels(np.linspace(vmin,vmax,3),size = 'x-large')
+            axl.set_ylabel('$dva$\t\t', rotation = 0, size = 'x-large')
+            axl.yaxis.set_label_coords(box.xmax+30,0.4)
+            axl.patch.set_alpha(0.5)
+
+        elif cbar == 'discrete':
+
+            # Discrete color bars
+            # -------------------
+            colorbar_location= [0.9, 0.05, 0.03, 0.25]
+            cmaplist = [colmap(i) for i in range(colmap.N)]
+
+            # define the bins and normalize
+            bounds = np.linspace(vmin, vmax, cmap_steps + 1)
+            bounds_label = np.linspace(vmin, vmax, 3)
+            norm = mpl.colors.BoundaryNorm(bounds, colmap.N)
+            
+            cbar_axis = vertex_rgb_fig.add_axes(colorbar_location)
+            cb = mpl.colorbar.ColorbarBase(cbar_axis,cmap = colmap,norm = norm,ticks = bounds_label,boundaries = bounds)
+
+        # add to overalt
+        if add_roi == True:
+            cortex.utils.add_roi(   data = vertex_rgb,
+                                    name = roi_name,
+                                    open_inkscape = False,
+                                    add_path = False,
+                                    depth = depth,
+                                    thick = thick,
+                                    sampler = sampler,
+                                    with_curvature = with_curvature,
+                                    with_colorbar = with_colorbar,
+                                    with_borders = with_borders,
+                                    curvature_brightness = curv_brightness,
+                                    curvature_contrast = curv_contrast)
+
     return vertex_rgb
 
-def zoom_to_roi(subject, roi, hem, margin=1.0):
-    """
-    -----------------------------------------------------------------------------------------
-    zoom_to_roi(subject, roi, hem, margin=1.0):
-    -----------------------------------------------------------------------------------------
-    Goal of the script:
-    Draw a zoon on roi
-    -----------------------------------------------------------------------------------------
-    Input(s):
-    subject: subject name
-    roi: roi name
-    hem: hemifield
-    margin: mm out of ROI
-    -----------------------------------------------------------------------------------------
-    Output(s):
-    None
-    -----------------------------------------------------------------------------------------
-    """
-
-    
-    roi_verts = cortex.get_roi_verts(subject, roi)[roi]
-    roi_map = cortex.Vertex.empty(subject)
-    roi_map.data[roi_verts] = 1
-
-    (lflatpts, lpolys), (rflatpts, rpolys) = cortex.db.get_surf(subject, "flat",
-                                                                nudge=True)
-    sel_pts = dict(left=lflatpts, right=rflatpts)[hem]
-    roi_pts = sel_pts[np.nonzero(getattr(roi_map, hem))[0],:2]
-    
-    xmin, ymin = roi_pts.min(0) - margin
-    xmax, ymax = roi_pts.max(0) + margin
-    zoom_width = roi_pts.max(0)[0]- roi_pts.min(0)[0]
-    zoom_height = roi_pts.max(0)[1]- roi_pts.min(0)[1]
-    sqr_zoom_size = np.round(np.max([zoom_width,zoom_height]))*1.1
-    zoom_ctr_x = np.mean([roi_pts.max(0)[0],roi_pts.min(0)[0]])
-    zoom_ctr_y = np.mean([roi_pts.max(0)[1],roi_pts.min(0)[1]])
-    mat = [zoom_ctr_x-sqr_zoom_size/2.0,zoom_ctr_x+sqr_zoom_size/2.0,zoom_ctr_y-sqr_zoom_size/2.0,zoom_ctr_y+sqr_zoom_size/2.0]
-    zoom_plot = pl.axis(mat)
-    
-    return None
 
 def roi_coord_mask(roi,hem,subject = 'fsaverage'):
     """
