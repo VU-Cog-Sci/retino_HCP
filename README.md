@@ -24,7 +24,6 @@ martin_dev branch
 
 # TO DO
 # -----
-# 01. copy dropbox notebook of eccentricity progression in aeneas file
 # 01. check summary plot use average weighted and correct error bars and see what is going on without threhsold
 # 02. make error bar for subject 999999
 # 04. change ecc plots to not have baseline and amplitude incorporated for all subjects
