@@ -1,11 +1,15 @@
 ## retino_HCP
 
-martin_dev branch
------------------
+martin_dev_indiv branch
+-----------------------
 
-## Analysis specifics
+## Analysis specificsd
 ---------------------
-- HCP subjects were first pre-processed and averaged by Tomas
+- individual subjects are first preprocessed using FMRIPREP
+- good registration runs are kept for analysis
+- data are sg filter, psc and averaged within subjects
+
+
 - Best subjects (based on R2 of V1 voxel selected by glasser2016 attlas) were chosen using data
   issued from Benson et al (http://dx.doi.org/10.1101/308247)
 - pRF parameters are extracted using fit/submit_fit_jobs.py on Lisa for css and gaussian model
