@@ -60,11 +60,11 @@ if 'aeneas' in platform.uname()[1]:
 elif 'lisa' in platform.uname()[1]:
     base_dir = analysis_info['lisa_base_folder'] 
     
-# Copy files in pp_data folder
+# Copy files in raw_data folder
 # ----------------------------
 for sub_name in analysis_info['subject_list'] :
     sub_session = select_block["{sub}_sessions".format(sub = sub_name)]
-    dest_folder = "{base_dir}/pp_data/{sub}".format(base_dir = base_dir, sub = sub_name)
+    dest_folder = "{base_dir}/raw_data/{sub}".format(base_dir = base_dir, sub = sub_name)
     try: os.makedirs(dest_folder)
     except: pass
       
@@ -92,7 +92,7 @@ for sub_name in analysis_info['subject_list'] :
     # SG + PSC
     # --------
     print(sub_name+': sg + psc')
-    file_list = sorted(glob.glob("{base_dir}/pp_data/{sub}/*func.gii".format(base_dir = base_dir, sub = sub_name)))
+    file_list = sorted(glob.glob("{base_dir}/raw_data/{sub}/*func.gii".format(base_dir = base_dir, sub = sub_name)))
     for file in file_list:
         print(file)
         # load
@@ -128,7 +128,7 @@ for sub_name in analysis_info['subject_list'] :
     # ------------
     print(sub_name+': average runs')
     for hemi in ['L','R']:
-        file_list = sorted(glob.glob("{base_dir}/pp_data/{sub}/*{hemi}.func_sg_psc.gii".format(base_dir = base_dir, sub = sub_name, hemi = hemi)))
+        file_list = sorted(glob.glob("{base_dir}/raw_data/{sub}/*{hemi}.func_sg_psc.gii".format(base_dir = base_dir, sub = sub_name, hemi = hemi)))
 
         pp_hemi_sg_psc_avg = np.zeros((120,40962))
         for file in file_list:
@@ -143,7 +143,7 @@ for sub_name in analysis_info['subject_list'] :
             pp_hemi_sg_psc_avg += pp_hemi_sg_psc/len(file_list)
 
         # save
-        gii_out_name = "{base_dir}/pp_data/{sub}/{sub}_task-prf_space-fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, 
+        gii_out_name = "{base_dir}/raw_data/{sub}/{sub}_task-prf_space-fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, 
                                                                                                                      sub = sub_name, 
                                                                                                                      hemi = hemi)
 
@@ -160,7 +160,7 @@ for sub_name in analysis_info['subject_list'] :
     hemi_mat=[]
     for hemi in ['L','R']:
         # load
-        hemi_filename = "{base_dir}/pp_data/{sub}/{sub}_task-prf_space-fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, 
+        hemi_filename = "{base_dir}/raw_data/{sub}/{sub}_task-prf_space-fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, 
                                                                                                                       sub = sub_name, 
                                                                                                                       hemi = hemi)
         hemi_file = nb.load(hemi_filename)
@@ -171,7 +171,7 @@ for sub_name in analysis_info['subject_list'] :
     hemi_mat = np.hstack(hemi_mat)
     
     # save
-    gii_out_name = "{base_dir}/pp_data/{sub}/{sub}_task-prf_space-fsaverage6.func_sg_psc.gii".format(base_dir = base_dir, 
+    gii_out_name = "{base_dir}/raw_data/{sub}/{sub}_task-prf_space-fsaverage6.func_sg_psc.gii".format(base_dir = base_dir, 
                                                                                                      sub = sub_name)
     darrays_hemi_mat = [nb.gifti.gifti.GiftiDataArray(d) for d in hemi_mat]
     gii_out = nb.gifti.gifti.GiftiImage(header = hemi_file.header,
