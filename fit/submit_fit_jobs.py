@@ -126,8 +126,7 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
 
     if 'lisa' in platform.uname()[1]:
         os.chdir(opj(base_dir,'pp_data',subject,fit_model,'log_outputs'))
-        os.system('qsub ' + js_name)
+        os.system('sbatch ' + js_name)
         
     elif 'aeneas' in platform.uname()[1]:
-        deb()
         os.system('sh ' + js_name)   
