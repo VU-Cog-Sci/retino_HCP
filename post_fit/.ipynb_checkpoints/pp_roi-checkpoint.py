@@ -18,6 +18,7 @@ To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
 python post_fit/pp_roi.py sub-01 gauss 2500
+python post_fit/pp_roi.py sub-02 gauss 2500
 -----------------------------------------------------------------------------------------
 """
 
@@ -43,6 +44,7 @@ deb = ipdb.set_trace
 # -----------
 import nibabel as nb
 import cortex
+from nipype.interfaces.freesurfer import SurfaceTransform
 
 # Functions import
 # ----------------
@@ -71,16 +73,14 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
-    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
-elif 'local' in platform.uname()[1]:
-    base_dir = analysis_info['local_base_folder'] 
-    main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
+elif 'lisa' in platform.uname()[1]:
+    base_dir = analysis_info['lisa_base_folder'] 
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 
 # determine number of vertex and time_serie
 data = []
 data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,"{bfn}.gii".format(bfn = base_file_name))))
-data_file_load = nb.load(data_file)
+data_file_load = nb.load(data_file[0])
 data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
 data = np.vstack(data) 
 ts_num,vox_num = data.shape[0],data.shape[1]
@@ -102,8 +102,8 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
             num_miss_part += 1 
         else:
             fit_est_files_job.append(fit_est_file)
-        else:
-            num_miss_part += 1
+    else:
+        num_miss_part += 1
 
 if num_miss_part != 0:
     sys.exit('%i missing files, analysis stopped'%num_miss_part)
@@ -121,46 +121,48 @@ for fit_filename in fit_est_files_job:
     data_fit = np.vstack(data_fit)
     data = data + data_fit
 
-darrays_est = [nb.gifti.gifti.GiftiDataArray(d) for d in data]
-gii_out = nb.gifti.gifti.GiftiImage(header = data_fit_file.header, 
-                                    extra = data_fit_file.extra,
-                                    darrays = darrays_est)
-prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}_est.gii".format(bfn =base_file_name))
-nb.save(gii_out_{hemi}, prf_filename)
+# Seperate hemi files
+# -------------------
+data_L = data[:,0:vox_num/2]
+data_R = data[:,vox_num/2:vox_num]
+
+vox_num = vox_num/2.0
+for hemi in ['L','R']:
+    exec("darrays_est_{hemi} = [nb.gifti.gifti.GiftiDataArray(d) for d in data_{hemi}]".format(hemi = hemi))
+    exec("gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file.header, extra = data_fit_file.extra, darrays = darrays_est_{hemi})".format(hemi = hemi))
+    exec("prf_filename_{hemi} = opj(base_dir,'pp_data',subject,fit_model,'fit','{bfn}_est_{hemi}.gii')".format(bfn =base_file_name, hemi = hemi))
+    exec("nb.save(gii_out_{hemi}, prf_filename_{hemi})".format(hemi = hemi))
 
 # Compute derived measures from prfs
 # ----------------------------------
 print('extracting pRF derivatives')
-
-convert_fit_results(prf_filename = prf_filename,
-                    output_dir = deriv_dir,
-                    stim_width = analysis_info['stim_width'],
-                    stim_height = analysis_info['stim_height'],
-                    fit_model = fit_model)
+for hemi in ['L','R']:
+    exec("prf_filename = prf_filename_{hemi}".format(hemi = hemi)) 
+    convert_fit_results(prf_filename = prf_filename,
+                        output_dir = deriv_dir,
+                        hemi = hemi,
+                        stim_width = analysis_info['stim_width'],
+                        stim_height = analysis_info['stim_height'],
+                        fit_model = fit_model)
 
 # Resample gii to fsaverage
 # -------------------------
 print('converting derivative files to fsaverage')
-resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+sxfm = SurfaceTransform()
+sxfm.inputs.source_subject = "fsaverage6"
+sxfm.inputs.target_subject = "fsaverage"
+sxfm.terminal_output = 'none'
+
 for hemi in ['L','R']:
-
-    current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.{num_vox_k}k_fs_LR.surf.gii'.format(hemi=hemi, num_vox_k = int(np.round(vox_num/1000))))
-    new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-    current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.{num_vox_k}k_fs_LR.shape.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
-    new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
-
-    for mask_dir in ['all','pos','neg']:
+    sxfm.inputs.subjects_dir = opj(base_dir,'derivatives','freesurfer')
+    if hemi == 'L': sxfm.inputs.hemi = "lh"
+    elif hemi == 'R': sxfm.inputs.hemi = "rh"
         
-    metric_in = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
-    metric_out = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
-
-    os.system(resample_cmd.format(  main_cmd = main_cmd,
-                                    metric_in = metric_in, 
-                                    current_sphere = current_sphere, 
-                                    new_sphere = new_sphere, 
-                                    metric_out = metric_out, 
-                                    current_area = current_area, 
-                                    new_area = new_area))
+    for mask_dir in ['all','pos','neg']:
+        sxfm.inputs.source_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+        sxfm.inputs.out_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.gii".format(hemi = hemi, mask_dir = mask_dir))
+        print(sxfm.inputs.out_file)
+        sxfm.run()
 
 # Change cortex database folder
 # -----------------------------
@@ -181,7 +183,7 @@ sign_idx, rsq_idx, ecc_idx, polar_real_idx, polar_imag_idx , size_idx, \
             non_lin_idx, amp_idx, baseline_idx, cov_idx, x_idx, y_idx = 0,1,2,3,4,5,6,7,8,9,10,11
 
 for mask_dir in ['all','pos','neg']:
-    
+
     # Create figure folders
     vertex_names = []
     all_vertex   = []
@@ -192,21 +194,21 @@ for mask_dir in ['all','pos','neg']:
     # Combine hemispheres
     deriv_mat=[]
     for hemi in ['L','R']:
-        deriv_file = nb.load(opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir)))
+        deriv_file = nb.load(opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.gii".format(hemi = hemi, mask_dir = mask_dir)))
         deriv_mat.append(np.array([deriv_file.darrays[i].data for i in range(len(deriv_file.darrays))]))
     deriv_mat = np.hstack(deriv_mat)
-
+    
     # R-square
     rsq_data = deriv_mat[rsq_idx,:]
     alpha = rsq_data
     param_rsq = {'subject': 'fsaverage', 'data': rsq_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': 0,'vmax': 1,'cbar': 'discrete'}
     vertex_names.append('rsq')
-    
+
     # Polar angle
     pol_comp_num = deriv_mat[polar_real_idx,:] + 1j * deriv_mat[polar_imag_idx,:]
     polar_ang = np.angle(pol_comp_num)
     ang_norm = (polar_ang + np.pi) / (np.pi * 2.0)
-    
+
     for cmap_steps in polar_col_steps:
         param_polar = {'data': ang_norm.T, 'cmap': cmap_polar, 'alpha': alpha.T, 'vmin': 0, 'vmax': 1, 'cmap_steps': cmap_steps,\
                        'curv_brightness': 0.05, 'curv_contrast': 0.1, 'cbar': 'polar', 'col_offset': col_offset}
@@ -222,7 +224,7 @@ for mask_dir in ['all','pos','neg']:
     sign_data = deriv_mat[sign_idx,:]
     param_sign = {'data': sign_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 1, 'cbar': 'discrete'}
     vertex_names.append('sign')
-    
+
     # Size
     size_data = deriv_mat[size_idx,:]
     param_size = {'data': size_data.T, 'cmap': cmap_ecc_size, 'alpha': alpha.T, 'vmin': 0, 'vmax': 8, 'cbar': 'discrete'}
@@ -243,7 +245,7 @@ for mask_dir in ['all','pos','neg']:
     param_baseline = {'data': baseline_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -0.5, 'vmax': 0.5,\
                       'curv_brightness': 0.05, 'curv_contrast': 0.1,'cbar': 'discrete'}
     vertex_names.append('baseline')
-    
+
     # Non-linearity
     non_lin_data = deriv_mat[non_lin_idx,:]
     param_non_lin = {'data': non_lin_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': 0, 'vmax': 1.5, 'cbar': 'discrete'}
@@ -277,7 +279,7 @@ for mask_dir in ['all','pos','neg']:
         exec('pl.savefig(opj(fig_roi_dir_{mask_dir}, "{vertex_name}_{mask_dir}.pdf"),facecolor="w")'.format(mask_dir=mask_dir,vertex_name = vertex_name))
         if fit_model == 'gauss' and subject == '999999': 
             dataset_webgl.append(**{vertex_name:vertex_rgb})
-    
+
     if fit_model == 'gauss' and subject == '999999': 
         print('saving dataset: {dataset_name}'.format(dataset_name = dataset_name))
         print('cortex.webgl.make_static(outpath = os.path.join(fig_roi_dir_{mask_dir}, data = dataset_name, recache = True))'.format(mask_dir = mask_dir))

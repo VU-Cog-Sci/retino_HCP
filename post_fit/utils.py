@@ -63,8 +63,9 @@ def set_pycortex_config_file(project_folder):
 
 def convert_fit_results(prf_filename,
                         output_dir,
+                        hemi,
                         stim_width,
-                        stim_height
+                        stim_height,
                         fit_model):
     """
     Convert pRF fitting value in different parameters for following analysis
@@ -73,15 +74,16 @@ def convert_fit_results(prf_filename,
     ----------
     prf_filename: absolute paths to prf result files.
     output_dir: absolute path to directory into which to put the resulting files.
+    hemi: hemisphere
     stim_width: stimulus width in deg
     stim_heigth: stimulus height in deg
     fit_model: fit model ('gauss','css')
 
     Returns
     -------
-    prf_deriv_all: derivative of pRF analysis for all pRF voxels
-    prf_deriv_neg: derivative of pRF analysis for all negative pRF voxels
-    prf_deriv_pos: derivative of pRF analysis for all positive pRF voxels
+    prf_deriv_L_all and  prf_deriv_R_all: derivative of pRF analysis for all pRF voxels
+    prf_deriv_L_neg and  prf_deriv_R_neg : derivative of pRF analysis for all negative pRF voxels
+    prf_deriv_L_pos and  prf_deriv_R_pos : derivative of pRF analysis for all positive pRF voxels
 
     stucture output:
     columns: 1->size of input
@@ -127,7 +129,7 @@ def convert_fit_results(prf_filename,
     # Get data details
     # ----------------
     prf_data = []
-    prf_data_load = nb.load(prf_filename[0])
+    prf_data_load = nb.load(prf_filename)
     prf_data.append(np.array([prf_data_load.darrays[i].data for i in range(len(prf_data_load.darrays))]))
     prf_data = np.vstack(prf_data)    
     ext = prf_data_load.extra
@@ -194,8 +196,8 @@ def convert_fit_results(prf_filename,
         rfs = rfs ** prf_data[non_lin_idx,:]
 
     total_prf_content = rfs.reshape((-1, prf_data.shape[1])).sum(axis=0)
-    log_x = np.logical_and(deg_x >= stim_width/2, deg_x <= stim_width/2)
-    log_y = np.logical_and(deg_y >= stim_height/2, deg_y <= stim_height/2)
+    log_x = np.logical_and(deg_x >= stim_width/2.0, deg_x <= stim_width/2.0)
+    log_y = np.logical_and(deg_y >= stim_height/2.0, deg_y <= stim_height/2.0)
     stim_vignet = np.logical_and(log_x,log_y)
     prf_cov_all = rfs[stim_vignet, :].sum(axis=0) / total_prf_content
 
@@ -205,10 +207,9 @@ def convert_fit_results(prf_filename,
     # pRF y
     prf_y_all = prf_data[y_idx,:]
 
-    # Saving
-    # ------
+    
     for mask_dir in ['all','pos','neg']:
-        print('saving: %s'%('os.path.join(output_dir,"{mask_dir}","prf_deriv_{mask_dir}.gii")'.format(mask_dir = mask_dir)))
+        print('saving: %s'%('os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii")'.format(hemi = hemi, mask_dir = mask_dir)))
         for output_type in ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov','prf_x','prf_y']:
             exec('{output_type}_{mask_dir} = np.copy({output_type}_all)'.format(mask_dir = mask_dir, output_type = output_type))
             exec('{output_type}_{mask_dir}[~{mask_dir}_mask] = np.nan'.format(mask_dir = mask_dir, output_type = output_type))
@@ -220,9 +221,10 @@ def convert_fit_results(prf_filename,
         exec('prf_deriv_{mask_dir} = prf_deriv_{mask_dir}.astype(np.float32)'.format(mask_dir = mask_dir))
         exec('darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in prf_deriv_{mask_dir}]'.format(mask_dir = mask_dir))
         exec('gii_out = nb.gifti.gifti.GiftiImage(header = hdr, extra = ext, darrays = darrays)')
-        exec('nb.save(gii_out,os.path.join(output_dir,"{mask_dir}","prf_deriv_{mask_dir}.gii"))'.format(mask_dir = mask_dir))
+        exec('nb.save(gii_out,os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii"))'.format(hemi = hemi, mask_dir = mask_dir))
 
     return None
+    
 
 def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     """masks data in in_file with mask in mask_file,
