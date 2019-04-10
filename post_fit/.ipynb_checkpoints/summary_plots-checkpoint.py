@@ -470,7 +470,6 @@ if save_svg == 1:
                 'lat_roi_fig_all_dmn':      lat_roi_fig_all[2],
                 }
 
-
     # save figure
     for fig in fig_dict:
         fig_dict[fig].output_backend = 'svg'
