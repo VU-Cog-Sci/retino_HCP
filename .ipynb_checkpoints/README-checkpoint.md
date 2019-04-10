@@ -3,7 +3,7 @@
 martin_dev_indiv branch
 -----------------------
 
-## Analysis specificsd
+## Analysis specifics
 ---------------------
 - individual subjects are first preprocessed using FMRIPREP on LISA, see pre_fit/fmriprep_lisa.py
 - Well registrered runs were kept for analysis, see select_block.json
@@ -14,7 +14,7 @@ martin_dev_indiv branch
 - each ROI masks are and saved in hdf5 files using post_pp_roi.py
 - roi plots for Vision and DMM rois are plotted with bokeh using roi_plots.py
 
-- summary statistics per participants are extracted in extract_sum.py
+- Compute summary statistics per participants using extract_sum.py
 - polar angle progression over ANG using polar_prog.py
 
 
