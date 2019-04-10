@@ -263,7 +263,6 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     import ipdb
     deb = ipdb.set_trace
 
-
     gii_in_data = nb.load(in_file)
     data_mat = np.array([gii_in_data.darrays[i].data for i in range(len(gii_in_data.darrays))])
     data_name = op.split(in_file)[-1].split('.gii')[0]

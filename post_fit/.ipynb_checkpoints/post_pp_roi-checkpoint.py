@@ -44,6 +44,7 @@ deb = ipdb.set_trace
 # -----------
 import nibabel as nb
 import cortex
+from nipype.interfaces.freesurfer import SurfaceTransform
 
 # Functions import
 # ----------------
@@ -106,14 +107,6 @@ elif fit_model == 'css':
 
     num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
     
-# Determine number of vertex and time_serie
-# -----------------------------------------
-data = []
-data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*.func_bla_psc_av.gii')))
-data_file_load = nb.load(data_file[0])
-data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
-data = np.vstack(data) 
-ts_num,vox_num = data.shape[0],data.shape[1]
 
 # Check system
 # ------------
@@ -126,6 +119,7 @@ set_pycortex_config_file(   project_folder = pycortex_folder)
 
 # Create mask from overlay.svg
 # ----------------------------
+# make fsaverage roi masks
 print('creating roi masks from overlay.svg')
 masks = cortex.utils.get_roi_verts( subject = 'fsaverage', 
                                     roi = analysis_info['rois'], 
@@ -136,40 +130,38 @@ for roi in analysis_info['rois']:
 mat_masks = np.vstack(mat_masks)
 mat_masks = mat_masks.astype('float32')
 
-prf_deriv_L_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_L_all_fsaverage.func.gii'))
+prf_deriv_L_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_L_all_fsaverage.gii'))
 mat_masks_L = mat_masks[:,0:163842]
 darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in mat_masks_L]
 gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_L_all_fsaverage.header,
                                     extra = prf_deriv_L_all_fsaverage.extra,
                                     darrays = darrays)
-nb.save(gii_out,opj(roi_masks_dir,"masks_L_fsaverage.func.gii"))
+nb.save(gii_out,opj(roi_masks_dir,"masks_L_fsaverage.gii"))
 
-prf_deriv_R_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_R_all_fsaverage.func.gii'))
+prf_deriv_R_all_fsaverage = nb.load(opj(deriv_dir,'all','prf_deriv_R_all_fsaverage.gii'))
 mat_masks_R = mat_masks[:,163842:327684]
 darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in mat_masks_R]
 gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_R_all_fsaverage.header, 
                                     extra = prf_deriv_R_all_fsaverage.extra, 
                                     darrays = darrays)
-nb.save(gii_out,opj(roi_masks_dir,"masks_R_fsaverage.func.gii"))
+nb.save(gii_out,opj(roi_masks_dir,"masks_R_fsaverage.gii"))
 
-resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+# convert roi masks to fsaverage6
+print('converting roi masks files to fsaverage6')
+sxfm = SurfaceTransform()
+sxfm.inputs.source_subject = "fsaverage"
+sxfm.inputs.target_subject = "fsaverage6"
+sxfm.terminal_output = 'none'
+
 for hemi in ['L','R']:
-
-    current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-    new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.{num_vox_k}k_fs_LR.surf.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
-    current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
-    new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.{num_vox_k}k_fs_LR.shape.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
-
-    metric_in = opj(roi_masks_dir,"masks_{hemi}_fsaverage.func.gii".format(hemi = hemi))
-    metric_out = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
-
-    os.system(resample_cmd.format(  main_cmd = main_cmd,
-                                    metric_in = metric_in, 
-                                    current_sphere = current_sphere, 
-                                    new_sphere = new_sphere, 
-                                    metric_out = metric_out, 
-                                    current_area = current_area, 
-                                    new_area = new_area))
+    sxfm.inputs.subjects_dir = opj(base_dir,'derivatives','freesurfer')
+    if hemi == 'L': sxfm.inputs.hemi = "lh"
+    elif hemi == 'R': sxfm.inputs.hemi = "rh"
+        
+    sxfm.inputs.source_file = opj(roi_masks_dir,"masks_{hemi}_fsaverage.gii".format(hemi = hemi))
+    sxfm.inputs.out_file = opj(roi_masks_dir,"masks_{hemi}_fsaverage6.gii".format(hemi = hemi))
+    print(sxfm.inputs.out_file)
+    sxfm.run()
 
 # Save ROIS data in hdf5
 # ----------------------
@@ -184,7 +176,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
     for hemi in ['L','R']:
 
-        mask_file = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
+        mask_file = opj(roi_masks_dir,"masks_{hemi}_fsaverage6.gii".format(hemi = hemi))
         
         for mask_dir in ['all','pos','neg']:
             
