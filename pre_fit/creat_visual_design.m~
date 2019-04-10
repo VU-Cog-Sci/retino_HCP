@@ -28,6 +28,6 @@ stim = single(stim);
 % save('/Users/martin/disks/ae_S/2018/visual/nprf_indiv/raw_data/vis_design.mat','stim');
 
 close all
-for t=30:32;imshow(stim(:,:,t));pause(0.1);
+for t=17:39;imshow(stim(:,:,t));pause(0.1);
 t
 end

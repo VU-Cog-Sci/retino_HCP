@@ -196,11 +196,11 @@ def convert_fit_results(prf_filename,
         rfs = rfs ** prf_data[non_lin_idx,:]
 
     total_prf_content = rfs.reshape((-1, prf_data.shape[1])).sum(axis=0)
-    log_x = np.logical_and(deg_x >= stim_width/2.0, deg_x <= stim_width/2.0)
-    log_y = np.logical_and(deg_y >= stim_height/2.0, deg_y <= stim_height/2.0)
+    log_x = np.logical_and(deg_x >= -stim_width/2.0, deg_x <= stim_width/2.0)
+    log_y = np.logical_and(deg_y >= -stim_height/2.0, deg_y <= stim_height/2.0)
     stim_vignet = np.logical_and(log_x,log_y)
     prf_cov_all = rfs[stim_vignet, :].sum(axis=0) / total_prf_content
-
+    
     # pRF x
     prf_x_all = prf_data[x_idx,:]
 
