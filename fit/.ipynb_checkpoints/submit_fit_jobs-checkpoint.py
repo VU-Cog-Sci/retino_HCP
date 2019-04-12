@@ -67,8 +67,7 @@ except:
 data = []
     
 # Determine data to analyse
-data_file  =  opj(base_dir,'raw_data',subject,"{}_task-prf_space-fsaverage6.func_sg_psc.gii".format(subject))
-
+data_file  =  opj(base_dir,'raw_data',subject,"{sub}_task-prf_space-fsaverage6.func_sg_psc.gii".format(sub = subject))
 
 # Cut it in small pieces of voxels
 data_file_load = nb.load(data_file)
@@ -91,7 +90,7 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
     # Define output file
     base_file_name = os.path.split(data_file)[-1][:-4]
     opfn = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.gii' %(str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-
+    
     if os.path.isfile(opfn):
         if os.path.getsize(opfn) != 0:
             print('output file %s already exists and is non-empty. aborting analysis of voxels %s to %s'%(opfn,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
@@ -130,3 +129,4 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
         
     elif 'aeneas' in platform.uname()[1]:
         print('sh ' + js_name)   
+        deb()

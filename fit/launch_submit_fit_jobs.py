@@ -57,7 +57,7 @@ for subject in subs[index_start:index_end]:
                                                                                            num_vox = num_vox, 
                                                                                            dur_fit = dur_fit))
     
-    print("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
-                                                                                               fit_model = fit_model, 
-                                                                                               num_vox = num_vox, 
-                                                                                               dur_fit = dur_fit))
+    # os.system("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
+    #                                                                                            fit_model = fit_model, 
+    #                                                                                            num_vox = num_vox, 
+    #                                                                                            dur_fit = dur_fit))
