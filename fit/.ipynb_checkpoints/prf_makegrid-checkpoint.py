@@ -79,13 +79,13 @@ prf = prf_fit(  fit_model = fit_model,
                 screen_width = analysis_info["screen_width"],
                 tr =  analysis_info["TR"],
                 grid_steps = analysis_info["grid_steps"],
+                hrf_delay = analysis_info["hrf_delay"],
                 bound_grids = bound_grids,
                 bound_fits = bound_fits,
                 sg_filter_window_length = analysis_info["sg_filt_window_length"],
                 sg_filter_polyorder = analysis_info["sg_filt_polyorder"],
                 sg_filter_deriv = analysis_info["sg_filt_deriv"], 
                 )
-
 
 # Make and save the grid
 prf.make_grid(save_file = grid_prediction_file)

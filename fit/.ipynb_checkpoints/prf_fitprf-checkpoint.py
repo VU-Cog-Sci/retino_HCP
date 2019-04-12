@@ -54,7 +54,7 @@ with open('settings.json') as f:
 if 'lisa' in platform.uname()[1]:
     N_PROCS = 16
 elif 'aeneas' in platform.uname()[1]:
-    N_PROCS = 1
+    N_PROCS = 5
     
 # Create stimulus design
 visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','vis_design.mat'))
@@ -104,6 +104,7 @@ prf = prf_fit(  fit_model = fit_model,
                 grid_steps = analysis_info["grid_steps"],
                 bound_grids = bound_grids,
                 bound_fits = bound_fits,
+                hrf_delay = analysis_info["hrf_delay"],
                 sg_filter_window_length = analysis_info["sg_filt_window_length"],
                 sg_filter_polyorder = analysis_info["sg_filt_polyorder"],
                 sg_filter_deriv = analysis_info["sg_filt_deriv"], 
@@ -116,7 +117,6 @@ gridfit = []
 gridfit_load = nb.load(gridfit_est)
 gridfit.append(np.array([gridfit_load.darrays[i].data for i in range(len(gridfit_load.darrays))]))
 gridfit = np.vstack(gridfit)
-
 
 # Fit the prf
 prf.fit_prf(data = data_to_analyse, n_jobs = N_PROCS, gridsearch_params = gridfit[:,:-1])

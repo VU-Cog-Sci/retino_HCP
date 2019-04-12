@@ -1,7 +1,7 @@
 ## retino_HCP
 
-martin_dev_indiv branch
------------------------
+ada_dev_indiv branch
+--------------------
 
 ## Analysis specifics
 ---------------------
@@ -25,3 +25,5 @@ martin_dev_indiv branch
 
 # TO DO
 # -----
+# Run it on LISA to see if it works with 10 steps
+# Compare with results of gauss obtain with martin_dev_indiv

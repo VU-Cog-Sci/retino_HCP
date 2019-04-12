@@ -14,6 +14,7 @@ import ipdb
 deb = ipdb.set_trace
 import warnings
 warnings.filterwarnings('ignore')
+import sharedmem
 
 # MRI analysis imports
 import nibabel as nb
@@ -21,8 +22,6 @@ import popeye.utilities as utils
 from popeye.visual_stimulus import VisualStimulus
 import popeye.css as css
 import popeye.og as og
-import cifti
-from joblib import Parallel, delayed
 from scipy import signal
 
 import h5py
@@ -30,13 +29,9 @@ from scipy.signal import fftconvolve, savgol_filter
 from popeye.base import PopulationModel
 from popeye.spinach import generate_og_receptive_field, generate_rf_timeseries_nomask
 
-def fit_gradient_descent(model, data, ballpark, bounds, verbose=0):
-    return utils.gradient_descent_search(data,
-                                         utils.error_function,
-                                         model.generate_prediction,
-                                         ballpark,
-                                         bounds,
-                                         verbose)[0]
+
+
+    
 
 class CompressiveSpatialSummationModel(PopulationModel):
     
@@ -256,7 +251,7 @@ class GaussianModelFiltered(PopulationModel):
 class prf_fit(object):
     
     def __init__(self, fit_model, visual_design, screen_distance, screen_width, 
-                 tr, bound_grids, grid_steps, bound_fits,
+                 tr, bound_grids, grid_steps, bound_fits,hrf_delay,
                  sg_filter_window_length = 210,sg_filter_polyorder = 3,sg_filter_deriv =0):
 
         self.stimulus = VisualStimulus( stim_arr = visual_design,
@@ -410,8 +405,23 @@ class prf_fit(object):
             raise Exception('First use self.fit_grid!')
         
         
-        prf_params = Parallel(self.n_jobs,verbose = 10,prefer='processes')(delayed(fit_gradient_descent)(self.model_func, data, ballpark, self.bound_fits)
-                                       for (data,ballpark) in zip(self.data.T, self.gridsearch_params))
+        with sharedmem.MapReduce(np=n_jobs) as pool:
+            def wrap_gradient_descent(args):                
+                data, ballpark = args
+                
+                return utils.gradient_descent_search(data,
+                                     utils.error_function,
+                                     self.model_func.generate_prediction,
+                                     ballpark,
+                                     self.bound_fits,
+                                     verbose=0)[0]
+            
+            args = []
+            for i in range(data.shape[1]):
+                args.append((data[:, i],self.gridsearch_params[i]))
+            
+            prf_params = pool.map(wrap_gradient_descent, args)
+
         prf_params = np.vstack(prf_params)
         if self.fit_model == 'gauss' or self.fit_model == 'gauss_sg':
             output = np.ones((self.data.shape[1],6))*np.nan

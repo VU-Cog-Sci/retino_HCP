@@ -42,9 +42,8 @@ with open('settings.json') as f:
     analysis_info = json.loads(json_s)
 
 fit_model = sys.argv[1]
-num_vox = 5
+num_vox = 2500
 dur_fit = 10
-
 subs = analysis_info['subject_list']
 
 # Subject to analyse
