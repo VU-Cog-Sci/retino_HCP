@@ -41,12 +41,12 @@ with open('settings.json') as f:
 
 # Define server or cluster settings
 if 'lisa' in platform.uname()[1]:
-    jobscript_template_file = opj(os.getcwd(),'fit','lisa_makegrid_jobscript_template.sh')
+    jobscript_template_file = opj(os.getcwd(),'fit','templates','lisa_makegrid_jobscript_template.sh')
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     sub_command = 'sbatch '
     print('analysis running on lisa')
 elif 'aeneas' in platform.uname()[1]:
-    jobscript_template_file     =   opj(os.getcwd(),'fit','aeneas_makegrid_jobscript_template.sh')
+    jobscript_template_file     =   opj(os.getcwd(),'fit','templates','aeneas_makegrid_jobscript_template.sh')
     base_dir = analysis_info['aeneas_base_folder'] 
     sub_command = 'sh '
     print('analysis running on aeneas')

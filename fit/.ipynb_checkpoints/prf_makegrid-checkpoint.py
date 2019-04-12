@@ -46,12 +46,6 @@ base_dir = sys.argv[3]
 with open('settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
-
-# Define cluster/server specific parameters
-if 'lisa' in platform.uname()[1]:
-    N_PROCS = 16
-elif 'aeneas' in platform.uname()[1]:
-    N_PROCS = 2
     
 # Create stimulus design
 visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','vis_design.mat'))

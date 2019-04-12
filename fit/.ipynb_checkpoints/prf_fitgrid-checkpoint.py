@@ -39,8 +39,11 @@ from prf_utils import *
 
 # Get inputs
 fit_model = sys.argv[1]
-grid_prediction_file = sys.argv[2]
-base_dir = sys.argv[3]
+subject = sys.argv[2]
+start_idx = sys.argv[3]
+end_idx = sys.argv[4]
+data_file = sys.argv[5]
+base_dir = sys.argv[6]
 
 # Define analysis parameters
 with open('settings.json') as f:
@@ -50,6 +53,19 @@ with open('settings.json') as f:
 # Create stimulus design
 visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','vis_design.mat'))
 visual_dm = visual_dm_file['stim']
+
+# Load data
+data = []
+data_file_load = nb.load(data_file)
+data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
+data = np.vstack(data)
+data_to_analyse = data[:,int(start_idx):int(end_idx)]
+
+# Define output file path and directories
+base_file_name = os.path.split(data_file)[-1][:-4]
+opfn_est = opj(base_dir,'pp_data',subject,fit_model,'gridfit',base_file_name + '_est_%s_to_%s.gii' %(start_idx,end_idx))
+try: os.makedirs(opj(base_dir,'pp_data',subject,fit_model,'gridfit'))
+except: pass
 
 # Fit: define search grids
 x_grid_bound = (-13.4, 13.4)
@@ -86,6 +102,16 @@ prf = prf_fit(  fit_model = fit_model,
                 sg_filter_deriv = analysis_info["sg_filt_deriv"], 
                 )
 
+# Load the grid
+grid_prediction_file = opj(base_dir,'pp_data','makegrid',fit_model,'grid_predictions.hdf5')
+prf.load_grid(save_file = grid_prediction_file)
 
-# Make and save the grid
-prf.make_grid(save_file = grid_prediction_file)
+# Fit the grid
+prf.fit_grid(data = data_to_analyse)
+
+# Save estimates data
+darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in prf.gridsearch_all]
+gii_out = nb.gifti.gifti.GiftiImage(header = data_file_load.header, 
+                                    extra = data_file_load.extra,
+                                    darrays = darrays)
+nb.save(gii_out, opfn_est)

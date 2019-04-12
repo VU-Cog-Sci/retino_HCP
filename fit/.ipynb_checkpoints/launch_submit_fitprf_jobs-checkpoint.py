@@ -1,6 +1,6 @@
 """
 -----------------------------------------------------------------------------------------
-launch_submit_fit_jobs.py
+launch_submit_fitprf_jobs.py
 -----------------------------------------------------------------------------------------
 Goal of the script:
 run pp_roi codes for each subjects of hcp dataset
@@ -13,7 +13,7 @@ None
 -----------------------------------------------------------------------------------------
 To run:
 cd /home/szinte/projects/retino_HCP
-python fit/launch_submit_fit_jobs.py gauss_sg
+python fit/launch_submit_fitprf_jobs.py gauss_sg
 -----------------------------------------------------------------------------------------
 """
 
@@ -42,7 +42,7 @@ with open('settings.json') as f:
     analysis_info = json.loads(json_s)
 
 fit_model = sys.argv[1]
-num_vox = 2500
+num_vox = 5
 dur_fit = 10
 
 subs = analysis_info['subject_list']
@@ -52,12 +52,13 @@ subs = analysis_info['subject_list']
 index_start = 0
 index_end = 2
 for subject in subs[index_start:index_end]:
-    print("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
-                                                                                           fit_model = fit_model, 
-                                                                                           num_vox = num_vox, 
-                                                                                           dur_fit = dur_fit))
     
-    # os.system("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
-    #                                                                                            fit_model = fit_model, 
-    #                                                                                            num_vox = num_vox, 
-    #                                                                                            dur_fit = dur_fit))
+    print("python fit/submit_fitprf_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
+                                                                                               fit_model = fit_model, 
+                                                                                               num_vox = num_vox, 
+                                                                                               dur_fit = dur_fit))
+    
+    os.system("python fit/submit_fitprf_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
+                                                                                               fit_model = fit_model, 
+                                                                                               num_vox = num_vox, 
+                                                                                               dur_fit = dur_fit))

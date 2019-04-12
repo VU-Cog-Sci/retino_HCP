@@ -45,17 +45,17 @@ with open('settings.json') as f:
 
 # Define server or cluster settings
 if 'lisa' in platform.uname()[1]:
-    jobscript_template_file = opj(os.getcwd(),'fit','lisa_jobscript_template.sh')
+    jobscript_template_file = opj(os.getcwd(),'fit','templates','lisa_fitgrid_jobscript_template.sh')
     base_dir = analysis_info['lisa_cluster_base_folder'] 
     sub_command = 'sbatch '
     print('analysis running on lisa')
 elif 'aeneas' in platform.uname()[1]:
-    jobscript_template_file     =   opj(os.getcwd(),'fit','aeneas_jobscript_template.sh')
+    jobscript_template_file     =   opj(os.getcwd(),'fit','templates','aeneas_fitgrid_jobscript_template.sh')
     base_dir = analysis_info['aeneas_base_folder'] 
     sub_command = 'sh '
     print('analysis running on aeneas')
 
-fit_script = 'fit/prf_fit.py'
+fit_script = 'fit/prf_fitprf.py'
 
 # Create job and log output folders
 try:
@@ -114,7 +114,7 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
     for e in re_dict.keys():
         working_string  =   working_string.replace(e, re_dict[e])
 
-    js_name =  opj(base_dir, 'pp_data', subject, fit_model, 'jobs', '%s_vox_%s_to_%s.sh'%(subject,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+    js_name =  opj(base_dir, 'pp_data', subject, fit_model, 'jobs', '%s_vox_%s_to_%s_fit.sh'%(subject,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
 
     of = open(js_name, 'w')
     of.write(working_string)
@@ -130,3 +130,5 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
     elif 'aeneas' in platform.uname()[1]:
         print('sh ' + js_name)   
         deb()
+        # os.system('sh ' + js_name)   
+        

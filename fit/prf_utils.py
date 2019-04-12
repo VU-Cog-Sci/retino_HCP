@@ -256,7 +256,7 @@ class GaussianModelFiltered(PopulationModel):
 class prf_fit(object):
     
     def __init__(self, fit_model, visual_design, screen_distance, screen_width, 
-                 tr, bound_grids, grid_steps, bound_fits, n_jobs = 4,
+                 tr, bound_grids, grid_steps, bound_fits,
                  sg_filter_window_length = 210,sg_filter_polyorder = 3,sg_filter_deriv =0):
 
         self.stimulus = VisualStimulus( stim_arr = visual_design,
@@ -292,10 +292,6 @@ class prf_fit(object):
         self.bound_grids = bound_grids
         self.grid_steps = grid_steps
         self.bound_fits = bound_fits
-        self.n_jobs = n_jobs
-        
-    def add_data(self,data):
-        self.data = data
         
     def make_grid(self,save_file):
 
@@ -344,12 +340,24 @@ class prf_fit(object):
                 f.create_dataset('prf_sigma', data = self.prf_sigma)
                 f.create_dataset('prf_n', data= self.prf_n)            
     
-    def fit_grid(self):
+    def load_grid(self,save_file):
+        grid_predictions = h5py.File(save_file, 'r')
+        
+        self.prf_xs = grid_predictions['prf_xs'][:]
+        self.prf_ys = grid_predictions['prf_ys'][:]
+        self.prf_sigma = grid_predictions['prf_sigma'][:]
+        if self.fit_model == 'css' or self.fit_model == 'css_sg':
+            self.prf_n = grid_predictions['prf_n'][:]  
+        self.predictions = grid_predictions['predictions'][:]
+    
+    def fit_grid(self,data):
+        
+        self.data = data
         
         if self.fit_model == 'gauss' or self.fit_model == 'gauss_sg':
-            fit_grid_params = np.ones((data_to_analyse.shape[1], 6))*np.nan
+            fit_grid_params = np.ones((self.data.shape[1], 6))*np.nan
         elif self.fit_model == 'css' or self.fit_model == 'css_sg':
-            fit_grid_params = np.ones((data_to_analyse.shape[1], 7))*np.nan
+            fit_grid_params = np.ones((self.data.shape[1], 7))*np.nan
         
         for vox_num in range (0,self.data.shape[1]):
             data_ = self.data[:,vox_num]
@@ -391,22 +399,23 @@ class prf_fit(object):
 
         self.gridsearch_params = fit_grid_params[:,:-1]
         self.gridsearch_r2 = fit_grid_params[:,-1]
-        
-        with h5py.File('gridsearch_params10.hdf5', 'a') as f: 
-            f.create_dataset('gridsearch_params', data = self.gridsearch_params)
+        self.gridsearch_all = fit_grid_params
                 
-    def fit_prf(self):
+    def fit_prf(self, data, n_jobs, gridsearch_params):
+        
+        self.data = data
+        self.n_jobs = n_jobs
+        self.gridsearch_params = gridsearch_params
         if self.gridsearch_params is None:
             raise Exception('First use self.fit_grid!')
         
-        
-        prf_params = Parallel(self.n_jobs,verbose = 10)(delayed(fit_gradient_descent)(self.model_func, data, ballpark, self.bound_fits)
+        prf_params = Parallel(self.n_jobs,verbose = 10,prefer='processes')(delayed(fit_gradient_descent)(self.model_func, data, ballpark, self.bound_fits)
                                        for (data,ballpark) in zip(self.data.T, self.gridsearch_params))
         prf_params = np.vstack(prf_params)
         if self.fit_model == 'gauss' or self.fit_model == 'gauss_sg':
-            output = np.ones((self.data.shape[1],6))*nan
+            output = np.ones((self.data.shape[1],6))*np.nan
         elif self.fit_model == 'css' or self.fit_model == 'css_sg':
-            output = np.ones((self.data.shape[1],7))*nan
+            output = np.ones((self.data.shape[1],7))*np.nan
             
         for vox in range(0,self.data.shape[1]):
             data_tc = self.data[:,vox]
@@ -418,19 +427,3 @@ class prf_fit(object):
             output[vox,:] = np.hstack([prf_params[vox,:], utils.coeff_of_determination(data_tc,model_tc)/100.0])
         
         self.fit_output = output
-        #return output
-        
-        with h5py.File('fit_output10.hdf5', 'a') as f:
-            f.create_dataset('fit_output', data = self.fit_output)
-    
-    def load_grid(self):
-        grid_predictions = h5py.File('grid_predictions10.hdf5', 'r')
-        self.prf_xs = grid_predictions['prf_xs'][:]
-        self.prf_ys = grid_predictions['prf_ys'][:]
-        self.prf_sigma = grid_predictions['prf_sigma'][:]
-        self.prf_n = grid_predictions['prf_n'][:]
-        self.predictions = grid_predictions['predictions'][:]
-        gridsearch_params = h5py.File('gridsearch_params10.hdf5','r')
-        self.gridsearch_params = gridsearch_params['gridsearch_params'][:]
-        fit_output = h5py.File('fit_output10.hdf5', 'r')
-        self.fit_output = fit_output['fit_output'][:]
