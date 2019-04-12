@@ -129,4 +129,4 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
         os.system('sbatch ' + js_name)
         
     elif 'aeneas' in platform.uname()[1]:
-        os.system('sh ' + js_name)   
+        print('sh ' + js_name)   

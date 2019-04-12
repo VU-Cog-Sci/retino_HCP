@@ -41,6 +41,7 @@ import popeye.utilities as utils
 from popeye.visual_stimulus import VisualStimulus
 import popeye.css as css
 import popeye.og as og
+import og_sg as og_sg
 
 # Get inputs
 fit_model = sys.argv[1]
@@ -49,7 +50,6 @@ start_idx = sys.argv[3]
 end_idx = sys.argv[4]
 data_file = sys.argv[5]
 base_dir = sys.argv[6]
-
 
 # Define analysis parameters
 with open('settings.json') as f:
@@ -60,7 +60,7 @@ with open('settings.json') as f:
 if 'lisa' in platform.uname()[1]:
     N_PROCS = 16
 elif 'aeneas' in platform.uname()[1]:
-    N_PROCS = 31
+    N_PROCS = 2
 Ns = analysis_info["fit_step"]
 
 # Define output file path and directories
@@ -100,7 +100,7 @@ elif fit_model == 'css':
     model_func = css.CompressiveSpatialSummationModel(  stimulus = stimulus,
                                                         hrf_model = utils.spm_hrf)
 
-model_func.hrf_delay = 0
+model_func.hrf_delay = analysis_info["TR"]/2.0
 print('models and stimulus loaded')
 
 # Fit: define search grids
@@ -118,6 +118,9 @@ beta_bound = (-1e3, 1e3)
 baseline_bound = (-1e3, 1e3)
 
 if fit_model == 'gauss':
+    fit_model_grids =  (x_grid, y_grid, sigma_grid)
+    fit_model_bounds = (x_bound, y_bound, sigma_bound, beta_bound, baseline_bound)
+elif  fit_model == 'gauss_sg':
     fit_model_grids =  (x_grid, y_grid, sigma_grid)
     fit_model_bounds = (x_bound, y_bound, sigma_bound, beta_bound, baseline_bound)
 elif fit_model == 'css':

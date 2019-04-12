@@ -13,7 +13,7 @@ None
 -----------------------------------------------------------------------------------------
 To run:
 cd /home/szinte/projects/retino_HCP
-python fit/launch_submit_fit_jobs.py gauss
+python fit/launch_submit_fit_jobs.py gauss_sg
 -----------------------------------------------------------------------------------------
 """
 
@@ -50,15 +50,14 @@ subs = analysis_info['subject_list']
 # Subject to analyse
 # ------------------
 index_start = 0
-index_end = 1
+index_end = 2
 for subject in subs[index_start:index_end]:
-	print("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
+    print("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
                                                                                            fit_model = fit_model, 
                                                                                            num_vox = num_vox, 
                                                                                            dur_fit = dur_fit))
     
-	os.system("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
+    print("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
                                                                                                fit_model = fit_model, 
                                                                                                num_vox = num_vox, 
                                                                                                dur_fit = dur_fit))
-	
