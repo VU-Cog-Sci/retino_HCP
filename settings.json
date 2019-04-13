@@ -19,6 +19,6 @@
     "sg_filt_window_length": 211,
     "sg_filt_polyorder": 3,
     "sg_filt_deriv": 0,
-    "grid_steps": 5,
+    "grid_steps": 30,
     "hrf_delay":0.750
 }
