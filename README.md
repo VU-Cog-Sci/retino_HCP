@@ -25,5 +25,7 @@ ada_dev_indiv branch
 
 # TO DO
 # -----
-# Run it on LISA to see if it works with 10 steps
+# Run it on LISA to see if it works with 30 steps
+# Check duration
 # Compare with results of gauss obtain with martin_dev_indiv
+# Code multiprocessing of prf_fitgrid

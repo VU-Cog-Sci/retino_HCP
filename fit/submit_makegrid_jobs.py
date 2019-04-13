@@ -7,14 +7,14 @@ create jobscript to run locally, in a cluster (LISA) or server (AENEAS)
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[2]: fit model ('gauss','css')
-sys.argv[4]: job duration requested in hours (used 20h on lisa)
+sys.argv[4]: job duration requested in hours (for 30 steps gauss_sg = less 2h on LISA)
 -----------------------------------------------------------------------------------------
 Output(s):
 .sh file to execute in server
 -----------------------------------------------------------------------------------------
 Exemple:
 cd /home/szinte/projects/retino_HCP/
-python fit/submit_makegrid_jobs.py gauss_sg 20
+python fit/submit_makegrid_jobs.py gauss_sg 3
 -----------------------------------------------------------------------------------------
 """
 
