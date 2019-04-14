@@ -43,13 +43,13 @@ with open('settings.json') as f:
 
 fit_model = sys.argv[1]
 num_vox = 2500
-dur_fit = 10
+dur_fit = 30
 
 subs = analysis_info['subject_list']
 
 # Subject to analyse
 # ------------------
-index_start = 0
+index_start = 1
 index_end = 2
 for subject in subs[index_start:index_end]:
     
