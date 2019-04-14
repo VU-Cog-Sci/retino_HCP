@@ -17,8 +17,8 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/pp_roi.py sub-01 gauss 2500
-python post_fit/pp_roi.py sub-02 gauss 2500
+python post_fit/pp_roi.py sub-01 gauss_sg 2500
+python post_fit/pp_roi.py sub-02 gauss_sg 2500
 -----------------------------------------------------------------------------------------
 """
 
@@ -59,8 +59,8 @@ sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_
 subject = sys.argv[1]
 fit_model = sys.argv[2]
 job_vox = float(sys.argv[3])
-if fit_model == 'gauss': fit_val = 6
-elif fit_model == 'css': fit_val = 7
+if fit_model == 'gauss' or fit_model == 'gauss_sg': fit_val = 6
+elif fit_model == 'css' or fit_model == 'css_sg': fit_val = 7
 base_file_name = "{sub}_task-prf_space-fsaverage6.func_sg_psc".format(sub = subject)
 
 # Define analysis parameters
@@ -94,7 +94,7 @@ num_miss_part = 0
 
 fit_est_files_job = []
 for iter_job in np.arange(0,start_idx.shape[0],1):
-    fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', "{bfn}_est_{start_idx}_to_{end_idx}.gii".format(bfn = base_file_name,
+    fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'gridfit', "{bfn}_est_{start_idx}_to_{end_idx}.gii".format(bfn = base_file_name,
                                                                                                                    start_idx = str(int(start_idx[iter_job])),
                                                                                                                    end_idx = str(int(end_idx[iter_job]))))
     if os.path.isfile(fit_est_file):
@@ -114,12 +114,17 @@ print('combining fit files')
 
 data = np.zeros((fit_val,vox_num))
 
+idx_start = 0
+idx_end = 0
 for fit_filename in fit_est_files_job:
     data_fit = []
     data_fit_file = nb.load(fit_filename)
     data_fit.append(np.array([data_fit_file.darrays[i].data for i in range(len(data_fit_file.darrays))]))
     data_fit = np.vstack(data_fit)
-    data = data + data_fit
+    idx_end += data_fit.shape[0] 
+    data[:,idx_start:idx_end] = data_fit.T
+    idx_start += data_fit.shape[0]
+    
 
 # Seperate hemi files
 # -------------------
@@ -130,7 +135,7 @@ vox_num = vox_num/2.0
 for hemi in ['L','R']:
     exec("darrays_est_{hemi} = [nb.gifti.gifti.GiftiDataArray(d) for d in data_{hemi}]".format(hemi = hemi))
     exec("gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file.header, extra = data_fit_file.extra, darrays = darrays_est_{hemi})".format(hemi = hemi))
-    exec("prf_filename_{hemi} = opj(base_dir,'pp_data',subject,fit_model,'fit','{bfn}_est_{hemi}.gii')".format(bfn =base_file_name, hemi = hemi))
+    exec("prf_filename_{hemi} = opj(base_dir,'pp_data',subject,fit_model,'gridfit','{bfn}_est_{hemi}.gii')".format(bfn =base_file_name, hemi = hemi))
     exec("nb.save(gii_out_{hemi}, prf_filename_{hemi})".format(hemi = hemi))
 
 # Compute derived measures from prfs

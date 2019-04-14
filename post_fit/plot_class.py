@@ -1227,7 +1227,7 @@ class PlotOperator(object):
             
 
             # # get model time course
-            if fit_model == 'gauss':
+            if fit_model == 'gauss' or fit_model == 'gauss_sg':
                 tc_model_mat = self.model_func.generate_prediction( 
                                                     x = self.deriv_mat[num_vertex,x_idx], 
                                                     y = self.deriv_mat[num_vertex,y_idx], 
@@ -1235,7 +1235,7 @@ class PlotOperator(object):
                                                     beta = self.deriv_mat[num_vertex,amp_idx], 
                                                     baseline = self.deriv_mat[num_vertex,baseline_idx])
 
-            elif fit_model == 'css':
+            elif fit_model == 'css' or fit_model == 'css_sg':
                 tc_model_mat = self.model_func.generate_prediction( 
                                                     x = self.deriv_mat[num_vertex,x_idx], 
                                                     y = self.deriv_mat[num_vertex,y_idx], 
@@ -1393,7 +1393,7 @@ class PlotOperator(object):
             x_text1 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.05
             x_text2 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.55
             y_text = self.y_range_map[1] - (self.y_range_map[1]-self.y_range_map[0])*0.025
-            if self.fit_model == 'gauss':
+            if self.fit_model == 'gauss' or self.fit_model == 'gauss_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(
                                                                                                 deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
@@ -1403,7 +1403,7 @@ class PlotOperator(object):
                                                                         deriv_model_mat[amp_idx],
                                                                         )
 
-            elif self.fit_model == 'css':
+            elif self.fit_model == 'css' or self.fit_model == 'css_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(   deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
@@ -1563,7 +1563,7 @@ class PlotOperator(object):
             x_text1 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.05
             x_text2 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.55
             y_text = self.y_range_map[1] - (self.y_range_map[1]-self.y_range_map[0])*0.025
-            if self.fit_model == 'gauss':
+            if self.fit_model == 'gauss' or self.fit_model == 'gauss_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(
                                                                                                 deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
@@ -1573,7 +1573,7 @@ class PlotOperator(object):
                                                                        deriv_model_mat[amp_idx],
                                                                         )
 
-            elif self.fit_model == 'css':
+            elif self.fit_model == 'css' or self.fit_model == 'css_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.2f} dva'.format(   deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],

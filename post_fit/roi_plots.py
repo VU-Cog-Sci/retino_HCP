@@ -17,8 +17,8 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/roi_plots.py sub-01 gauss 1 0
-python post_fit/roi_plots.py sub-02 gauss 1 0
+python post_fit/roi_plots.py sub-01 gauss_sg 1 0
+python post_fit/roi_plots.py sub-02 gauss_sg 1 0
 -----------------------------------------------------------------------------------------
 """
 
@@ -100,7 +100,7 @@ stimulus = VisualStimulus(  stim_arr = visual_dm,
                             scale_factor = 1/10.0,
                             tr_length = analysis_info["TR"],
                             dtype = np.short)
-if fit_model == 'gauss':
+if fit_model == 'gauss' or fit_model == 'gauss_sg':
     fit_func = og.GaussianFit
     model_func = og.GaussianModel(  stimulus = stimulus,
                                     hrf_model = utils.spm_hrf)
@@ -111,7 +111,7 @@ if fit_model == 'gauss':
     list_params = ['ecc','amp','size','cov']
     num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
     
-elif fit_model == 'css':
+elif fit_model == 'css' or fit_model == 'css_sg':
     fit_func = css.CompressiveSpatialSummationFit
     model_func = css.CompressiveSpatialSummationModel(  stimulus = stimulus,
                                                         hrf_model = utils.spm_hrf)
@@ -123,7 +123,7 @@ elif fit_model == 'css':
 
     num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
     
-model_func.hrf_delay = 0
+model_func.hrf_delay = analysis_info['hrf_delay']
 
 # Draw main analysis figure
 # -------------------------
@@ -287,9 +287,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         # pRFecc
                         old_main_fig = []
                         f_pRFecc = []
-                        if fit_model == 'gauss':
+                        if fit_model == 'gauss' or fit_model == 'gauss_sg':
                             type_comp_list = ['Size','R2','Amplitude','Coverage','Baseline']
-                        elif fit_model == 'css':
+                        elif fit_model == 'css' or fit_model == 'css_sg':
                             type_comp_list = ['Size','R2','Non-Linearity','Amplitude','Coverage','Baseline']
 
                         for numData, type_comp in enumerate(type_comp_list):
@@ -520,7 +520,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                 f_pRFtc.append(out4)
 
                         # save files
-                        if fit_model == 'gauss':
+                        if fit_model == 'gauss' or fit_model == 'gauss_sg':
                             all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
                                                 [f_pRFecc[3],f_pRFecc[4],None]],toolbar_location='right')
 
@@ -528,7 +528,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 [f_pRFtc[2],f_pRFtc[3]],
                                                 [f_pRFtc[4],f_pRFtc[5]],
                                                 [f_pRFtc[6],f_pRFtc[7]]],toolbar_location = None)
-                        elif fit_model == 'css':
+                        elif fit_model == 'css' or fit_model == 'css_sg':
                             all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
                                                 [f_pRFecc[3],f_pRFecc[4],f_pRFecc[5]]],toolbar_location='right')
                             

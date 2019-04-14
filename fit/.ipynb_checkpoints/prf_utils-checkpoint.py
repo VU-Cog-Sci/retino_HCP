@@ -28,11 +28,7 @@ import h5py
 from scipy.signal import fftconvolve, savgol_filter
 from popeye.base import PopulationModel
 from popeye.spinach import generate_og_receptive_field, generate_rf_timeseries_nomask
-
-
-
     
-
 class CompressiveSpatialSummationModel(PopulationModel):
     
     r"""

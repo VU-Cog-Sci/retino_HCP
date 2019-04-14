@@ -138,9 +138,9 @@ def convert_fit_results(prf_filename,
     # Compute derived measures from prfs
     # ----------------------------------
     # get data index
-    if fit_model == 'gauss':
+    if fit_model == 'gauss' or fit_model == 'gauss_sg':
         x_idx, y_idx, sigma_idx, beta_idx, baseline_idx, rsq_idx = 0, 1, 2, 3, 4, 5
-    elif fit_model == 'css':
+    elif fit_model == 'css' or fit_model == 'css_sg':
         x_idx, y_idx, sigma_idx, non_lin_idx, beta_idx, baseline_idx, rsq_idx = 0, 1, 2, 3, 4, 5, 6
     
     # pRF sign
@@ -166,21 +166,25 @@ def convert_fit_results(prf_filename,
     prf_size_all[prf_size_all<1e-4] = 1e-4
 
     # pRF non-linearity
-    if fit_model == 'gauss':
+    if fit_model == 'gauss' or fit_model == 'gauss_sg':
         prf_non_lin_all = np.zeros((prf_size_all.shape))*np.nan
-    elif fit_model == 'css':
+    elif fit_model == 'css' or fit_model == 'css_sg':
         prf_non_lin_all = prf_data[non_lin_idx,:]
 
     # pRF amplitude
     if fit_model == 'gauss':
         prf_amp_all = prf_data[beta_idx,:]*100
-    elif fit_model == 'css':
+    elif  fit_model == 'gauss_sg':
+        prf_amp_all = prf_data[beta_idx,:]
+    elif fit_model == 'css' or fit_model == 'css_sg':
         prf_amp_all = prf_data[beta_idx,:]
 
     # pRF baseline
-    if fit_model == 'gauss':
+    if fit_model == 'gauss' :
         prf_baseline_all = prf_data[baseline_idx,:]/100
-    elif fit_model == 'css':
+    elif  fit_model == 'gauss_sg':
+        prf_baseline_all = prf_data[baseline_idx,:]
+    elif fit_model == 'css' or fit_model == 'css_sg':
         prf_baseline_all = prf_data[baseline_idx,:]
 
     # pRF coverage
@@ -192,7 +196,7 @@ def convert_fit_results(prf_filename,
                                         np.ones(np.prod(prf_data[0,:].shape[0])),
                                         deg_x,
                                         deg_y)
-    if fit_model == 'css':
+    if fit_model == 'css' or fit_model == 'css_sg':
         rfs = rfs ** prf_data[non_lin_idx,:]
 
     total_prf_content = rfs.reshape((-1, prf_data.shape[1])).sum(axis=0)
