@@ -24,7 +24,6 @@ deb = ipdb.set_trace
 from popeye.spinach import generate_og_receptive_fields
 from IPython import embed as shell
 
-
 class PlotOperator(object):
     """
     class docstring
@@ -1221,13 +1220,12 @@ class PlotOperator(object):
         
         def get_prediction(fit_model,num_vertex):
             
-
             # get data time course
             tc_data_mat = self.tc_mat[num_vertex,:]
             
 
             # # get model time course
-            if fit_model == 'gauss':
+            if fit_model == 'gauss' or fit_model == 'gauss_sg':
                 tc_model_mat = self.model_func.generate_prediction( 
                                                     x = self.deriv_mat[num_vertex,x_idx], 
                                                     y = self.deriv_mat[num_vertex,y_idx], 
@@ -1235,7 +1233,7 @@ class PlotOperator(object):
                                                     beta = self.deriv_mat[num_vertex,amp_idx], 
                                                     baseline = self.deriv_mat[num_vertex,baseline_idx])
 
-            elif fit_model == 'css':
+            elif fit_model == 'css' or fit_model == 'css_sg':
                 tc_model_mat = self.model_func.generate_prediction( 
                                                     x = self.deriv_mat[num_vertex,x_idx], 
                                                     y = self.deriv_mat[num_vertex,y_idx], 
@@ -1250,9 +1248,11 @@ class PlotOperator(object):
 
         # Time course - high parameter
         # ---------------------------
-
+        
+        
         # get model and data time course
         if self.num_vertex[1] != -1:
+            deb()
             tc_data_mat,tc_model_mat,deriv_model_mat = get_prediction(fit_model = self.fit_model,num_vertex = self.num_vertex[1])
             low_val = np.nanpercentile(tc_data_mat,5)*1.5
             if np.round(low_val,0): low_val_dec_round = 1
@@ -1303,6 +1303,7 @@ class PlotOperator(object):
         high_param_tc_fig.axis.axis_label_text_font_style = 'normal'
         high_param_tc_fig.xaxis.major_label_text_font_size = '0pt'
 
+        deb()
         # span
         high_param_tc_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
 
@@ -1393,7 +1394,7 @@ class PlotOperator(object):
             x_text1 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.05
             x_text2 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.55
             y_text = self.y_range_map[1] - (self.y_range_map[1]-self.y_range_map[0])*0.025
-            if self.fit_model == 'gauss':
+            if self.fit_model == 'gauss' or self.fit_model == 'gauss_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(
                                                                                                 deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
@@ -1403,7 +1404,7 @@ class PlotOperator(object):
                                                                         deriv_model_mat[amp_idx],
                                                                         )
 
-            elif self.fit_model == 'css':
+            elif self.fit_model == 'css' or self.fit_model == 'css_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(   deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
@@ -1563,7 +1564,7 @@ class PlotOperator(object):
             x_text1 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.05
             x_text2 = self.x_range_map[0] + (self.x_range_map[1]-self.x_range_map[0])*0.55
             y_text = self.y_range_map[1] - (self.y_range_map[1]-self.y_range_map[0])*0.025
-            if self.fit_model == 'gauss':
+            if self.fit_model == 'gauss' or self.fit_model == 'gauss_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.1f} dva'.format(
                                                                                                 deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
@@ -1573,7 +1574,7 @@ class PlotOperator(object):
                                                                        deriv_model_mat[amp_idx],
                                                                         )
 
-            elif self.fit_model == 'css':
+            elif self.fit_model == 'css' or self.fit_model == 'css_sg':
                 text1 = 'r2:     \t{:1.2f}\nEcc.: \t{:1.1f} dva\nSize: \t{:1.2f} dva'.format(   deriv_model_mat[rsq_idx],
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],

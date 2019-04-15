@@ -24,7 +24,6 @@ deb = ipdb.set_trace
 from popeye.spinach import generate_og_receptive_fields
 from IPython import embed as shell
 
-
 class PlotOperator(object):
     """
     class docstring
@@ -1221,7 +1220,6 @@ class PlotOperator(object):
         
         def get_prediction(fit_model,num_vertex):
             
-
             # get data time course
             tc_data_mat = self.tc_mat[num_vertex,:]
             
@@ -1250,9 +1248,11 @@ class PlotOperator(object):
 
         # Time course - high parameter
         # ---------------------------
-
+        
+        
         # get model and data time course
         if self.num_vertex[1] != -1:
+            deb()
             tc_data_mat,tc_model_mat,deriv_model_mat = get_prediction(fit_model = self.fit_model,num_vertex = self.num_vertex[1])
             low_val = np.nanpercentile(tc_data_mat,5)*1.5
             if np.round(low_val,0): low_val_dec_round = 1
@@ -1303,6 +1303,7 @@ class PlotOperator(object):
         high_param_tc_fig.axis.axis_label_text_font_style = 'normal'
         high_param_tc_fig.xaxis.major_label_text_font_size = '0pt'
 
+        deb()
         # span
         high_param_tc_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
 

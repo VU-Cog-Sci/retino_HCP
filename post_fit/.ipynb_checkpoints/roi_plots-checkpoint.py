@@ -17,8 +17,8 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/roi_plots.py sub-01 gauss 1 0
-python post_fit/roi_plots.py sub-02 gauss 1 0
+python post_fit/roi_plots.py sub-01 gauss_sg 1 0
+python post_fit/roi_plots.py sub-02 gauss_sg 1 0
 -----------------------------------------------------------------------------------------
 """
 
@@ -51,17 +51,18 @@ import cortex
 # ----------------
 from plot_class import PlotOperator
 from utils import set_pycortex_config_file, mask_gii_2_hdf5 
+from prf_utils import *
 
 # Bokeh imports
 # ---------------
 from bokeh.io import output_notebook, show, save, output_file, export_png, export_svgs
 from bokeh.layouts import row, column, gridplot
 
-# Popeye imports
-import popeye.utilities as utils
-from popeye.visual_stimulus import VisualStimulus
-import popeye.css as css
-import popeye.og as og
+
+# import popeye.utilities as utils
+# from popeye.visual_stimulus import VisualStimulus
+# import popeye.css as css
+# import popeye.og as og
 
 # Get inputs
 # ----------
@@ -94,36 +95,48 @@ except OSError: pass
 visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','vis_design.mat'))
 visual_dm = visual_dm_file['stim']
 
-stimulus = VisualStimulus(  stim_arr = visual_dm,
-                            viewing_distance = analysis_info["screen_distance"],
-                            screen_width = analysis_info["screen_width"],
-                            scale_factor = 1/10.0,
-                            tr_length = analysis_info["TR"],
-                            dtype = np.short)
-if fit_model == 'gauss':
-    fit_func = og.GaussianFit
-    model_func = og.GaussianModel(  stimulus = stimulus,
-                                    hrf_model = utils.spm_hrf)
-    step_r2 = [0,100/3.0,250/3.0,100]
-    list_r2_level = ['High','Low']
-    step_params = [0,100/3.0,200/3.0,100]
-    list_params_level = ['High','Low']
-    list_params = ['ecc','amp','size','cov']
-    num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
-    
-elif fit_model == 'css':
-    fit_func = css.CompressiveSpatialSummationFit
-    model_func = css.CompressiveSpatialSummationModel(  stimulus = stimulus,
-                                                        hrf_model = utils.spm_hrf)
-    step_r2 = [0,100/3.0,200/3.0,100]
-    list_r2_level = ['Low','High']
-    step_params = [0,100/3.0,200/3.0,100]
-    list_params_level = ['Low','High']
-    list_params = ['ecc','amp','size','cov','non_lin']
+# Fit: define search grids
+x_grid_bound = (-13.4, 13.4)
+y_grid_bound = (-7.5, 7.5)
+sigma_grid_bound = (0.05, 9.5)
+n_grid_bound = (0.01, 1.5)
 
-    num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
+# Fit: define search bounds
+x_fit_bound = (-30.0, 30.0)
+y_fit_bound = (-30.0, 30.0)
+sigma_fit_bound = (0.001, 70.0)
+n_fit_bound = (0.01, 3)
+beta_fit_bound = (-1e3, 1e3)
+baseline_fit_bound = (-1e3, 1e3)
+
+if fit_model == 'gauss' or fit_model == 'gauss_sg':
+    bound_grids  = (x_grid_bound, y_grid_bound, sigma_grid_bound)
+    bound_fits = (x_fit_bound, y_fit_bound, sigma_fit_bound, beta_fit_bound, baseline_fit_bound)
+elif fit_model == 'css' or fit_model == 'css_sg':
+    bound_grids  = (x_grid_bound, y_grid_bound, sigma_grid_bound, n_grid_bound)
+    bound_fits = (x_fit_bound, y_fit_bound, sigma_fit_bound, n_fit_bound, beta_fit_bound, baseline_fit_bound)
     
-model_func.hrf_delay = 0
+# Initialize the prf model
+prf = prf_fit(  fit_model = fit_model, 
+                visual_design = visual_dm, 
+                screen_distance = analysis_info["screen_distance"],
+                screen_width = analysis_info["screen_width"],
+                tr =  analysis_info["TR"],
+                grid_steps = analysis_info["grid_steps"],
+                hrf_delay = analysis_info["hrf_delay"],
+                bound_grids = bound_grids,
+                bound_fits = bound_fits,
+                sg_filter_window_length = analysis_info["sg_filt_window_length"],
+                sg_filter_polyorder = analysis_info["sg_filt_polyorder"],
+                sg_filter_deriv = analysis_info["sg_filt_deriv"], 
+                )
+
+step_r2 = [0,100/3.0,250/3.0,100]
+list_r2_level = ['High','Low']
+step_params = [0,100/3.0,200/3.0,100]
+list_params_level = ['High','Low']
+list_params = ['ecc','amp','size','cov']
+num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)   
 
 # Draw main analysis figure
 # -------------------------
@@ -287,9 +300,9 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         # pRFecc
                         old_main_fig = []
                         f_pRFecc = []
-                        if fit_model == 'gauss':
+                        if fit_model == 'gauss' or fit_model == 'gauss_sg':
                             type_comp_list = ['Size','R2','Amplitude','Coverage','Baseline']
-                        elif fit_model == 'css':
+                        elif fit_model == 'css' or fit_model == 'css_sg':
                             type_comp_list = ['Size','R2','Non-Linearity','Amplitude','Coverage','Baseline']
 
                         for numData, type_comp in enumerate(type_comp_list):
@@ -506,7 +519,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                     'tc_mat':               tc_mat,
                                                     'num_vertex':           num_vertex2draw,
                                                     'fit_model':            fit_model,
-                                                    'model_func':           model_func,
+                                                    'model_func':           prf,
                                                     'mask_dir':             mask_dir,
                                                     'title':                '{roi} {hemi} {sign}'.format(sign = mask_dir,hemi=hemi,roi = roi_text)
                                                 })
@@ -520,7 +533,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                 f_pRFtc.append(out4)
 
                         # save files
-                        if fit_model == 'gauss':
+                        if fit_model == 'gauss' or fit_model == 'gauss_sg':
                             all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
                                                 [f_pRFecc[3],f_pRFecc[4],None]],toolbar_location='right')
 
@@ -528,7 +541,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                 [f_pRFtc[2],f_pRFtc[3]],
                                                 [f_pRFtc[4],f_pRFtc[5]],
                                                 [f_pRFtc[6],f_pRFtc[7]]],toolbar_location = None)
-                        elif fit_model == 'css':
+                        elif fit_model == 'css' or fit_model == 'css_sg':
                             all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
                                                 [f_pRFecc[3],f_pRFecc[4],f_pRFecc[5]]],toolbar_location='right')
                             

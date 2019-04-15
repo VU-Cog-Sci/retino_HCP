@@ -49,7 +49,6 @@ def set_pycortex_config_file(project_folder):
                     newline = 'Colormaps=' + pycortex_cm_folder
                     fileOut.write(newline)
                     newline = '\n'
-
                 else:
                     newline = line
 
