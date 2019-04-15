@@ -15,7 +15,6 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
 python post_fit/pp_roi.py sub-01 gauss_sg 2500
 python post_fit/pp_roi.py sub-02 gauss_sg 2500
@@ -100,8 +99,8 @@ ts_num,vox_num = data.shape[0],data.shape[1]
 
 for type_data in ["gridfit","fit"]:
     
-    # Determine derivative folder
-    # ---------------------------
+    # Determine folders
+    # -----------------
     deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv',type_data)
     
     # Check if all slices are present

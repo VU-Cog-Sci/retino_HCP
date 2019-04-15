@@ -15,7 +15,6 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
 python post_fit/pp_roi.py sub-01 gauss_sg 2500
 python post_fit/pp_roi.py sub-02 gauss_sg 2500
