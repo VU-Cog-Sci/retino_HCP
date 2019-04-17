@@ -2,6 +2,7 @@
 
 martin_dev_indiv branch
 -----------------------
+Branch analysing data of 2 individual subjects
 
 ## Analysis specifics
 ---------------------
@@ -15,9 +16,5 @@ martin_dev_indiv branch
 - roi plots for Vision and DMM rois are plotted with bokeh using roi_plots.py
 - Compute summary statistics per participants using extract_sum.py
 - Draw summary statistics per participants using summary_plots.py
-
 - polar angle progression over ANG using polar_prog.py
-
-
-# TO DO
-# -----
+- make Figure S1 with post_fit/notebooks/MakeFigureS1.ipynb
