@@ -11,7 +11,6 @@ code for analysing HCP dataset
 - get yeo atlas see others/get_yeo_atlas_gii.txt
 - DMN regions (ANG/MED_PAR/SUP_MED_FR/LAT_TEMP) are put on fsaverage flatmap overlay.svg
 - DMN regions of interest are drawn in inkscape of fsaverage post_fit/add_dmn_roi.py
-
 - pRF derivatives of subject '999999' are analysed and drawn on fsaverage pycortex map using pp_roi.py
 - Vision regions of interest (V1/V2/V3/VO/DO/LO/SUP_PAR/TPJ/sPCS/iPCS/mPCS/INS/DLPFC) are drawn manually in inkscape
 - PRF derivatives summary for each ROI are put in h5 files with post_pp_roi.py
@@ -21,6 +20,4 @@ code for analysing HCP dataset
 - summary statistics across participants are extracted in extract_sum.py
 - summary statistics per participants are extracted in extract_sum.py
 - polar angle progression over ANG using polar_prog.py
-
-# TO DO
-# -----
+- make Figure 1C using post_fit/notebooks/MakeFigure1C.ipynb
