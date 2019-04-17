@@ -17,7 +17,7 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/pp_roi.py 192641 gauss 2500
+python post_fit/pp_roi.py 999999 gauss 2500
 -----------------------------------------------------------------------------------------
 """
 
@@ -85,8 +85,8 @@ data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_fil
 data = np.vstack(data) 
 ts_num,vox_num = data.shape[0],data.shape[1]
 
-# Check if all slices are present
-# -------------------------------
+# # Check if all slices are present
+# # -------------------------------
 # start_idx =  np.arange(0,vox_num,job_vox)
 # end_idx = start_idx+job_vox
 # end_idx[-1] = vox_num
@@ -107,8 +107,9 @@ ts_num,vox_num = data.shape[0],data.shape[1]
 # if num_miss_part != 0:
 #     sys.exit('%i missing files, analysis stopped'%num_miss_part)
 
-# Combine fit files
-# -----------------
+
+# # Combine fit files
+# # -----------------
 # print('combining fit files')
 # for hemi in ['L','R']:
 #     data_hemi = np.zeros((fit_val,vox_num))
@@ -124,9 +125,8 @@ ts_num,vox_num = data.shape[0],data.shape[1]
 #     exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_est_hemi)'.format(hemi=hemi))
 #     exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
 
-
-# Compute derived measures from prfs
-# ----------------------------------
+# # Compute derived measures from prfs
+# # ----------------------------------
 # print('extracting pRF derivatives')
 # for hemi in ['L','R']:
 #     prf_filename = sorted(glob.glob(opj(base_dir,'pp_data',subject,fit_model,'fit','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
@@ -137,8 +137,8 @@ ts_num,vox_num = data.shape[0],data.shape[1]
 #                         fit_model = fit_model)
 
 
-# Resample gii to fsaverage
-# -------------------------
+# # Resample gii to fsaverage
+# # -------------------------
 # print('converting derivative files to fsaverage')
 # resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
 # for hemi in ['L','R']:
@@ -171,7 +171,6 @@ set_pycortex_config_file(project_folder = pycortex_folder)
 print('draw deriv maps')
 cmap_neg_pos = 'RdBu_r'
 cmap_polar = 'hsv'
-cmap_gain = 'viridis'
 col_offset = 1/14.0
 polar_col_steps = [4.0, 8.0, 16.0, 255.0]
 cmap_ecc_size = 'Spectral'
@@ -228,18 +227,13 @@ for mask_dir in ['all','pos','neg']:
     vertex_names.append('size')
 
     # Amplitude
-    amp_data = np.abs(deriv_mat[amp_idx,:])
-    if mask_dir == 'all':
-        param_amp = {'data': amp_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 1, 'cbar': 'discrete'}
-    elif mask_dir == 'pos':
-        param_amp = {'data': amp_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': 0, 'vmax': 1, 'cbar': 'discrete'}
-    elif mask_dir == 'neg':
-        param_amp = {'data': amp_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 0, 'cbar': 'discrete'}
+    amp_data = deriv_mat[amp_idx,:]
+    param_amp = {'data': amp_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 1, 'cbar': 'discrete'}
     vertex_names.append('amp')
 
     # Baseline
     baseline_data = deriv_mat[baseline_idx,:]
-    param_baseline = {'data': baseline_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -0.5, 'vmax': 0.5,\
+    param_baseline = {'data': baseline_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 1,\
                       'curv_brightness': 0.05, 'curv_contrast': 0.1,'cbar': 'discrete'}
     vertex_names.append('baseline')
     
@@ -254,31 +248,25 @@ for mask_dir in ['all','pos','neg']:
     vertex_names.append('cov')
 
     # Draw figures
-
-    if fit_model == 'gauss' and subject == '999999': 
-        dataset_name = 'dataset_{mask_dir}.hdf'.format(mask_dir = mask_dir)
-        dataset_webgl = cortex.Dataset()
+    # if fit_model == 'gauss' and subject == '999999': 
+    #     dataset_name = 'dataset_{mask_dir}.hdf'.format(mask_dir = mask_dir)
+    #     dataset_webgl = cortex.Dataset()
 
     for vertex_name in vertex_names:
         roi_name = '{vertex_name}_{mask_dir}'.format(vertex_name = vertex_name, mask_dir = mask_dir)
 
-        if mask_dir == 'all' and fit_model == 'gauss' and subject == '999999': 
-            roi_param = {   'subject': 'fsaverage',
-                            'add_roi': False,
-                            'roi_name': roi_name}
-        else:
-            roi_param = {   'subject': 'fsaverage',
-                            'add_roi': False,
-                            'roi_name': roi_name}
+        roi_param = {   'subject': 'fsaverage',
+                        'add_roi': False,
+                        'roi_name': roi_name}
 
         exec('param_{vertex_name}.update(roi_param)'.format(vertex_name = vertex_name))
         exec('vertex_rgb = draw_cortex_vertex(**param_{vertex_name})'.format(vertex_name=vertex_name))
         exec('pl.savefig(opj(fig_roi_dir_{mask_dir}, "{vertex_name}_{mask_dir}.pdf"),facecolor="w")'.format(mask_dir=mask_dir,vertex_name = vertex_name))
-        if fit_model == 'gauss' and subject == '999999': 
-            dataset_webgl.append(**{vertex_name:vertex_rgb})
+        # if fit_model == 'gauss' and subject == '999999': 
+        #     dataset_webgl.append(**{vertex_name:vertex_rgb})
     
-    if fit_model == 'gauss' and subject == '999999': 
-        print('saving dataset: {dataset_name}'.format(dataset_name = dataset_name))
-        print('cortex.webgl.make_static(outpath = os.path.join(fig_roi_dir_{mask_dir}, data = dataset_name, recache = True))'.format(mask_dir = mask_dir))
+    # if fit_model == 'gauss' and subject == '999999': 
+    #     print('saving dataset: {dataset_name}'.format(dataset_name = dataset_name))
+    #     print('cortex.webgl.make_static(outpath = os.path.join(fig_roi_dir_{mask_dir}, data = dataset_name, recache = True))'.format(mask_dir = mask_dir))
 
     pl.close()

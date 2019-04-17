@@ -134,8 +134,6 @@ def convert_fit_results(prf_filename,
     ext = prf_data_load.extra
     hdr = prf_data_load.header
 
-    
-
     # Compute derived measures from prfs
     # ----------------------------------
     # get data index
