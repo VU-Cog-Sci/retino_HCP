@@ -100,7 +100,7 @@ elif fit_model == 'css':
     model_func = css.CompressiveSpatialSummationModel(  stimulus = stimulus,
                                                         hrf_model = utils.spm_hrf)
 
-model_func.hrf_delay = analysis_info["TR"]/2.0
+model_func.hrf_delay = 0
 print('models and stimulus loaded')
 
 # Fit: define search grids
