@@ -172,13 +172,13 @@ def convert_fit_results(prf_filename,
 
     # pRF amplitude
     if fit_model == 'gauss':
-        prf_amp_all = prf_data[beta_idx,:]*100
+        prf_amp_all = prf_data[beta_idx,:]
     elif fit_model == 'css':
         prf_amp_all = prf_data[beta_idx,:]
 
     # pRF baseline
     if fit_model == 'gauss':
-        prf_baseline_all = prf_data[baseline_idx,:]/100
+        prf_baseline_all = prf_data[baseline_idx,:]
     elif fit_model == 'css':
         prf_baseline_all = prf_data[baseline_idx,:]
 
