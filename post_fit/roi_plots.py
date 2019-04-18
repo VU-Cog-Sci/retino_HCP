@@ -137,7 +137,7 @@ sign_idx, rsq_idx, ecc_idx, polar_real_idx, polar_imag_idx , size_idx, \
 
 # Initialize data dictionary that will save all data arrays
 for roi_num, roi in enumerate(analysis_info['rois']):
-    for mask_dir in ['pos']:#['pos','neg']:
+    for mask_dir in ['pos','neg']:
         data_hemi = []
         val_hemi = 0
         tc_mat_hemi = []
