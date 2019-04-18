@@ -14,7 +14,7 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
+i27 # save svg only in python 2.7
 cd /home/szinte/projects/retino_HCP
 python post_fit/polar_prog.py sub-01 gauss 1
 python post_fit/polar_prog.py sub-02 gauss 1
@@ -83,9 +83,6 @@ big_size_dot = small_size_dot*3
 # ----------------
 from utils import set_pycortex_config_file, draw_cortex_vertex, rotate_pts, get_colors, roi_coord_mask, rot_coord
 
-# Check system
-# ------------
-sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
 
 # Define analysis parameters
 # --------------------------
@@ -539,4 +536,6 @@ if save_svg == 1:
     for fig in fig_dict:
         fig_dict[fig].output_backend = 'svg'
         output_file_svg = opj(svg_folder,"ANG_LR_neg_pRFpol_{fig}.svg".format(fig = fig))
+        try: os.makedirs(svg_folder)
+        except: pass
         export_svgs(fig_dict[fig], filename = output_file_svg)

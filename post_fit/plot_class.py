@@ -495,7 +495,7 @@ class PlotOperator(object):
                                                 ('Eccentricity',        '@ecc{0.00} dva'),                          # eccentricity of hover tool
                                                 ('Size',                '@sigma{0.00} dva'),                        # size of hover tool
                                                 ('Baseline',            '@baseline{0.00}'),                         # baseline of hover tool
-                                                ('Amplitude',           '@beta{0.00}'),                             # amplitude of hover tool
+                                                ('Amplitude',           '@beta{0.0000}'),                           # amplitude of hover tool
                                                 ('Non-linarity',        '@non_lin{0.00}'),                          # non-linearity of hover tool
                                                 ('Coverage',            '@cov{0.0}')]                               # coverage
         main_fig_hover                  =   HoverTool(                                                              # create hover tool
@@ -600,7 +600,7 @@ class PlotOperator(object):
                                                 ('Eccentricity',        '@ecc{0.00} dva'),                          # eccentricity of hover tool
                                                 ('Size',                '@sigma{0.00} dva'),                        # size of hover tool
                                                 ('Baseline',            '@baseline{0.00}'),                         # baseline of hover tool
-                                                ('Amplitude',           '@beta{0.00}'),                             # amplitude of hover tool
+                                                ('Amplitude',           '@beta{0.0000}'),                             # amplitude of hover tool
                                                 ('Non-linarity',        '@non_lin{0.00}'),                          # non-linearity of hover tool
                                                 ('Coverage',            '@cov{0.0}')]                               # coverage
 
@@ -1263,7 +1263,7 @@ class PlotOperator(object):
             if np.round(high_val,0): high_val_dec_round = 1
             elif np.round(high_val,1): high_val_dec_round = 2
             else: high_val_dec_round = 0
-            y_range_tc = (round(Decimal(low_val),low_val_dec_round),round(Decimal(high_val),high_val_dec_round))
+            y_range_tc = (round(np.double(Decimal(low_val)),low_val_dec_round),round(np.double(Decimal(high_val)),high_val_dec_round))
         
             # get data
             x_data = np.arange(1,tc_data_mat.shape[0]+1,1)*self.tr_dur
@@ -1399,8 +1399,7 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'Cov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(   deriv_model_mat[cov_idx]*100,
-                                                                        deriv_model_mat[amp_idx],
+                text2 = 'Cov.: \t{:1.0f} %'.format(   deriv_model_mat[cov_idx]*100
                                                                         )
 
             elif self.fit_model == 'css':
@@ -1408,9 +1407,8 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(  deriv_model_mat[non_lin_idx],
-                                                                                        deriv_model_mat[cov_idx]*100,
-                                                                                        deriv_model_mat[amp_idx],
+                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f}'.format(  deriv_model_mat[non_lin_idx],
+                                                                    deriv_model_mat[cov_idx]*100,
                                                                         )
 
             high_param_map_fig.text(x=x_text1,y=y_text,text = [text1],text_font_size = '8pt',text_baseline = 'top')
@@ -1433,7 +1431,7 @@ class PlotOperator(object):
             if np.round(high_val,0): high_val_dec_round = 1
             elif np.round(high_val,1): high_val_dec_round = 2
             else: high_val_dec_round = 0
-            y_range_tc = (round(Decimal(low_val),low_val_dec_round),round(Decimal(high_val),high_val_dec_round))
+            y_range_tc = (round(np.double(Decimal(low_val)),low_val_dec_round),round(np.double(Decimal(high_val)),high_val_dec_round))
             
             
             # get data
@@ -1569,8 +1567,7 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'Cov.: \t{:1.0f} %\nAmp.: \t{:1.1f}'.format(   deriv_model_mat[cov_idx]*100,
-                                                                       deriv_model_mat[amp_idx],
+                text2 = 'Cov.: \t{:1.0f} %'.format( deriv_model_mat[cov_idx]*100
                                                                         )
 
             elif self.fit_model == 'css':
@@ -1578,9 +1575,8 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(  deriv_model_mat[non_lin_idx],
-                                                                                        deriv_model_mat[cov_idx]*100,
-                                                                                        deriv_model_mat[amp_idx],
+                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %'.format(  deriv_model_mat[non_lin_idx],
+                                                                                        deriv_model_mat[cov_idx]*100
                                                                         )
 
             low_param_map_fig.text(x=x_text1,y=y_text,text = [text1],text_font_size = '8pt',text_baseline = 'top')

@@ -15,9 +15,9 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
 python post_fit/summary_plots.py sub-01 gauss 95ci 0
+python post_fit/summary_plots.py sub-02 gauss 95ci 0
 -----------------------------------------------------------------------------------------
 """
 

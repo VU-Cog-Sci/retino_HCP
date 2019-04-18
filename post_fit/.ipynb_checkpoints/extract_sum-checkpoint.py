@@ -19,9 +19,8 @@ Output(s):
 hdf5_file summary.h5
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/extract_sum.py gauss
+python post_fit/extract_sum.py sub-01 gauss
 -----------------------------------------------------------------------------------------
 """
 

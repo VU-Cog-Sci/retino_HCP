@@ -15,7 +15,6 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
 python post_fit/pp_roi.py sub-01 gauss 2500
 python post_fit/pp_roi.py sub-02 gauss 2500
@@ -52,7 +51,7 @@ from utils import set_pycortex_config_file, convert_fit_results, draw_cortex_ver
 
 # Check system
 # ------------
-sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
+sys.exit('Popeye error with Python 2. Use Python 3 Aborting.') if sys.version_info[0] < 3 else None
 
 # Get inputs
 # ----------
@@ -123,10 +122,10 @@ for fit_filename in fit_est_files_job:
 
 # Seperate hemi files
 # -------------------
-data_L = data[:,0:vox_num/2]
-data_R = data[:,vox_num/2:vox_num]
+data_L = data[:,0:int(vox_num/2)]
+data_R = data[:,int(vox_num/2):vox_num]
 
-vox_num = vox_num/2.0
+vox_num = int(vox_num/2.0)
 for hemi in ['L','R']:
     exec("darrays_est_{hemi} = [nb.gifti.gifti.GiftiDataArray(d) for d in data_{hemi}]".format(hemi = hemi))
     exec("gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file.header, extra = data_fit_file.extra, darrays = darrays_est_{hemi})".format(hemi = hemi))
@@ -231,18 +230,13 @@ for mask_dir in ['all','pos','neg']:
     vertex_names.append('size')
 
     # Amplitude
-    amp_data = np.abs(deriv_mat[amp_idx,:])
-    if mask_dir == 'all':
-        param_amp = {'data': amp_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 1, 'cbar': 'discrete'}
-    elif mask_dir == 'pos':
-        param_amp = {'data': amp_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': 0, 'vmax': 1, 'cbar': 'discrete'}
-    elif mask_dir == 'neg':
-        param_amp = {'data': amp_data.T, 'cmap': cmap_pos, 'alpha': alpha.T, 'vmin': -1, 'vmax': 0, 'cbar': 'discrete'}
+    amp_data = deriv_mat[amp_idx,:]
+    param_amp = {'data': amp_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -0.005, 'vmax': 0.005, 'cbar': 'discrete'}
     vertex_names.append('amp')
-
+    
     # Baseline
     baseline_data = deriv_mat[baseline_idx,:]
-    param_baseline = {'data': baseline_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -0.5, 'vmax': 0.5,\
+    param_baseline = {'data': baseline_data.T, 'cmap': cmap_neg_pos, 'alpha': alpha.T, 'vmin': -10, 'vmax': 10,\
                       'curv_brightness': 0.05, 'curv_contrast': 0.1,'cbar': 'discrete'}
     vertex_names.append('baseline')
 
@@ -258,30 +252,25 @@ for mask_dir in ['all','pos','neg']:
 
     # Draw figures
 
-    if fit_model == 'gauss' and subject == '999999': 
-        dataset_name = 'dataset_{mask_dir}.hdf'.format(mask_dir = mask_dir)
-        dataset_webgl = cortex.Dataset()
+    # if fit_model == 'gauss' and subject == '999999': 
+    #     dataset_name = 'dataset_{mask_dir}.hdf'.format(mask_dir = mask_dir)
+    #     dataset_webgl = cortex.Dataset()
 
     for vertex_name in vertex_names:
         roi_name = '{vertex_name}_{mask_dir}'.format(vertex_name = vertex_name, mask_dir = mask_dir)
 
-        if mask_dir == 'all' and fit_model == 'gauss' and subject == '999999': 
-            roi_param = {   'subject': 'fsaverage',
-                            'add_roi': False,
-                            'roi_name': roi_name}
-        else:
-            roi_param = {   'subject': 'fsaverage',
-                            'add_roi': False,
-                            'roi_name': roi_name}
+        roi_param = {   'subject': 'fsaverage',
+                        'add_roi': False,
+                        'roi_name': roi_name}
 
         exec('param_{vertex_name}.update(roi_param)'.format(vertex_name = vertex_name))
         exec('vertex_rgb = draw_cortex_vertex(**param_{vertex_name})'.format(vertex_name=vertex_name))
         exec('pl.savefig(opj(fig_roi_dir_{mask_dir}, "{vertex_name}_{mask_dir}.pdf"),facecolor="w")'.format(mask_dir=mask_dir,vertex_name = vertex_name))
-        if fit_model == 'gauss' and subject == '999999': 
-            dataset_webgl.append(**{vertex_name:vertex_rgb})
+        # if fit_model == 'gauss' and subject == '999999': 
+        #     dataset_webgl.append(**{vertex_name:vertex_rgb})
 
-    if fit_model == 'gauss' and subject == '999999': 
-        print('saving dataset: {dataset_name}'.format(dataset_name = dataset_name))
-        print('cortex.webgl.make_static(outpath = os.path.join(fig_roi_dir_{mask_dir}, data = dataset_name, recache = True))'.format(mask_dir = mask_dir))
+    # if fit_model == 'gauss' and subject == '999999': 
+    #     print('saving dataset: {dataset_name}'.format(dataset_name = dataset_name))
+    #     print('cortex.webgl.make_static(outpath = os.path.join(fig_roi_dir_{mask_dir}, data = dataset_name, recache = True))'.format(mask_dir = mask_dir))
 
     pl.close()

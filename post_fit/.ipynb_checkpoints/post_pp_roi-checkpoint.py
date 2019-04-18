@@ -13,7 +13,6 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
 python post_fit/post_pp_roi.py sub-01 gauss
 python post_fit/post_pp_roi.py sub-02 gauss
@@ -86,31 +85,9 @@ h5_dir = opj(base_dir,'pp_data',subject,fit_model,'h5')
 try: os.makedirs(roi_masks_dir)
 except OSError: pass
 
-# Create stimulus design and define model
-# ---------------------------------------
-if fit_model == 'gauss':
-    fit_func = og.GaussianFit
-    step_r2 = [0,100/3.0,200/3.0,100]
-    list_r2_level = ['High','Low']
-    step_params = [0,100/3.0,200/3.0,100]
-    list_params_level = ['High','Low']
-    list_params = ['ecc','amp','size','cov']
-    num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
-    
-elif fit_model == 'css':
-    fit_func = css.CompressiveSpatialSummationFit
-    step_r2 = [0,100/3.0,200/3.0,100]
-    list_r2_level = ['Low','High']
-    step_params = [0,100/3.0,200/3.0,100]
-    list_params_level = ['Low','High']
-    list_params = ['ecc','amp','size','cov','non_lin']
-
-    num_plots = len(list_params)*len(step_params)*(len(step_r2)-1)
-    
-
 # Check system
 # ------------
-sys.exit('Drawing Flatmaps only works with Python 2. Aborting.') if sys.version_info[0] > 2 else None
+sys.exit('Popeye error with Python 2. Use Python 3 Aborting.') if sys.version_info[0] < 3 else None
 
 # Change cortex database folder
 # -----------------------------

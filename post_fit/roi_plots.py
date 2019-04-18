@@ -15,7 +15,6 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
 python post_fit/roi_plots.py sub-01 gauss 1 0
 python post_fit/roi_plots.py sub-02 gauss 1 0
@@ -69,6 +68,10 @@ subject = sys.argv[1]
 fit_model = sys.argv[2]
 draw_hemi = int(sys.argv[3])
 save_svg = int(sys.argv[4])
+
+# Check system
+# ------------
+sys.exit('Drawing Flatmaps only works with Python 3. Aborting.') if sys.version_info[0] > 3 else None
 
 # Define analysis parameters
 # --------------------------
@@ -204,7 +207,8 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                     data = data[np.logical_and(np.logical_and( data4mask[:,rsq_idx]>=analysis_info['rsq_threshold'],
                                                                 data4mask[:,cov_idx]>=analysis_info['cov_threshold']),
                                                                 data4mask[:,size_idx]>=analysis_info['size_threshold'])]
-
+                    
+                    
                     tc_mat = tc_mat[np.logical_and(np.logical_and(  data4mask[:,rsq_idx]>=analysis_info['rsq_threshold'],
                                                                     data4mask[:,cov_idx]>=analysis_info['cov_threshold']),
                                                                     data4mask[:,size_idx]>=analysis_info['size_threshold'])]
@@ -212,7 +216,12 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                     vertex = data.shape[0]
 
                     
+                    
                     if vertex > 0:
+                        # randomize order
+                        new_order = np.random.permutation(vertex)
+                        data = data[new_order,:]
+                        tc_mat = tc_mat[new_order,:]
 
                         print("drawing {roi}_{hemi}_{mask_dir} figures, n={vertex}".format(roi = roi_text,hemi = hemi,vertex = vertex, mask_dir = mask_dir)) 
 
@@ -342,10 +351,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
                             elif type_comp == 'Amplitude':
                                 params_pRFecc.update(
-                                            {   'y_range':          (-1, 1),
-                                                'y_label':          'Amplitude (z-score)',
+                                            {   'y_range':          (-0.02, 0.02),
+                                                'y_label':          'Amplitude',
                                                 "y_source_label":   'beta',
-                                                'y_tick_steps':     0.5,
+                                                'y_tick_steps':     0.01,
                                                 'v_hist_bins':      16})
                                 if save_svg == 1:
                                     params_pRFecc.update(
@@ -364,10 +373,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
                             elif type_comp == 'Baseline':
                                 params_pRFecc.update(
-                                            {   'y_range':          (-1, 1),
-                                                'y_label':          'Baseline (z-score)',
+                                            {   'y_range':          (-200, 200),
+                                                'y_label':          'Baseline',
                                                 'y_source_label':   'baseline',
-                                                'y_tick_steps':     0.5,
+                                                'y_tick_steps':     25,
                                                 'v_hist_bins':      16})
                                 if save_svg == 1:
                                     params_pRFecc.update(
@@ -556,7 +565,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}_{mask_dir}_pRFtc.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
                         output_file(output_file_html, title='Subject: %s | ROI: %s | Hemisphere: %s | Sign: %s | Figures: pRF time course'%(subject,roi_text,hemi,mask_dir))
                         save(all_f4)
-                        
 
                     else:
                         print("drawing {roi}_{hemi}_{mask_dir} figures not possible: n={vertex}".format(roi = roi_text,hemi = hemi,vertex = vertex,mask_dir = mask_dir)) 
