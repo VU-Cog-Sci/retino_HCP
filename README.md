@@ -21,3 +21,5 @@ code for analysing HCP dataset
 - summary statistics per participants are extracted in extract_sum.py
 - polar angle progression over ANG using polar_prog.py
 - make Figure 1C using post_fit/notebooks/MakeFigure1C.ipynb
+- make Figure 2A using post_fit/notebooks/MakeFigure2A.ipynb
+- make Figure 2B using post_fit/notebooks/MakeFigure2B.ipynb
