@@ -74,6 +74,8 @@ analysed_subject_plus.append('999999_ns13')
 analysed_subject_plus.append('999999_mm16')
 analysed_subject_plus.append('999999_mm16_ns13')
 
+analysed_subject_plus = ['999999']
+
 # Create h5 for all subject
 # -------------------------
 subject_all = '000000'
@@ -163,7 +165,7 @@ for subject in analysed_subject_plus:
 
                         ecc_size_r = weighted_corr(ecc_data,size_data,weight_data)
                         ecc_size_slope = coeffs[0]
-                        ecc_size_intercept = coeffs[0]
+                        ecc_size_intercept = coeffs[1]
                     else:
                         ecc_size_r = np.nan
                         ecc_size_slope = np.nan
@@ -189,32 +191,32 @@ for subject in analysed_subject_plus:
             h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary'.format(subject = subject, roi = roi, mask_dir = mask_dir),data = summary_mat,dtype='float32')
             time.sleep(0.1)
 
-# make mean across participants of all parameters
-h5file = h5py.File(summary_hdf5_file, "a")
-num_sum_val = 6
-for roi_num, roi in enumerate(analysis_info['rois']):
-    print('across subjects summary processing of: %s'%roi)
-    for mask_dir in ['pos','neg']:
-        summary_mat = np.zeros((len(analysed_subject),num_sum_val))*np.nan
-        for subject_num, subject in enumerate(analysed_subject):
-            folder_alias = '{subject}/{roi}/{mask_dir}_summary'.format(subject = subject, roi = roi, mask_dir = mask_dir)
-            summary_mat[subject_num,:] = h5file['{folder_alias}'.format(folder_alias=folder_alias)]
+# # make mean across participants of all parameters
+# h5file = h5py.File(summary_hdf5_file, "a")
+# num_sum_val = 6
+# for roi_num, roi in enumerate(analysis_info['rois']):
+#     print('across subjects summary processing of: %s'%roi)
+#     for mask_dir in ['pos','neg']:
+#         summary_mat = np.zeros((len(analysed_subject),num_sum_val))*np.nan
+#         for subject_num, subject in enumerate(analysed_subject):
+#             folder_alias = '{subject}/{roi}/{mask_dir}_summary'.format(subject = subject, roi = roi, mask_dir = mask_dir)
+#             summary_mat[subject_num,:] = h5file['{folder_alias}'.format(folder_alias=folder_alias)]
 
 
-        summary_mat_mean = np.nanmean(summary_mat,axis=0)
-        h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_mean'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_mean,dtype='float32')
-        time.sleep(0.1)
-        summary_mat_median =  np.nanmedian(summary_mat,axis=0)
-        h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_median'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_median,dtype='float32')
-        time.sleep(0.1)
-        summary_mat_std = np.nanstd(summary_mat,axis=0,ddof=1)
-        h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_std'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_std,dtype='float32')
-        time.sleep(0.1)
-        summary_mat_sem = np.nanstd(summary_mat,axis=0,ddof=1)/len(analysed_subject)
-        h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_sem'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_sem,dtype='float32')
-        time.sleep(0.1)
-        summary_mat_95ci = np.nanpercentile(summary_mat,[2.5,97.5],axis=0)
-        h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_95ci'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_95ci,dtype='float32')
-        time.sleep(0.1)
+#         summary_mat_mean = np.nanmean(summary_mat,axis=0)
+#         h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_mean'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_mean,dtype='float32')
+#         time.sleep(0.1)
+#         summary_mat_median =  np.nanmedian(summary_mat,axis=0)
+#         h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_median'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_median,dtype='float32')
+#         time.sleep(0.1)
+#         summary_mat_std = np.nanstd(summary_mat,axis=0,ddof=1)
+#         h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_std'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_std,dtype='float32')
+#         time.sleep(0.1)
+#         summary_mat_sem = np.nanstd(summary_mat,axis=0,ddof=1)/len(analysed_subject)
+#         h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_sem'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_sem,dtype='float32')
+#         time.sleep(0.1)
+#         summary_mat_95ci = np.nanpercentile(summary_mat,[2.5,97.5],axis=0)
+#         h5file.create_dataset('{subject}/{roi}/{mask_dir}_summary_95ci'.format(subject = subject_all, roi = roi, mask_dir = mask_dir),data = summary_mat_95ci,dtype='float32')
+#         time.sleep(0.1)
               
-        deb()
+        
