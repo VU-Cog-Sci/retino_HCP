@@ -23,3 +23,4 @@ code for analysing HCP dataset
 - make Figure 1C using post_fit/notebooks/MakeFigure1C.ipynb
 - make Figure 2A using post_fit/notebooks/MakeFigure2A.ipynb
 - make Figure 2B using post_fit/notebooks/MakeFigure2B.ipynb
+- make Figure 3 and S3 using post_fit/notebooks/MakeFigure3.ipynb
