@@ -17,8 +17,6 @@ code for analysing HCP dataset
 - roi plots for DMN and Vision ROI are plotted with bokeh using roi_plots.py for subject 999999
 - pRF derivatives of all others subject are analysed using pp_roi.py and drawn using fsaverage and ROI of 999999
 - roi plots for of all others subject for DMN and Vision ROI are plotted with bokeh using roi_plots.py
-- summary statistics across participants are extracted in extract_sum.py
-- summary statistics per participants are extracted in extract_sum.py
 - polar angle progression over ANG using polar_prog.py
 - make Figure 1C using post_fit/notebooks/MakeFigure1C.ipynb
 - make Figure 2A using post_fit/notebooks/MakeFigure2A.ipynb
