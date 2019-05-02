@@ -88,7 +88,7 @@ voxel_indices = [(xx, yy, zz) for xx,yy,zz in  zip(data_to_analyse_idx[0][:],dat
 voxel_indices = voxel_indices[int(start_idx):int(end_idx)]
 
 # Create stimulus design
-visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','retinotopysmall5.mat'))
+visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','retinotopysmall_all.mat'))
 visual_dm = visual_dm_file['stim']
 
 stimulus = VisualStimulus(  stim_arr = visual_dm,
