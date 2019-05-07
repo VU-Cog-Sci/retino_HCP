@@ -43,12 +43,12 @@ import popeye.css as css
 import popeye.og as og
 
 # Get inputs
-fit_model = sys.argv[1]
-subject = sys.argv[2]
-start_idx = sys.argv[3]
-end_idx = sys.argv[4]
-data_file = sys.argv[5]
-base_dir = sys.argv[6]
+fit_model = 'gauss'
+subject = '999999'
+start_idx = 1
+end_idx = 5
+data_file = '/Users/macbook/disks/ae_Home/hcp_code/tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc_all.dtseries.nii'
+base_dir = '/Users/macbook/disks/ae_Home/projects/retino_HCP'
 
 
 # Define analysis parameters
@@ -60,35 +60,44 @@ with open('settings.json') as f:
 if 'lisa' in platform.uname()[1]:
     N_PROCS = 16
 elif 'aeneas' in platform.uname()[1]:
-    N_PROCS = 31
+    N_PROCS = 8 #31
 elif 'local' in platform.uname()[1]:
     N_PROCS = 8
 
 # Define output file path and directories
 base_file_name = os.path.split(data_file)[-1][:-7]
-opfn_est = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.nii.gz' %(start_idx,end_idx))
+opfn_est = opj(base_dir, base_file_name + '_est_%s_to_%s.nii.' %(start_idx,end_idx))
+#opfn_est = opj(base_dir,'pp_data',subject,fit_model,'fit',base_file_name + '_est_%s_to_%s.nii.' %(start_idx,end_idx))
 
-try: os.makedirs(opj(base_dir,'pp_data',subject,fit_model,'fit'))
+try : os.makedirs(opj(base_dir))
+#try: os.makedirs(opj(base_dir,'pp_data',subject,fit_model,'fit'))
 except: pass
 
+#loading with cifti
+data = nb.cifti2.cifti2.load(data_file)
+data_file_shape = data.shape
+
 # Load data
-data = []
-data_file_load = nb.load(data_file)
-data_file_dat = data_file_load.get_data()
-data_file_shape = data_file_load.shape
+#data = []
+#data_file_load = nb.load(data_file)
+#data_file_dat = data_file_load.get_data()
+#data_file_shape = data_file_load.shape
 
 # load mask
-maskfn = opj(base_dir,'raw_data','RETBAR_ALL_tfMRI_data_sub_mask.nii.gz')
-data_mask = nb.load(maskfn).get_data()
+#maskfn = opj(base_dir,'raw_data','RETBAR_ALL_tfMRI_data_sub_mask.nii.gz')
+#data_mask = nb.load(maskfn).get_data()
 
-data_file_masked = data_file_dat[data_mask==1.0]
-data_to_analyse = data_file_masked[int(start_idx):int(end_idx),:]
-data_to_analyse_idx = np.where(data_mask==1.0)
-voxel_indices = [(xx, yy, zz) for xx,yy,zz in  zip(data_to_analyse_idx[0][:],data_to_analyse_idx[1][:],data_to_analyse_idx[2][:])]
-voxel_indices = voxel_indices[int(start_idx):int(end_idx)]
+#data_file_masked = data_file_dat[data_mask==1.0]
+#data_to_analyse = data_file_masked[int(start_idx):int(end_idx),:]
+#data_to_analyse_idx = np.where(data_mask==1.0)
+#voxel_indices = [(xx, yy, zz) for xx,yy,zz in  zip(data_to_analyse_idx[0][:],data_to_analyse_idx[1][:],data_to_analyse_idx[2][:])]
+#voxel_indices = voxel_indices[int(start_idx):int(end_idx)]
+
+vertex_indices = [(xx, 0, 0) for xx in np.arange(int(start_idx),int(end_idx),1)]
 
 # Create stimulus design
-visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','retinotopysmall_all.mat'))
+visual_dm_file = scipy.io.loadmat(opj(base_dir,'stim','retinotopysmall_all.mat'))
+#visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','retinotopysmall_all.mat'))
 visual_dm = visual_dm_file['stim']
 
 stimulus = VisualStimulus(  stim_arr = visual_dm,
@@ -135,15 +144,22 @@ elif fit_model == 'css':
     fit_model_bounds = (x_bound, y_bound, sigma_bound, n_bound, beta_bound, baseline_bound)
 
 # Fit: define empty estimate and voxel indeces
-estimates = np.zeros((data_file_shape[0], data_file_shape[1], data_file_shape[2], num_est))
+estimates = np.zeros((num_est,data.shape[1]))
+#estimates = np.zeros((data_file_shape[0], data_file_shape[1], data_file_shape[2], num_est))
+
+#data_to_analyse
+index_start = 1
+index_end = 5
+data_to_analyse = data.get_data()[:,int(index_start):int(index_end)]
+data_to_analyse.shape
 
 # Define multiprocess bundle
 bundle = utils.multiprocess_bundle( Fit = fit_func,
                                     model = model_func,
-                                    data = data_to_analyse,
+                                    data = data_to_analyse.T,
                                     grids = fit_model_grids, 
                                     bounds = fit_model_bounds, 
-                                    indices = voxel_indices,
+                                    indices = vertex_indices,
                                     auto_fit = True,
                                     verbose = 1,
                                     Ns = 6)
@@ -153,17 +169,28 @@ output = pool.map(  func = utils.parallel_fit,
                     iterable = bundle)
 
 # Save estimates data
+
 for fit in output:
+    estimates[:num_est-1,fit.voxel_index[0]] = fit.estimate
+    estimates[num_est-1,fit.voxel_index[0]] = fit.rsquared
+
+#for fit in output:
     # Fill estimates matrix
-    estimates[fit.voxel_index][:num_est-1] = fit.estimate
-    estimates[fit.voxel_index][num_est-1] = fit.rsquared
+    #estimates[fit.voxel_index][:num_est-1] = fit.estimate
+    #estimates[fit.voxel_index][num_est-1] = fit.rsquared
 
 # Free up memory
 pool.close()
 pool.join()
 
+#saving with cifti
+gii_out = nb.cifti2.cifti2.Cifti2Image(dataobj = estimates,
+                                        header = data.header, 
+                                        extra = data.extra)
+nb.cifti2.cifti2.save(gii_out, opfn_est)
+
 # Save data
-img = nb.Nifti1Image(   dataobj = estimates,
-                        affine = data_file_load.affine,
-                        header = data_file_load.header)
-img.to_filename(opfn_est)
+#img = nb.Nifti1Image(   dataobj = estimates,
+                        #affine = data_file_load.affine,
+                        #header = data_file_load.header)
+#img.to_filename(opfn_est)

@@ -43,7 +43,7 @@ with open('settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
-fit_model = sys.argv[1]
+fit_model = 'gauss'
 num_vox = 2500
 dur_fit = 10
 
@@ -73,7 +73,7 @@ subs = analysis_info['subject_list']
 
 # Subject to analyse
 # ------------------
-index_start = int(sys.argv[2])
-index_end = int(sys.argv[3])
+index_start = 0   #int(sys.argv[2])
+index_end = 10  #int(sys.argv[3])
 for subject in subs[index_start:index_end]:
 	os.system("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, fit_model = fit_model, num_vox = num_vox, dur_fit = dur_fit))
