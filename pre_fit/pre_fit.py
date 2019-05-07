@@ -3,250 +3,98 @@
 pre_fit.py
 -----------------------------------------------------------------------------------------
 Goal of the script:
-SG filter, PSC, AVG runs and combine data of both hemisphere
+Load individual subjects, filter data per run and concatenate the files, then create the
+average subject across the HCP dataset time series
 -----------------------------------------------------------------------------------------
 Input(s):
-sys.argv[1]: subject name
-sys.argv[2]: start voxel index
-sys.argv[3]: end voxel index
-sys.argv[4]: data file path
-sys.argv[5]: main directory
+None
 -----------------------------------------------------------------------------------------
 Output(s):
-# Preprocessed timeseries files
+Cifti files
 -----------------------------------------------------------------------------------------
 To run:
-cd /home/szinte/projects/retino_HCP
 python pre_fit/pre_fit.py
 -----------------------------------------------------------------------------------------
 """
 
-# Stop warnings
-# -------------
-import warnings
-warnings.filterwarnings("ignore")
-
 # General imports
-# ---------------
-import json
 import sys
-import os
-import glob
-import ipdb
-import platform
 import numpy as np
-opj = os.path.join
+import platform
+from math import *
+import os
+import json
+import ipdb
 deb = ipdb.set_trace
+opj = os.path.join
+import warnings
+warnings.filterwarnings('ignore')
 
 # MRI analysis imports
-# --------------------
-import nibabel as nb
+import cifti
 from scipy.signal import savgol_filter
-from nipype.interfaces.freesurfer import SurfaceTransform
 
+# Define analysis parameters
 with open('settings.json') as f:
     json_s = f.read()
     analysis_info = json.loads(json_s)
 
-with open('select_block.json') as f:
-    json_s = f.read()
-    select_block = json.loads(json_s)
-    
-trans_cmd = 'rsync -avuz --progress'
-
 # Define cluster/server specific parameters
-# -----------------------------------------
-if 'aeneas' in platform.uname()[1]:
-    base_dir = analysis_info['aeneas_base_folder'] 
-elif 'lisa' in platform.uname()[1]:
-    base_dir = analysis_info['lisa_base_folder'] 
+raw_dir = analysis_info["{platform_name}_raw_folder".format(platform_name = platform.uname()[1])]
+raw_shared_dir = analysis_info["{platform_name}_raw_shared_folder".format(platform_name = platform.uname()[1])]
+
+# Filter and normalized data per run and combine it
+print('filtering and pscing data per run -using initial blanks- and combine runs together')
+for subject in analysis_info['subject_list']:
+    print(subject)
+    for task_num,task in enumerate(analysis_info['task_list']):
+
+        file_in_name = opj(raw_dir,subject,'MNINonLinear','Results',"{task}".format(task = task),"{task}_Atlas_1.6mm_MSMAll_hp2000_clean.dtseries.nii".format(task = task))
+
+        data_load = cifti.read(file_in_name)
+        data = data_load[0]
+        run_duration = data.shape[0]
+        
+        data_filt = savgol_filter(  x = data.T, 
+                                    window_length = analysis_info['sg_filt_window_length'],
+                                    polyorder = analysis_info['sg_filt_polyorder'],
+                                    deriv = analysis_info['sg_filt_deriv'],
+                                    axis = 1, 
+                                    mode = 'nearest').T
+
+        data_filt = data - data_filt + data_filt.mean(axis=0)
+        
+        data_mean_blank = data[0:analysis_info["blanks"][task_num]].mean(axis=0)
+        data_filt_psc = 100.0 * (data_filt - data_mean_blank)/data_mean_blank
+        
+        if task_num == 0:
+            all_data_filt_psc = data_filt_psc
+        else:
+            all_data_filt_psc = np.concatenate((all_data_filt_psc,data_filt_psc),axis = 0)
+            
     
-# Copy files in raw_data folder
-# ----------------------------
-for sub_name in analysis_info['subject_list'] :
-    sub_session = select_block["{sub}_sessions".format(sub = sub_name)]
-    dest_folder = "{base_dir}/raw_data/{sub}".format(base_dir = base_dir, sub = sub_name)
-    try: os.makedirs(dest_folder)
+    # Save the 6 tasks data
+    try: os.makedirs(opj(raw_shared_dir,subject))
     except: pass
-      
-    for session in sub_session:
-        sub_session_run = select_block["{sub}_{ses}_run".format(sub = sub_name, ses = session)]
+    file_out_name = opj(raw_shared_dir,subject,'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
 
-        for run in sub_session_run:
-            orig_folder = "{base_dir}/derivatives/fmriprep/{sub}/{ses}/func".format(base_dir = base_dir, sub = sub_name, ses=session)
-            
-            for hemi in ['L','R']:
-                orig_file = "{orig_fold}/{sub}_{ses}_task-prf_{run}_space-fsaverage6_hemi-{hemi}.func.gii".format(orig_fold = orig_folder, 
-                                                                                                                  sub = sub_name, ses=session, 
-                                                                                                                  run = run, hemi = hemi)
-                dest_file = "{dest_fold}/{sub}_{ses}_task-prf_{run}_space-fsaverage6_hemi-{hemi}.func.gii".format(dest_fold = dest_folder, 
-                                                                                                                  sub = sub_name, ses=session, 
-                                                                                                                  run = run, hemi = hemi)
-
-                os.system("{cmd} {orig} {dest}".format(cmd = trans_cmd, orig = orig_file, dest = dest_file))
-                
-                
-# SG + PSC + AVG + COMBINE HEMI
-# -----------------------------
-# sxfm = SurfaceTransform()
-# sxfm.inputs.source_subject = "fsaverage6"
-# sxfm.inputs.target_subject = "fsaverage"
-# sxfm.terminal_output = 'none'
-# sxfm.inputs.subjects_dir = opj(base_dir,'derivatives','freesurfer')
-
-for sub_name in analysis_info['subject_list'] :
-    
-    # SG + PSC
-    # --------
-    print(sub_name+': sg + psc')
-    file_list = sorted(glob.glob("{base_dir}/raw_data/{sub}/*func.gii".format(base_dir = base_dir, sub = sub_name)))
-    
-    for file in file_list:
+    series = cifti.Series(start=0, step=analysis_info["TR"]*1000, size=all_data_filt_psc.shape[0])
+    bm_full = data_load[1][1]
+    cifti.write(file_out_name, all_data_filt_psc, (series, bm_full))
         
-        
-        print(file)
-        # load
-        pp_hemi = []
-        pp_hemi_file = nb.load(file)
-        pp_hemi.append(np.array([pp_hemi_file.darrays[i].data for i in range(len(pp_hemi_file.darrays))]))
-        pp_hemi = np.vstack(pp_hemi)
+# Average across participant _sg
+print('averaging subjects data')
+prep_mean_data = np.zeros((1800,170494))
+for subject_num, subject in enumerate(analysis_info['subject_list']):
+    print(subject,subject_num)
+    file_in_name = opj(raw_shared_dir,subject,'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
+    data_load = cifti.read(file_in_name)
+    prep_mean_data += data_load.get_data()/len(analysis_info['subject_list'])
 
-        # sg filter
-        pp_hemi_filt = savgol_filter( x = pp_hemi.T,
-                                      window_length = analysis_info['sg_filt_window_length'],
-                                      polyorder = analysis_info['sg_filt_polyorder'],
-                                      deriv = analysis_info['sg_filt_deriv'],
-                                      axis = 1, 
-                                      mode = 'nearest').T
+try: os.makedirs(opj(raw_shared_dir,'999999'))
+except: pass
+file_out_name = opj(raw_shared_dir,'999999','tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
 
-        pp_hemi_sg = pp_hemi - pp_hemi_filt + pp_hemi_filt.mean(axis=0)
-
-        # percent signal change
-        pp_hemi_sg_median = np.median(pp_hemi_sg, axis=0)
-        pp_hemi_sg_psc = 100.0 * (pp_hemi_sg - pp_hemi_sg_median)/pp_hemi_sg_median
-
-        # save
-        gii_out_name = file[:-4] + '_sg_psc.gii'
-        darrays_pp_hemi_sg_psc = [nb.gifti.gifti.GiftiDataArray(d) for d in pp_hemi_sg_psc]
-        gii_out = nb.gifti.gifti.GiftiImage(header = pp_hemi_file.header, 
-                                            extra = pp_hemi_file.extra,
-                                            darrays = darrays_pp_hemi_sg_psc)
-
-        nb.save(img = gii_out,filename = gii_out_name)
-        
-#         # convert to fsaverage
-#         if 'hemi-L' in gii_out_name: 
-#             sxfm.inputs.hemi = "lh"
-#             hemi = 'L'
-#         elif 'hemi-R' in gii_out_name: 
-#             sxfm.inputs.hemi = "rh"
-#             hemi = 'R'
-
-#         sxfm.inputs.source_file = gii_out_name
-#         sxfm.inputs.out_file = gii_out_name[:-33]+"fsaverage_hemi-{hemi}.func_sg_psc.gii".format(hemi = hemi)
-#         print(sxfm.inputs.out_file)
-#         sxfm.run()
-    
-    
-    # AVERAGE RUNS
-    # ------------
-    print(sub_name+': average runs')
-    for hemi in ['L','R']:
-        file_list = sorted(glob.glob("{base_dir}/raw_data/{sub}/*fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, sub = sub_name, hemi = hemi)))
-
-        pp_hemi_sg_psc_avg = np.zeros((120,40962))
-        for file in file_list:
-            print(file)
-            # load
-            pp_hemi_sg_psc = []
-            pp_hemi_sg_psc_file = nb.load(file)
-            pp_hemi_sg_psc.append(np.array([pp_hemi_sg_psc_file.darrays[i].data for i in range(len(pp_hemi_sg_psc_file.darrays))]))
-            pp_hemi_sg_psc = np.vstack(pp_hemi_sg_psc)
-
-            
-            # avg
-            pp_hemi_sg_psc_avg += pp_hemi_sg_psc/len(file_list)
-            
-        # save
-        gii_out_name = "{base_dir}/raw_data/{sub}/{sub}_task-prf_space-fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, 
-                                                                                                                     sub = sub_name, 
-                                                                                                                     hemi = hemi)
-
-        darrays_pp_hemi_sg_psc_avg = [nb.gifti.gifti.GiftiDataArray(d) for d in pp_hemi_sg_psc_avg]
-        gii_out = nb.gifti.gifti.GiftiImage(header = pp_hemi_file.header,
-                                            extra = pp_hemi_file.extra,
-                                            darrays = darrays_pp_hemi_sg_psc_avg)
-
-        nb.save(img = gii_out,filename = gii_out_name)
-        
-#         # convert to fsaverage
-#         if 'hemi-L' in gii_out_name: 
-#             sxfm.inputs.hemi = "lh"
-#             hemi = 'L'
-#         elif 'hemi-R' in gii_out_name: 
-#             sxfm.inputs.hemi = "rh"
-#             hemi = 'R'
-
-#         sxfm.inputs.source_file = gii_out_name
-#         sxfm.inputs.out_file = gii_out_name[:-33]+"fsaverage_hemi-{hemi}.func_sg_psc.gii".format(hemi = hemi)
-#         print(sxfm.inputs.out_file)
-#         sxfm.run()
-        
-        
-    # COMBINE HEMISPHERE
-    # ------------------
-    print(sub_name+': combine hemisphere')
-    
-#     sub_session = select_block["{sub}_sessions".format(sub = sub_name)]
-#     dest_folder = "{base_dir}/raw_data/{sub}".format(base_dir = base_dir, sub = sub_name)
-    
-#     for session in sub_session:
-#         sub_session_run = select_block["{sub}_{ses}_run".format(sub = sub_name, ses = session)]
-
-#         for run in sub_session_run:
-#             hemi_mat = []
-#             for hemi in ['L','R']:
-#                 hemi_filename = "{base_dir}/raw_data/{sub}/{sub}_{ses}_task-prf_{run}_space-fsaverage_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, 
-#                                                                                                         sub = sub_name, ses=session, hemi = hemi,
-#                                                                                                         run = run)
-#                 hemi_file = nb.load(hemi_filename)
-#                 hemi_mat.append(np.array([hemi_file.darrays[i].data for i in range(len(hemi_file.darrays))]))
-            
-#             hemi_mat = np.hstack(hemi_mat)
-#             # save
-#             gii_out_name = "{base_dir}/raw_data/{sub}/{sub}_{ses}_task-prf_{run}_space-fsaverage.func_sg_psc.gii".format(base_dir = base_dir, 
-#                                                                                                      sub = sub_name,ses=session, 
-#                                                                                                         run = run)
-#             darrays_hemi_mat = [nb.gifti.gifti.GiftiDataArray(d) for d in hemi_mat]
-#             gii_out = nb.gifti.gifti.GiftiImage(header = hemi_file.header,
-#                                         extra = hemi_file.extra,
-#                                         darrays = darrays_hemi_mat)
-    
-#             nb.save(img = gii_out,filename = gii_out_name)
-            
-    
-    hemi_mat=[]
-    for hemi in ['L','R']:
-        # load
-        hemi_filename = "{base_dir}/raw_data/{sub}/{sub}_task-prf_space-fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(base_dir = base_dir, 
-                                                                                                                      sub = sub_name, 
-                                                                                                                      hemi = hemi)
-        hemi_file = nb.load(hemi_filename)
-
-        # load
-        hemi_mat.append(np.array([hemi_file.darrays[i].data for i in range(len(hemi_file.darrays))]))
-
-    hemi_mat = np.hstack(hemi_mat)
-    
-    # save
-    gii_out_name = "{base_dir}/raw_data/{sub}/{sub}_task-prf_space-fsaverage6.func_sg_psc.gii".format(base_dir = base_dir, 
-                                                                                                     sub = sub_name)
-    darrays_hemi_mat = [nb.gifti.gifti.GiftiDataArray(d) for d in hemi_mat]
-    gii_out = nb.gifti.gifti.GiftiImage(header = hemi_file.header,
-                                        extra = hemi_file.extra,
-                                        darrays = darrays_hemi_mat)
-    
-    nb.save(img = gii_out,filename = gii_out_name)
-    
-    
-    
+series = cifti.Series(start=0, step=analysis_info["TR"]*1000, size=all_data_filt_psc.shape[0])
+bm_full = data_load[1][1]
+cifti.write(file_out_name, prep_mean_data, (series, bm_full))

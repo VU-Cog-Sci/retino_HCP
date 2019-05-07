@@ -1,7 +1,0 @@
-{"sub-01_sessions":["ses-02","ses-03"],
- "sub-01_ses-02_run":["run-01","run-02","run-03","run-04","run-05","run-06","run-07","run-08","run-09","run-10","run-11"],
- "sub-01_ses-03_run":["run-01","run-02","run-03","run-04","run-05","run-06","run-07","run-08","run-09","run-10","run-11","run-12","run-13","run-14"],
- "sub-02_sessions":["ses-02","ses-03","ses-04"],
- "sub-02_ses-02_run":["run-02","run-03","run-04","run-05","run-06","run-07","run-08"],
- "sub-02_ses-03_run":["run-01","run-02","run-03","run-04","run-05","run-06","run-07","run-08","run-09","run-10"],
- "sub-02_ses-04_run":["run-01","run-02","run-03","run-04","run-05","run-06","run-07","run-08","run-09","run-10","run-11","run-12","run-13","run-14","run-15"]}
