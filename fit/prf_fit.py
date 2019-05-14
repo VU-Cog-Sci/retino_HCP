@@ -7,10 +7,10 @@ Create pRF estimates
 -----------------------------------------------------------------------------------------
 Input(s):
 sys.argv[1]: subject name
-sys.argv[2]: start voxel index
-sys.argv[3]: end voxel index
+sys.argv[2]: start voxel index -1
+sys.argv[3]: end voxel index   -2
 sys.argv[4]: data file path
-sys.argv[5]: main directory
+sys.argv[5]: main directory   
 -----------------------------------------------------------------------------------------
 Output(s):
 Gifti image files with fitting parameters per vertex
@@ -46,7 +46,7 @@ import popeye.og as og
 fit_model = sys.argv[1]
 subject = sys.argv[2]
 start_idx = sys.argv[3]
-end_idx = sys.argv[4]
+end_idx =  sys.argv[4]
 data_file = sys.argv[5]
 base_dir = sys.argv[6]
 
@@ -127,6 +127,7 @@ elif fit_model == 'css':
 # Fit: define empty estimate and voxel indeces
 estimates = np.zeros((num_est,data.shape[1]))
 vertex_indices = [(xx, 0, 0) for xx in np.arange(int(start_idx),int(end_idx),1)]
+
 
 # Define multiprocess bundle
 bundle = utils.multiprocess_bundle( Fit = fit_func,
