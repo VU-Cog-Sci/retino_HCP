@@ -37,6 +37,10 @@ class PlotOperator(object):
             setattr(self, k, v)
 
 
+    def get_stim_circle(self, main_fig):
+        return main_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
+
+
     def get_span(self, dimension, location = 0,color = 'black'):
         fig_span     =   Span(location            =   location,                                   # create a infinte line span                                           
                               dimension           =   dimension,                                  # define dimension
@@ -144,16 +148,16 @@ class PlotOperator(object):
         h_hist.axis.minor_tick_out      =   False                                                                   # set axis minor tick out
         h_hist.axis.major_tick_in       =   False                                                                   # set axis major tick in
         h_hist.outline_line_alpha       =   0                                                                       # set contour box alpha
-        h_hist.background_fill_color    =   self.bg_color                                                           # set background color
+        h_hist.background_fill_color    =   self.bg_color                                                      # set background color
         h_hist.xaxis.major_label_text_font_size = '0pt'                                                             # set x axis font size (make it disappear)
 
         # draw stim
         h_hist_stim                     =   h_hist.quad(                                                            # create a quad glyph of the stimulus
-                                                bottom              =   self.stim_fig_ylim[0],                      # define bottom value
-                                                left                =   -self.stim_width/2.0,                           # define left value
-                                                right               =   +self.stim_width/2.0,                           # define right value
-                                                top                 =   self.stim_fig_ylim[1],                      # define top value
-                                                color               =   self.stim_color)                            # define color
+                                                bottom              =   self.stim_fig_ylim[0],                           # define bottom value
+                                                left                =   -self.stim_radius,                                          # define left value
+                                                right               =   +self.stim_radius,                     # define right value
+                                                top                 =   self.stim_fig_ylim[1],                           # define top value
+                                                color               =   self.stim_color)                       # define color
 
         # draw plot
         h_hist_plot                     =   h_hist.quad(                                                            # create a quad glyph of the histogram
@@ -223,13 +227,13 @@ class PlotOperator(object):
         
 
         # define settings
-        v_hist                            =   figure(                                                               # create vertical histogram figure
-                                                plot_width          =   int(self.p_width/4),                        # define figure width 
-                                                plot_height         =   self.p_height,                              # define figure height
-                                                x_range             =   self.hist_range,                            # define figure x range
+        v_hist                            =   figure(                                                                 # create vertical histogram figure
+                                                plot_width          =   int(self.p_width/4),                   # define figure width 
+                                                plot_height         =   self.p_height,                         # define figure height
+                                                x_range             =   self.hist_range,                       # define figure x range
                                                 y_range             =   main_fig.y_range,                           # define figure y range
-                                                min_border_left     =   self.min_border_small,                      # define left border space
-                                                min_border_right    =   self.min_border_large,                      # define right border space 
+                                                min_border_left     =   self.min_border_small,                 # define left border space
+                                                min_border_right    =   self.min_border_large,                 # define right border space 
                                                 y_axis_location     =   'left',                                     # define y axis location
                                                 x_axis_location     =   'below',                                    # define x axis location
                                                 toolbar_location    =   'right',
@@ -246,16 +250,16 @@ class PlotOperator(object):
         v_hist.axis.major_tick_in       =   False                                                                   # set both axis major tick in
         v_hist.yaxis.major_label_text_font_size = '0pt'                                                             # set y axis font size (make it disappear)
         v_hist.outline_line_alpha       =   0                                                                       # set box contour alpha
-        v_hist.background_fill_color    =   self.bg_color                                                           # define background color
+        v_hist.background_fill_color    =   self.bg_color                                                      # define background color
 
         if draw_stim:
             # draw stim
-            v_hist_stim                     =   v_hist.quad(                                                        # create quad glyph of the stimulus
-                                                left                =   self.stim_fig_ylim[0],                      # define left value
-                                                bottom              =   +self.stim_height/2.0,                          # define bottom value
-                                                top                 =   -self.stim_height/2.0,                          # define top value
-                                                right               =   self.stim_fig_ylim[1],                      # define right value
-                                                color               =   self.stim_color)                            # define color
+            v_hist_stim                     =   v_hist.quad(                                                            # create quad glyph of the stimulus
+                                                left                =   self.stim_fig_ylim[0],                           # define left value
+                                                bottom              =   +self.stim_radius,                     # define bottom value
+                                                top                 =   -self.stim_radius,                     # define top value
+                                                right               =   self.stim_fig_ylim[1],                           # define right value
+                                                color               =   self.stim_color)                       # define color
         
 
         # draw plot
@@ -460,15 +464,10 @@ class PlotOperator(object):
         """
         
         self.condition                  =   'map'
+        self.left_hist_lim              =   -self.stim_radius
         main_fig,main_source,data_source=   self.initialize_main_fig(old_main_fig)
-        
-        _                               =  main_fig.quad(                                                           # create stimulus frame
-                                                left                =   -self.stim_width/2.0,                       # define left value
-                                                bottom              =   -self.stim_height/2.0,                      # define bottom value
-                                                top                 =   +self.stim_height/2.0,                      # define top value
-                                                right               =   +self.stim_width/2.0,                       # define right value
-                                                color               =   self.stim_color)                            # define color
-        
+        _                               =   main_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
+
         # plot data
         plot_data                       =   main_fig.circle(                                                        # create circle of the main plots
                                                 x                   =   'x',                                        # define x coord
@@ -487,6 +486,7 @@ class PlotOperator(object):
         h_hist                          =   self.create_horizontal_histogram(data_source = data_source, main_fig = main_fig)
         v_hist                          =   self.create_vertical_histogram(data_source = data_source, main_fig = main_fig, colors = True, draw_stim = True)
         leg                             =   self.create_legend_figure()
+
         
 
         # add a hover tool
@@ -495,7 +495,7 @@ class PlotOperator(object):
                                                 ('Eccentricity',        '@ecc{0.00} dva'),                          # eccentricity of hover tool
                                                 ('Size',                '@sigma{0.00} dva'),                        # size of hover tool
                                                 ('Baseline',            '@baseline{0.00}'),                         # baseline of hover tool
-                                                ('Amplitude',           '@beta{0.00}'),                             # amplitude of hover tool
+                                                ('Amplitude',           '@beta{0.0000}'),                             # amplitude of hover tool
                                                 ('Non-linarity',        '@non_lin{0.00}'),                          # non-linearity of hover tool
                                                 ('Coverage',            '@cov{0.0}')]                               # coverage
         main_fig_hover                  =   HoverTool(                                                              # create hover tool
@@ -557,12 +557,13 @@ class PlotOperator(object):
         -----------------------------------------------------------------------------------------
         """
         main_fig,main_source,data_source=   self.initialize_main_fig(old_main_fig)
+        self.left_hist_lim              =   0
         
         # plot stimulus area
         plot_stim                       =   main_fig.quad(                                                          # create a quad glyph of the stimulus
                                                 bottom              =   self.stim_fig_ylim[0],                      # define bottom value
                                                 left                =   0,                                          # define left value
-                                                right               =   self.stim_width/2.0,                        # define right value
+                                                right               =   self.stim_radius,                           # define right value
                                                 top                 =   self.stim_fig_ylim[1],                      # define top value
                                                 color               =   self.stim_color)                            # define color
         # plot data
@@ -600,7 +601,7 @@ class PlotOperator(object):
                                                 ('Eccentricity',        '@ecc{0.00} dva'),                          # eccentricity of hover tool
                                                 ('Size',                '@sigma{0.00} dva'),                        # size of hover tool
                                                 ('Baseline',            '@baseline{0.00}'),                         # baseline of hover tool
-                                                ('Amplitude',           '@beta{0.00}'),                             # amplitude of hover tool
+                                                ('Amplitude',           '@beta{0.0000}'),                           # amplitude of hover tool
                                                 ('Non-linarity',        '@non_lin{0.00}'),                          # non-linearity of hover tool
                                                 ('Coverage',            '@cov{0.0}')]                               # coverage
 
@@ -747,17 +748,15 @@ class PlotOperator(object):
                                                 color_mapper        =   color_mapper)                               # define colormap
 
         # plot stimulus circle
-        _                               =  main_fig.quad(                                                           # create stimulus frame
-                                                left                =   -self.stim_width/2.0,                       # define left value
-                                                bottom              =   -self.stim_height/2.0,                      # define bottom value
-                                                top                 =   +self.stim_height/2.0,                      # define top value
-                                                right               =   +self.stim_width/2.0,                       # define right value
+        plot_stim                       =   main_fig.circle(                                                        # create circle plots for the stim circle
+                                                x                   =   0,                                          # define x coord
+                                                y                   =   0,                                          # define y coord
+                                                radius              =   self.stim_radius,                           # define radius
                                                 line_alpha          =   0.5,                                        # define line alpha
                                                 fill_color          =   None,                                       # define color
                                                 line_color          =   'white',                                    # define line color
                                                 line_dash           =   'dashed')
-            
-        
+
         # Colorbar
         # --------
         colorbar_fig                    =   figure(                                                                 # create vertical histogram figure
@@ -1243,7 +1242,7 @@ class PlotOperator(object):
                                                     beta = self.deriv_mat[num_vertex,amp_idx], 
                                                     n = self.deriv_mat[num_vertex,non_lin_idx], 
                                                     baseline = self.deriv_mat[num_vertex,baseline_idx])
-        
+            
             deriv_model_mat = self.deriv_mat[num_vertex,:]
 
             return (tc_data_mat, tc_model_mat,deriv_model_mat)
@@ -1263,7 +1262,7 @@ class PlotOperator(object):
             if np.round(high_val,0): high_val_dec_round = 1
             elif np.round(high_val,1): high_val_dec_round = 2
             else: high_val_dec_round = 0
-            y_range_tc = (round(Decimal(low_val),low_val_dec_round),round(Decimal(high_val),high_val_dec_round))
+            y_range_tc = (round(np.double(Decimal(low_val)),low_val_dec_round),round(np.double(Decimal(high_val)),high_val_dec_round))
         
             # get data
             x_data = np.arange(1,tc_data_mat.shape[0]+1,1)*self.tr_dur
@@ -1374,7 +1373,7 @@ class PlotOperator(object):
 
         if self.num_vertex[1] != -1:
             # stimulus circle
-            high_param_map_fig.quad(left = -self.stim_width/2.0, bottom = -self.stim_height/2.0, top = +self.stim_height/2.0, right = +self.stim_width/2.0, color = self.stim_color)
+            high_param_map_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
 
             # spans
             high_param_map_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
@@ -1399,8 +1398,7 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'Cov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(   deriv_model_mat[cov_idx]*100,
-                                                                        deriv_model_mat[amp_idx],
+                text2 = 'Cov.: \t{:1.0f} %'.format(   deriv_model_mat[cov_idx]*100,
                                                                         )
 
             elif self.fit_model == 'css':
@@ -1408,9 +1406,8 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(  deriv_model_mat[non_lin_idx],
+                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %'.format(  deriv_model_mat[non_lin_idx],
                                                                                         deriv_model_mat[cov_idx]*100,
-                                                                                        deriv_model_mat[amp_idx],
                                                                         )
 
             high_param_map_fig.text(x=x_text1,y=y_text,text = [text1],text_font_size = '8pt',text_baseline = 'top')
@@ -1433,16 +1430,14 @@ class PlotOperator(object):
             if np.round(high_val,0): high_val_dec_round = 1
             elif np.round(high_val,1): high_val_dec_round = 2
             else: high_val_dec_round = 0
-            y_range_tc = (round(Decimal(low_val),low_val_dec_round),round(Decimal(high_val),high_val_dec_round))
-            
+            y_range_tc = (round(np.double(Decimal(low_val)),low_val_dec_round),round(np.double(Decimal(high_val)),high_val_dec_round))
             
             # get data
             x_data = np.arange(1,tc_data_mat.shape[0]+1,1)*self.tr_dur
             y_data = tc_data_mat
             x_model = np.arange(1,tc_model_mat.shape[0]+1,1)*self.tr_dur
             y_model = tc_model_mat
-            
-            
+
             low_param_tc_data_source = {  'x_data':x_data,
                                           'y_data':y_data,
                                           'x_model':x_model,
@@ -1541,7 +1536,7 @@ class PlotOperator(object):
 
         if self.num_vertex[0] != -1:
             # stimulus circle
-            low_param_map_fig.quad(left = -self.stim_width/2.0, bottom = -self.stim_height/2.0, top = +self.stim_height/2.0, right = +self.stim_width/2.0, color = self.stim_color)
+            low_param_map_fig.circle(x = 0, y = 0, radius = self.stim_radius, color = self.stim_color)
 
             # spans
             low_param_map_fig.add_layout(Span(location = 0, dimension = 'width', line_alpha = 0.5, line_color = 'black', line_width = 1, line_dash = 'dashed'))
@@ -1569,8 +1564,7 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'Cov.: \t{:1.0f} %\nAmp.: \t{:1.1f}'.format(   deriv_model_mat[cov_idx]*100,
-                                                                       deriv_model_mat[amp_idx],
+                text2 = 'Cov.: \t{:1.0f} %'.format(   deriv_model_mat[cov_idx]*100
                                                                         )
 
             elif self.fit_model == 'css':
@@ -1578,9 +1572,8 @@ class PlotOperator(object):
                                                                                                 deriv_model_mat[ecc_idx],
                                                                                                 deriv_model_mat[size_idx],
                                                                                                  )
-                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %\nAmp.: \t{:1.2f}'.format(  deriv_model_mat[non_lin_idx],
-                                                                                        deriv_model_mat[cov_idx]*100,
-                                                                                        deriv_model_mat[amp_idx],
+                text2 = 'n:    \t{:1.1f}\nCov.: \t{:1.0f} %'.format(  deriv_model_mat[non_lin_idx],
+                                                                                        deriv_model_mat[cov_idx]*100
                                                                         )
 
             low_param_map_fig.text(x=x_text1,y=y_text,text = [text1],text_font_size = '8pt',text_baseline = 'top')
@@ -1602,17 +1595,17 @@ class PlotOperator(object):
                                                 min_border_top      =   self.min_border_large,
                                                 toolbar_location    =   None)
 
-        stim_on = ([16,30],[31,52],[68,89],[90,104])
-        stim_off = ([0,15],[53,67],[105,119])
-        stim_dir = (['down'],['left'],['right'],['up'])
+        stim_on = ([16,47],[48,79],[80,111],[112,143],[156,187],[188,219],[220,251],[252,283])
+        stim_off = ([0,15],[144,155],[284,299])
+        stim_dir = (['right'],['up'],['left'],['down'],['up\nright'],['up\nleft'],['down\nleft'],['down\nright'])
 
         for t_stim_on in np.arange(0,len(stim_on),1):
-            time_leg_fig.quad(left=stim_on[t_stim_on][0]*self.tr_dur, right=stim_on[t_stim_on][1]*self.tr_dur, top=1, bottom=0, fill_color="black",line_color = 'white',line_width = 1)
-            x_dir_txt = (stim_on[t_stim_on][1]*self.tr_dur+stim_on[t_stim_on][0]*self.tr_dur)/2.0
+            time_leg_fig.quad(left=stim_on[t_stim_on][0], right=stim_on[t_stim_on][1], top=1, bottom=0, fill_color="black",line_color = 'white',line_width = 1)
+            x_dir_txt = (stim_on[t_stim_on][1]+stim_on[t_stim_on][0])/2.0
             time_leg_fig.text(x = x_dir_txt, y=0.5,text = ['{text}'.format(text = stim_dir[t_stim_on][0])],text_align = 'center',text_font_size = '8pt',text_color = 'white',text_baseline = 'middle')
 
         for t_stim_off in np.arange(0,len(stim_off),1):
-            time_leg_fig.quad(left=stim_off[t_stim_off][0]*self.tr_dur, right=stim_off[t_stim_off][1]*self.tr_dur, top=1, bottom=0, fill_color=self.bg_color,line_color = 'white',line_width = 1)
+            time_leg_fig.quad(left=stim_off[t_stim_off][0], right=stim_off[t_stim_off][1], top=1, bottom=0, fill_color=self.bg_color,line_color = 'white',line_width = 1)
 
         # up-right space
         s2 = Spacer(width=int(self.p_height/2), height=int(self.p_height/10))

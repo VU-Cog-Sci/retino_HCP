@@ -15,10 +15,8 @@ Output(s):
 None
 -----------------------------------------------------------------------------------------
 To run:
-source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/roi_plots.py sub-01 gauss 1 0
-python post_fit/roi_plots.py sub-02 gauss 1 0
+python post_fit/roi_plots.py 999999 gauss 0 0
 -----------------------------------------------------------------------------------------
 """
 
@@ -63,6 +61,10 @@ from popeye.visual_stimulus import VisualStimulus
 import popeye.css as css
 import popeye.og as og
 
+# Check system
+# ------------
+sys.exit('Drawing Flatmaps only works with Python 3. Aborting.') if sys.version_info[0] > 3 else None
+
 # Get inputs
 # ----------
 subject = sys.argv[1]
@@ -80,8 +82,10 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
-elif 'lisa' in platform.uname()[1]:
-    base_dir = analysis_info['lisa_base_folder']
+    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+elif 'local' in platform.uname()[1]:
+    base_dir = analysis_info['local_base_folder'] 
+    main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 roi_masks_dir = opj(base_dir,'pp_data',subject,fit_model,'roi_masks')
@@ -91,7 +95,7 @@ except OSError: pass
 
 # Create stimulus design and define model
 # ---------------------------------------
-visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','vis_design.mat'))
+visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','retinotopysmall5.mat'))
 visual_dm = visual_dm_file['stim']
 
 stimulus = VisualStimulus(  stim_arr = visual_dm,
@@ -133,13 +137,12 @@ sign_idx, rsq_idx, ecc_idx, polar_real_idx, polar_imag_idx , size_idx, \
 
 # Initialize data dictionary that will save all data arrays
 for roi_num, roi in enumerate(analysis_info['rois']):
-    
-    for mask_dir in ['pos','neg']:    
+    for mask_dir in ['pos','neg']:
         data_hemi = []
         val_hemi = 0
         tc_mat_hemi = []
-        
         for hemi in ['L', 'R', 'LR']:
+
             # create folder
             roi_text = roi
             exec('fig_bokeh_dir_{mask_dir}_{hemi} = opj(base_dir,"pp_data",subject,fit_model,"figs","prf","{mask_dir}","{hemi}")'.format(mask_dir=mask_dir, hemi = hemi))
@@ -158,11 +161,12 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                 data = np.row_stack((data_hemi[0],data_hemi[1]))
                 tc_mat = np.row_stack((tc_mat_hemi[0],tc_mat_hemi[1]))
                 draw = True
-            
             else:
+
                 # derivative data
                 if hemi == 'L': val_hemi = 1
                 elif hemi == 'R': val_hemi = 2
+
                 folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
                 h5_file = h5py.File(opj(h5_dir,'{roi}.h5'.format(roi = roi_text)), "r")
                 in_file = opj("prf_deriv_{hemi}_{mask_dir}".format(hemi = hemi, mask_dir = mask_dir))
@@ -177,13 +181,12 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
                 # time course data
                 if hemi == 'L' or hemi == 'R':
-                    mask_file = opj(roi_masks_dir,"masks_{hemi}_fsaverage6.gii".format(hemi = hemi))
+                    mask_file = opj(roi_masks_dir,"masks_{hemi}.func.gii".format(hemi = hemi))
                     gii_in_mask = nb.load(mask_file)
                     mask_mat = np.array([gii_in_mask.darrays[i].data for i in range(len(gii_in_mask.darrays))])
 
                     # load time course of original data
-                    
-                    orig_data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,"{sub}_task-prf_space-fsaverage6_hemi-{hemi}.func_sg_psc.gii".format(sub = subject, hemi = hemi))))
+                    orig_data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*%s.func_bla_psc_av.gii'% hemi)))
                     orig_data_file_load = nb.load(orig_data_file[0])
                     orig_data = []
                     orig_data.append(np.array([orig_data_file_load.darrays[i].data for i in range(len(orig_data_file_load.darrays))]))
@@ -197,8 +200,8 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
             vertex_ini = data.shape[0]
 
+
             if draw == True:
-                
                 if vertex_ini > 0:
                     data4mask = data
                     data = data[np.logical_and(np.logical_and( data4mask[:,rsq_idx]>=analysis_info['rsq_threshold'],
@@ -211,8 +214,13 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
                     vertex = data.shape[0]
 
-                    
                     if vertex > 0:
+                        
+                        # randomize order
+                        new_order = np.random.permutation(vertex)
+                        data = data[new_order,:]
+                        tc_mat = tc_mat[new_order,:]
+                        
 
                         print("drawing {roi}_{hemi}_{mask_dir} figures, n={vertex}".format(roi = roi_text,hemi = hemi,vertex = vertex, mask_dir = mask_dir)) 
 
@@ -237,14 +245,13 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'stim_color':       tuple([250,250,250]), 
                                         'hist_fill_color':  tuple([255,255,255]),
                                         'hist_line_color':  tuple([0,0,0]), 
-                                        'stim_width':       analysis_info['stim_width'], 
-                                        'stim_height':      analysis_info['stim_height'], 
+                                        'stim_radius':      analysis_info['stim_radius'], 
                                         'rsq_threshold':    analysis_info['rsq_threshold'],
                                         'cmap':             'Spectral',
-                                        'cmap_steps':       9,
+                                        'cmap_steps':       8,
                                         'col_offset':       0,
                                         'vmin':             0,
-                                        'vmax':             9,
+                                        'vmax':             8,
                                         'leg_xy_max_ratio': 1.8,
                                         'dataMat':          data,
                                         'data_source':      data_source,
@@ -283,7 +290,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         f_pRFmap,old_main_fig1 = plotter.draw_figure(   parameters = params_pRFmap, 
                                                                         plot = 'map')
 
-                        
                         # pRFecc
                         old_main_fig = []
                         f_pRFecc = []
@@ -342,10 +348,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
                             elif type_comp == 'Amplitude':
                                 params_pRFecc.update(
-                                            {   'y_range':          (-1, 1),
-                                                'y_label':          'Amplitude (z-score)',
+                                            {   'y_range':          (-0.02, 0.02),
+                                                'y_label':          'Amplitude',
                                                 "y_source_label":   'beta',
-                                                'y_tick_steps':     0.5,
+                                                'y_tick_steps':     0.01,
                                                 'v_hist_bins':      16})
                                 if save_svg == 1:
                                     params_pRFecc.update(
@@ -364,10 +370,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
                             elif type_comp == 'Baseline':
                                 params_pRFecc.update(
-                                            {   'y_range':          (-1, 1),
-                                                'y_label':          'Baseline (z-score)',
+                                            {   'y_range':          (-200, 200),
+                                                'y_label':          'Baseline',
                                                 'y_source_label':   'baseline',
-                                                'y_tick_steps':     0.5,
+                                                'y_tick_steps':     25,
                                                 'v_hist_bins':      16})
                                 if save_svg == 1:
                                     params_pRFecc.update(
@@ -380,6 +386,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                                                         plot = 'ecc',
                                                                         old_main_fig = old_main_fig)
                             f_pRFecc.append(out1)
+
 
                         # pRF cov
                         # -------
@@ -406,11 +413,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         if save_svg == 1:
                             params_pRFcov.update(
                                     {   'svg_filename':     '{roi}_{hemi}_{mask_dir}_pRFcov'.format(mask_dir=mask_dir,hemi=hemi,roi= roi_text)})
-                        title = '{roi}{hemi} {mask_dir}: pRF density map'.format(roi = roi_text, hemi = hemi, mask_dir = mask_dir)
+                        title = '{roi}{hemi} {mask_dir}: pRF density map'.format(roi = roi_text, hemi = hemi, type_comp = type_comp, mask_dir = mask_dir)
                         params_pRFcov.update({'main_fig_title':   title})
                         f_pRFcov = plotter.draw_figure(parameters = params_pRFcov, plot = 'cov',old_main_fig = old_main_fig1)
 
-                        
                         # pRF lat
                         # -------
                         params_pRFlat = param_all
@@ -447,10 +453,10 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                                         'y_label_map':      'Vertical coord. (dva)',
                                         'x_tick_map':       4,
                                         'y_tick_map':       4,
-                                        'x_range_tc':       (0,analysis_info['n_timepoints_per_run']*analysis_info['TR']),
+                                        'x_range_tc':       (0,analysis_info['n_timepoints_per_run']),
                                         'x_label_tc':       'Time (s)',
                                         'y_label_tc':       'BOLD signal change (%)',
-                                        'x_tick_tc':        20,
+                                        'x_tick_tc':        50,
                                         'tr_dur':           analysis_info['TR'],
                                         'model_line_color': tuple([254,51,10]),
                                         'model_fill_color': tuple([254,51,10])
@@ -524,6 +530,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                             all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
                                                 [f_pRFecc[3],f_pRFecc[4],None]],toolbar_location='right')
 
+
                             all_f4 = gridplot([ [f_pRFtc[0],f_pRFtc[1]],
                                                 [f_pRFtc[2],f_pRFtc[3]],
                                                 [f_pRFtc[4],f_pRFtc[5]],
@@ -531,7 +538,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         elif fit_model == 'css':
                             all_f1 = gridplot([ [f_pRFecc[0],f_pRFecc[1],f_pRFecc[2]],
                                                 [f_pRFecc[3],f_pRFecc[4],f_pRFecc[5]]],toolbar_location='right')
-                            
                             all_f4 = gridplot([ [f_pRFtc[0],f_pRFtc[1]],
                                                 [f_pRFtc[2],f_pRFtc[3]],
                                                 [f_pRFtc[2],f_pRFtc[3]],
@@ -545,8 +551,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}_{mask_dir}_pRFmap.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
                         output_file(output_file_html, title='Subject: %s | ROI: %s | Hemisphere: %s | Sign: %s | Vertex: %i | Figures:pRF maps parameters and density'%(subject,roi_text,hemi,mask_dir,vertex))
                         save(all_f2)
-                        
-                        
 
                         all_f3 = gridplot([[f_pRFlat[0]]],toolbar_location = 'right')
                         exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}_{mask_dir}_pRFlat.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
@@ -556,7 +560,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                         exec('output_file_html = opj(fig_bokeh_dir_{mask_dir}_{hemi},"{roi_text}_{hemi}_{mask_dir}_pRFtc.html")'.format(mask_dir = mask_dir,roi_text = roi_text, hemi = hemi))
                         output_file(output_file_html, title='Subject: %s | ROI: %s | Hemisphere: %s | Sign: %s | Figures: pRF time course'%(subject,roi_text,hemi,mask_dir))
                         save(all_f4)
-                        
 
                     else:
                         print("drawing {roi}_{hemi}_{mask_dir} figures not possible: n={vertex}".format(roi = roi_text,hemi = hemi,vertex = vertex,mask_dir = mask_dir)) 

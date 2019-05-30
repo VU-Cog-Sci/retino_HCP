@@ -63,9 +63,8 @@ def set_pycortex_config_file(project_folder):
 
 def convert_fit_results(prf_filename,
                         output_dir,
+                        stim_radius,
                         hemi,
-                        stim_width,
-                        stim_height,
                         fit_model):
     """
     Convert pRF fitting value in different parameters for following analysis
@@ -74,9 +73,8 @@ def convert_fit_results(prf_filename,
     ----------
     prf_filename: absolute paths to prf result files.
     output_dir: absolute path to directory into which to put the resulting files.
-    hemi: hemisphere
-    stim_width: stimulus width in deg
-    stim_heigth: stimulus height in deg
+    stim_radius: stimulus radius in deg
+    hemi: brain hemisphere
     fit_model: fit model ('gauss','css')
 
     Returns
@@ -86,7 +84,7 @@ def convert_fit_results(prf_filename,
     prf_deriv_L_pos and  prf_deriv_R_pos : derivative of pRF analysis for all positive pRF voxels
 
     stucture output:
-    columns: 1->size of input
+    columns: 1->32492
     row00 : sign
     row01 : R2
     row02 : eccentricity in deg
@@ -117,6 +115,7 @@ def convert_fit_results(prf_filename,
     # Popeye imports
     from popeye.spinach import generate_og_receptive_fields
 
+
     # Create folders
     # --------------
     try:
@@ -129,7 +128,7 @@ def convert_fit_results(prf_filename,
     # Get data details
     # ----------------
     prf_data = []
-    prf_data_load = nb.load(prf_filename)
+    prf_data_load = nb.load(prf_filename[0])
     prf_data.append(np.array([prf_data_load.darrays[i].data for i in range(len(prf_data_load.darrays))]))
     prf_data = np.vstack(prf_data)    
     ext = prf_data_load.extra
@@ -173,13 +172,13 @@ def convert_fit_results(prf_filename,
 
     # pRF amplitude
     if fit_model == 'gauss':
-        prf_amp_all = prf_data[beta_idx,:]*100
+        prf_amp_all = prf_data[beta_idx,:]
     elif fit_model == 'css':
         prf_amp_all = prf_data[beta_idx,:]
 
     # pRF baseline
     if fit_model == 'gauss':
-        prf_baseline_all = prf_data[baseline_idx,:]/100
+        prf_baseline_all = prf_data[baseline_idx,:]
     elif fit_model == 'css':
         prf_baseline_all = prf_data[baseline_idx,:]
 
@@ -196,18 +195,17 @@ def convert_fit_results(prf_filename,
         rfs = rfs ** prf_data[non_lin_idx,:]
 
     total_prf_content = rfs.reshape((-1, prf_data.shape[1])).sum(axis=0)
-    log_x = np.logical_and(deg_x >= -stim_width/2.0, deg_x <= stim_width/2.0)
-    log_y = np.logical_and(deg_y >= -stim_height/2.0, deg_y <= stim_height/2.0)
-    stim_vignet = np.logical_and(log_x,log_y)
+    stim_vignet = np.sqrt(deg_x ** 2 + deg_y**2) < stim_radius    
     prf_cov_all = rfs[stim_vignet, :].sum(axis=0) / total_prf_content
-    
+
     # pRF x
     prf_x_all = prf_data[x_idx,:]
 
     # pRF y
     prf_y_all = prf_data[y_idx,:]
 
-    
+    # Saving
+    # ------
     for mask_dir in ['all','pos','neg']:
         print('saving: %s'%('os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii")'.format(hemi = hemi, mask_dir = mask_dir)))
         for output_type in ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov','prf_x','prf_y']:
@@ -224,7 +222,6 @@ def convert_fit_results(prf_filename,
         exec('nb.save(gii_out,os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii"))'.format(hemi = hemi, mask_dir = mask_dir))
 
     return None
-    
 
 def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     """masks data in in_file with mask in mask_file,
@@ -262,6 +259,7 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     import h5py
     import ipdb
     deb = ipdb.set_trace
+
 
     gii_in_data = nb.load(in_file)
     data_mat = np.array([gii_in_data.darrays[i].data for i in range(len(gii_in_data.darrays))])

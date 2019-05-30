@@ -16,8 +16,8 @@ None
 To run:
 source activate i27
 cd /home/szinte/projects/retino_HCP
-python post_fit/polar_prog.py sub-01 gauss 1
-python post_fit/polar_prog.py sub-02 gauss 1
+python post_fit/polar_prog.py 999999 css 1
+python post_fit/polar_prog.py 999999 gauss 1
 -----------------------------------------------------------------------------------------
 """
 
@@ -66,18 +66,12 @@ import matplotlib.image as mpimg
 subject = sys.argv[1]
 fit_model = sys.argv[2]
 save_svg = int(sys.argv[3])
-
-if subject == 'sub-01':
-    rot_left = -20
-    rot_right = 20
-elif subject == 'sub-02':
-    rot_left = -20
-    rot_right = 20
-    
-
-nbins = 15
+rot_left = 10
+rot_right = 20
+nbins = 20
 small_size_dot = 5
 big_size_dot = small_size_dot*3
+
 
 # Functions import
 # ----------------
@@ -97,8 +91,10 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder']
-elif 'lisa' in platform.uname()[1]:
-    base_dir = analysis_info['lisa_base_folder']
+    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+elif 'local' in platform.uname()[1]:
+    base_dir = analysis_info['local_base_folder']
+    main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
 
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 if save_svg == 1:
@@ -124,13 +120,13 @@ mask_dir  = 'neg'
 # Get data and combine hemispheres
 deriv_mat=[]
 for hemi in ['L','R']:
-    deriv_file = nb.load(opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.gii".format(hemi = hemi, mask_dir = mask_dir)))
+    deriv_file = nb.load(opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir)))
     deriv_mat.append(np.array([deriv_file.darrays[i].data for i in range(len(deriv_file.darrays))]))
 deriv_mat = np.hstack(deriv_mat)
 deriv_mat = deriv_mat.T
-threshold_mask = np.logical_and(np.logical_and( deriv_mat[:,rsq_idx]>=0.0,
-                                                deriv_mat[:,cov_idx]>=0.0),
-                                                deriv_mat[:,size_idx]>=0.0)
+threshold_mask = np.logical_and(np.logical_and( deriv_mat[:,rsq_idx]>=analysis_info['rsq_threshold'],
+                                                deriv_mat[:,cov_idx]>=analysis_info['cov_threshold']),
+                                                deriv_mat[:,size_idx]>=analysis_info['size_threshold'])
 
 # R-square
 rsq_data = deriv_mat[:,rsq_idx]
