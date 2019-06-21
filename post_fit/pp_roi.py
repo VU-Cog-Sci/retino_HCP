@@ -10,14 +10,13 @@ Input(s):
 sys.argv[1]: subject number
 sys.argv[2]: fit model ('gauss','css')
 sys.argv[3]: voxels per fit (e.g 2500)
-sys.argv[4]: draw roi in pycortex
 -----------------------------------------------------------------------------------------
 Output(s):
 None
 -----------------------------------------------------------------------------------------
-To run:
-cd /home/szinte/projects/retino_HCP
-python post_fit/pp_roi.py 999999 gauss 2500
+#To run:
+#cd /home/ada/projects/retino_HCP
+#python post_fit/pp_roi_cifti.py 999999 gauss 2500
 -----------------------------------------------------------------------------------------
 """
 
@@ -38,6 +37,7 @@ import ipdb
 import platform
 opj = os.path.join
 deb = ipdb.set_trace
+import cifti
 
 # MRI imports
 # -----------
@@ -46,22 +46,20 @@ import cortex
 
 # Functions import
 # ----------------
-from utils import set_pycortex_config_file, convert_fit_results, draw_cortex_vertex
+import utils
 
 # Check system
 # ------------
 sys.exit('Popeye error with Python 2. Use Python 3 Aborting.') if sys.version_info[0] < 3 else None
 
-# Get inputs
-# ----------
+#Get inputs
 subject = sys.argv[1]
 fit_model = sys.argv[2]
-job_vox = float(sys.argv[3])
-draw_roi = float(sys.argv[4])
+job_vox = sys.argv[3]
 
 if fit_model == 'gauss': fit_val = 6
 elif fit_model == 'css': fit_val = 7
-base_file_name = 'tfMRI_RETBAR1_7T_AP_Atlas_MSMAll_hp2000_clean.dtseries'
+base_file_name = 'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc'
 
 # Define analysis parameters
 # --------------------------
@@ -72,72 +70,60 @@ with open('settings.json') as f:
 # Define cluster/server specific parameters
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
-    base_dir = analysis_info['aeneas_base_folder'] 
-    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+    base_dir = analysis_info['aeneas_base_folder']
+ 
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
-    main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
+#Output directory:
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 
-# determine number of vertex and time_serie
-data = []
-data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*.func_bla_psc_av.gii')))
-data_file_load = nb.load(data_file[0])
-data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
-data = np.vstack(data) 
-ts_num,vox_num = data.shape[0],data.shape[1]
+# determine number of vertex and time_series
+data_file = opj(base_dir,'raw_data', subject, 'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
+data_file_load = cifti.read(data_file)
+data = data_file_load[0]
 
 # Check if all slices are present
-# -------------------------------
 start_idx =  np.arange(0,vox_num,job_vox)
 end_idx = start_idx+job_vox
 end_idx[-1] = vox_num
 num_miss_part = 0
-fit_est_files_L = []
-fit_est_files_R = []
-for hemi in ['L','R']:
-    for iter_job in np.arange(0,start_idx.shape[0],1):
-        fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_%s.func_bla_psc_est_%s_to_%s.gii' %(base_file_name,hemi,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-        if os.path.isfile(fit_est_file):
-            if os.path.getsize(fit_est_file) == 0:
-                num_miss_part += 1 
-            else:
-                exec('fit_est_files_{hemi}.append(fit_est_file)'.format(hemi = hemi))
+
+fit_est_files = []
+for iter_job in np.arange(0,start_idx.shape[0],1):
+    fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_est_%s_to_%s.dtseries.nii' %(base_file_name,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+    if os.path.isfile(fit_est_file):
+        if os.path.getsize(fit_est_file) == 0:
+            num_miss_part += 1 
         else:
-            num_miss_part += 1
+            fit_est_files.append(fit_est_file)
+    else:
+        num_miss_part += 1
 
 if num_miss_part != 0:
     sys.exit('%i missing files, analysis stopped'%num_miss_part)
 
 
-# Combine fit files
-# -----------------
+#Combine fit files
 print('combining fit files')
-for hemi in ['L','R']:
-    data_hemi = np.zeros((fit_val,vox_num))
-    exec('fit_est_files_hemi = fit_est_files_{hemi}'.format(hemi=hemi))    
-    for fit_filename_hemi in fit_est_files_hemi:
-        data_fit_hemi = []
-        data_fit_file_hemi = nb.load(fit_filename_hemi)
-        data_fit_hemi.append(np.array([data_fit_file_hemi.darrays[i].data for i in range(len(data_fit_file_hemi.darrays))]))
-        data_fit_hemi = np.vstack(data_fit_hemi)
-        data_hemi = data_hemi + data_fit_hemi
+data_combined = np.zeros((fit_val, vox_num))
+for fit_filename in fit_est_files:
+    data_fit_file = cifti.read(fit_filename)
+    data_fit = data_fit_file[0]
+    data_combined = data_combined + data_fit
 
-    darrays_est_hemi = [nb.gifti.gifti.GiftiDataArray(d) for d in data_hemi]
-    exec('gii_out_{hemi} = nb.gifti.gifti.GiftiImage(header = data_fit_file_hemi.header, extra = data_fit_file_hemi.extra,darrays = darrays_est_hemi)'.format(hemi=hemi))
-    exec('nb.save(gii_out_{hemi}, opj(base_dir,"pp_data",subject,fit_model,"fit","{bfn}_{hemi}.func_bla_psc_est.gii"))'.format(hemi=hemi,bfn =base_file_name))
+prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
+bm_full = data_fit_file[1][1]
+series = cifti.Series(start=0, step=1, size=fit_val)
+cifti.write(prf_filename, data_combined, (series, bm_full)) 
 
 # Compute derived measures from prfs
 # ----------------------------------
 print('extracting pRF derivatives')
-for hemi in ['L','R']:
-    prf_filename = sorted(glob.glob(opj(base_dir,'pp_data',subject,fit_model,'fit','%s_%s.func_bla_psc_est.gii'%(base_file_name, hemi))))
-    convert_fit_results(prf_filename = prf_filename,
-                        output_dir = deriv_dir,
-                        stim_radius = analysis_info['stim_radius'],
-                        hemi = hemi,
-                        fit_model = fit_model)
 
+utils.convert_fit_results(prf_filename = prf_filename,
+                    output_dir = deriv_dir,
+                    stim_radius = analysis_info['stim_radius'],
+                    fit_model = fit_model)
 
 # Resample gii to fsaverage
 # -------------------------
