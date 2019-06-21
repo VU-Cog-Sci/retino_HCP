@@ -137,13 +137,12 @@ deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 print('separate cifti in cortical and subcortical')
 for mask_dir in ['all','pos','neg']:
 
-    separate_cmd = """{main_cmd} -cifti-separate {cii_in}.nii COLUMN -metric CORTEX_LEFT {cii_start}_L_{mask_dir}.func.gii  -metric CORTEX_RIGHT {cii_start}_R_{mask_dir}.func.gii"""
+    separate_cmd = """{main_cmd} -cifti-separate {cii_in}.nii COLUMN --volume-all {cii_start}_subcortical.nii.gz -metric CORTEX_LEFT {cii_start}_L_{mask_dir}.func.gii  -metric CORTEX_RIGHT {cii_start}_R_{mask_dir}.func.gii"""
     os.system(separate_cmd.format(main_cmd = main_cmd,
                                   cii_in = opj(deriv_dir,mask_dir,"prf_deriv_{mask_dir}".format(mask_dir = mask_dir)),
                                   cii_start = opj(deriv_dir,mask_dir,"prf_deriv"),
                                   mask_dir = mask_dir
                                   ))
-
 
 # determine number of vertex and time_serie
 data = []
