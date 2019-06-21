@@ -10,13 +10,14 @@ Input(s):
 sys.argv[1]: subject number
 sys.argv[2]: fit model ('gauss','css')
 sys.argv[3]: voxels per fit (e.g 2500)
+sys.argv[4]: draw ROI in inkscape
 -----------------------------------------------------------------------------------------
 Output(s):
 None
 -----------------------------------------------------------------------------------------
 #To run:
 #cd /home/ada/projects/retino_HCP
-#python post_fit/pp_roi_cifti.py 999999 gauss 2500
+#python post_fit/pp_roi.py 999999 gauss 2500 0
 -----------------------------------------------------------------------------------------
 """
 
@@ -46,16 +47,13 @@ import cortex
 
 # Functions import
 # ----------------
-import utils
-
-# Check system
-# ------------
-sys.exit('Popeye error with Python 2. Use Python 3 Aborting.') if sys.version_info[0] < 3 else None
+from utils import set_pycortex_config_file, convert_fit_results, draw_cortex_vertex
 
 #Get inputs
 subject = sys.argv[1]
 fit_model = sys.argv[2]
-job_vox = sys.argv[3]
+job_vox = float(sys.argv[3])
+draw_roi = float(sys.argv[4])
 
 if fit_model == 'gauss': fit_val = 6
 elif fit_model == 'css': fit_val = 7
@@ -71,62 +69,90 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder']
- 
+    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
-#Output directory:
+    main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
+
+# Output directory:
 deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 
-# determine number of vertex and time_series
-data_file = opj(base_dir,'raw_data', subject, 'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
-data_file_load = cifti.read(data_file)
-data = data_file_load[0]
+# Determine number of vertex and time_series
+# -------------------------------------------
+# data_file = opj(base_dir,'raw_data', subject, 'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
+# data_file_load = cifti.read(data_file)
+# data = data_file_load[0]
+# vox_num = data.shape[1]
 
 # Check if all slices are present
-start_idx =  np.arange(0,vox_num,job_vox)
-end_idx = start_idx+job_vox
-end_idx[-1] = vox_num
-num_miss_part = 0
+# -------------------------------
+# start_idx =  np.arange(0,vox_num,job_vox)
+# end_idx = start_idx+job_vox
+# end_idx[-1] = vox_num
+# num_miss_part = 0
 
-fit_est_files = []
-for iter_job in np.arange(0,start_idx.shape[0],1):
-    fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_est_%s_to_%s.dtseries.nii' %(base_file_name,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-    if os.path.isfile(fit_est_file):
-        if os.path.getsize(fit_est_file) == 0:
-            num_miss_part += 1 
-        else:
-            fit_est_files.append(fit_est_file)
-    else:
-        num_miss_part += 1
+# fit_est_files = []
+# for iter_job in np.arange(0,start_idx.shape[0],1):
+#     fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_est_%s_to_%s.dtseries.nii' %(base_file_name,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+#     if os.path.isfile(fit_est_file):
+#         if os.path.getsize(fit_est_file) == 0:
+#             num_miss_part += 1 
+#         else:
+#             fit_est_files.append(fit_est_file)
+#     else:
+#         num_miss_part += 1
 
-if num_miss_part != 0:
-    sys.exit('%i missing files, analysis stopped'%num_miss_part)
+# if num_miss_part != 0:
+#     sys.exit('%i missing files, analysis stopped'%num_miss_part)
 
 
-#Combine fit files
-print('combining fit files')
-data_combined = np.zeros((fit_val, vox_num))
-for fit_filename in fit_est_files:
-    data_fit_file = cifti.read(fit_filename)
-    data_fit = data_fit_file[0]
-    data_combined = data_combined + data_fit
+# Combine fit files
+# -----------------
+# print('combining fit files')
+# data_combined = np.zeros((fit_val, vox_num))
+# for fit_filename in fit_est_files:
+#     data_fit_file = cifti.read(fit_filename)
+#     data_fit = data_fit_file[0]
+#     data_combined = data_combined + data_fit
 
-prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
-bm_full = data_fit_file[1][1]
-series = cifti.Series(start=0, step=1, size=fit_val)
-cifti.write(prf_filename, data_combined, (series, bm_full)) 
+# prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
+# bm_full = data_fit_file[1][1]
+# series = cifti.Series(start=0, step=1, size=fit_val)
+# cifti.write(prf_filename, data_combined, (series, bm_full)) 
 
 # Compute derived measures from prfs
 # ----------------------------------
-print('extracting pRF derivatives')
+# print('extracting pRF derivatives')
+# prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
 
-utils.convert_fit_results(prf_filename = prf_filename,
-                    output_dir = deriv_dir,
-                    stim_radius = analysis_info['stim_radius'],
-                    fit_model = fit_model)
+# convert_fit_results(prf_filename = prf_filename,
+#                     output_dir = deriv_dir,
+#                     stim_radius = analysis_info['stim_radius'],
+#                     fit_model = fit_model)
+
 
 # Resample gii to fsaverage
 # -------------------------
+print('separate cifti in cortical and subcortical')
+for mask_dir in ['all','pos','neg']:
+
+    separate_cmd = """{main_cmd} -cifti-separate {cii_in}.nii COLUMN -metric CORTEX_LEFT {cii_start}_L_{mask_dir}.func.gii  -metric CORTEX_RIGHT {cii_start}_R_{mask_dir}.func.gii"""
+    os.system(separate_cmd.format(main_cmd = main_cmd,
+                                  cii_in = opj(deriv_dir,mask_dir,"prf_deriv_{mask_dir}".format(mask_dir = mask_dir)),
+                                  cii_start = opj(deriv_dir,mask_dir,"prf_deriv"),
+                                  mask_dir = mask_dir
+                                  ))
+
+
+# determine number of vertex and time_serie
+data = []
+data_file  =  opj(deriv_dir,mask_dir,"prf_deriv_L_{mask_dir}.func.gii".format(mask_dir = mask_dir)),
+data_file_load = nb.load(data_file[0])
+data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
+data = np.vstack(data) 
+ts_num,vox_num = data.shape[0],data.shape[1]
+
 print('converting derivative files to fsaverage')
 resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
 for hemi in ['L','R']:
@@ -138,7 +164,7 @@ for hemi in ['L','R']:
 
     for mask_dir in ['all','pos','neg']:
         
-        metric_in = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_in = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.func.gii".format(hemi = hemi, mask_dir = mask_dir))
         metric_out = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
 
         os.system(resample_cmd.format(  main_cmd = main_cmd,
@@ -148,9 +174,6 @@ for hemi in ['L','R']:
                                         metric_out = metric_out, 
                                         current_area = current_area, 
                                         new_area = new_area))
-
-
-
 
 if draw_roi:
     
@@ -241,10 +264,6 @@ if draw_roi:
         vertex_names.append('cov')
 
         # Draw figures
-        # if fit_model == 'gauss' and subject == '999999': 
-        #     dataset_name = 'dataset_{mask_dir}.hdf'.format(mask_dir = mask_dir)
-        #     dataset_webgl = cortex.Dataset()
-
         for vertex_name in vertex_names:
             roi_name = '{vertex_name}_{mask_dir}'.format(vertex_name = vertex_name, mask_dir = mask_dir)
 

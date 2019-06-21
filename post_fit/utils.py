@@ -200,6 +200,7 @@ def convert_fit_results(prf_filename,
     # pRF y
     prf_y_all = prf_data[y_idx,:]
 
+
     # Saving
     # ------
     for mask_dir in ['all','pos','neg']:
