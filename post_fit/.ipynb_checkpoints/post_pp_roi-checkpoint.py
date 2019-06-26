@@ -41,13 +41,12 @@ deb = ipdb.set_trace
 # MRI imports
 # -----------
 import nibabel as nb
-import cortex
+import cortex 
 
 # Functions import
 # ----------------
 from plot_class import PlotOperator
 from utils import set_pycortex_config_file, mask_gii_2_hdf5 
-
 
 # Get inputs
 # ----------
@@ -64,7 +63,8 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
-    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+    #main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+    main_cmd = '/home/ada/software/workbench/bin_rh_linux64/wb_command'
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
@@ -75,19 +75,21 @@ h5_dir = opj(base_dir,'pp_data',subject,fit_model,'h5')
 try: os.makedirs(roi_masks_dir)
 except OSError: pass
 
+
 # Determine number of vertex and time_serie
 # -----------------------------------------
 data = []
-data_file  =  sorted(glob.glob(opj(base_dir,'raw_data',subject,'*RETBAR1_7T*.func_bla_psc_av.gii')))
-data_file_load = nb.load(data_file[0])
+data_file  =  opj(deriv_dir,'all',"prf_deriv_L_all.func.gii")
+data_file_load = nb.load(data_file)
 data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
 data = np.vstack(data) 
-ts_num,vox_num = data.shape[0],data.shape[1]
+vox_num = data.shape[1]
+
 
 # Change cortex database folder
 # -----------------------------
-pycortex_folder     =   opj(base_dir,'pp_data','cortex')
-set_pycortex_config_file(   project_folder = pycortex_folder)
+pycortex_folder = opj(base_dir,'pp_data','cortex')
+set_pycortex_config_file(project_folder = pycortex_folder)
 
 # Create mask from overlay.svg
 # ----------------------------
@@ -116,6 +118,7 @@ gii_out = nb.gifti.gifti.GiftiImage(header = prf_deriv_R_all_fsaverage.header,
                                     extra = prf_deriv_R_all_fsaverage.extra, 
                                     darrays = darrays)
 nb.save(gii_out,opj(roi_masks_dir,"masks_R_fsaverage.func.gii"))
+
 
 resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
 for hemi in ['L','R']:
@@ -153,7 +156,7 @@ for roi_num, roi in enumerate(analysis_info['rois']):
         
         for mask_dir in ['all','pos','neg']:
             
-            in_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.gii".format(hemi = hemi, mask_dir = mask_dir))
+            in_file = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.func.gii".format(hemi = hemi, mask_dir = mask_dir))
             folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
             
             mask_gii_2_hdf5(in_file = in_file,
@@ -162,3 +165,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                             folder_alias = folder_alias,
                             roi_num = roi_num)
 
+
+
+            

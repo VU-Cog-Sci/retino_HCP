@@ -134,21 +134,19 @@ deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
                     #fit_model = fit_model)
 
 
-print('separate cifti in cortical and subcortical')
-base_dir,'raw_data', 
-cii_start = '/home/shared/2018/visual/subcortical_hcp/raw_data/999999/tfMRI_RETBARS_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc'
-cii_in = '/home/shared/2018/visual/subcortical_hcp/raw_data/999999/tfMRI_RETBARS_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii'
-
-separate_cmd = """{main_cmd} -cifti-separate {cii_in} COLUMN -volume-all {cii_start}_subcortical.nii.gz -metric CORTEX_LEFT {cii_start}_L.func.gii  -metric CORTEX_RIGHT {cii_start}_R.func.gii"""
-os.system(separate_cmd.format(main_cmd = main_cmd,
-                                  cii_in = cii_in,
-                                  cii_start = cii_start
-                                  ))
             
             
 # Resample gii to fsaverage
 # -------------------------
-print('separate cifti in cortical and subcortical')
+print('separate cifti in cortical and subcortical of raw data')
+base_dir,'raw_data', 
+cii_start = opj(base_dir,'raw_data',subject,'tfMRI_RETBARS_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries')
+separate_cmd = """{main_cmd} -cifti-separate {cii_start}.nii COLUMN -volume-all {cii_start}_subcortical.nii.gz -metric CORTEX_LEFT {cii_start}_L.func.gii  -metric CORTEX_RIGHT {cii_start}_R.func.gii"""
+os.system(separate_cmd.format(main_cmd = main_cmd,
+                                  cii_start = cii_start
+                                  ))
+
+print('separate cifti in cortical and subcortical of derivatives')
 for mask_dir in ['all','pos','neg']:
 
     separate_cmd = """{main_cmd} -cifti-separate {cii_in}.nii COLUMN -volume-all {cii_start}_subcortical_{mask_dir}.nii.gz -metric CORTEX_LEFT {cii_start}_L_{mask_dir}.func.gii  -metric CORTEX_RIGHT {cii_start}_R_{mask_dir}.func.gii"""

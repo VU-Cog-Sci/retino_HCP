@@ -139,7 +139,6 @@ for hemi in ['L','R']:
                                     current_area = current_area, 
                                     new_area = new_area))
 
-
 # Save ROIS data in hdf5
 # ----------------------
 print('creating h5 files')
@@ -166,3 +165,6 @@ for roi_num, roi in enumerate(analysis_info['rois']):
                             folder_alias = folder_alias,
                             roi_num = roi_num)
 
+
+
+            
