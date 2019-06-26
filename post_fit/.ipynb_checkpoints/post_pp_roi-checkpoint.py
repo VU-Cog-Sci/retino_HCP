@@ -63,8 +63,8 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
-    #main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
-    main_cmd = '/home/ada/software/workbench/bin_rh_linux64/wb_command'
+    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+    #main_cmd = '/home/ada/software/workbench/bin_rh_linux64/wb_command'
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
@@ -84,7 +84,6 @@ data_file_load = nb.load(data_file)
 data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
 data = np.vstack(data) 
 vox_num = data.shape[1]
-
 
 # Change cortex database folder
 # -----------------------------
@@ -139,9 +138,9 @@ for hemi in ['L','R']:
                                     current_area = current_area, 
                                     new_area = new_area))
 
-# Save ROIS data in hdf5
-# ----------------------
-print('creating h5 files')
+# Save cortical ROIS data in hdf5
+# -------------------------------
+print('creating cortical h5 files')
 for roi_num, roi in enumerate(analysis_info['rois']):
     try: os.makedirs(h5_dir)
     except OSError: pass
@@ -167,4 +166,32 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
 
 
+# Save subcortical ROIS data in hdf5
+# ----------------------------------
+print('creating subcortical h5 files')
+subcortical_file = ''
+for sub_roi_num, sub_roi in enumerate(analysis_info['subcortical_rois']):
+    try: os.makedirs(h5_dir)
+    except OSError: pass
+    
+    h5_file = opj(h5_dir,'{sub_roi}.h5'.format(sub_roi = sub_roi))
+    try: os.system('rm '+ h5_file)
+    except: pass
+    
+    for hemi in ['L','R']:
+        
+        hemi_mask_file = opj(base_dir,'raw_data','surfaces','pauli_atlas',"MNI152_T1_1mm_brain_mask_{hemi}_resample.nii.gz".format(hemi = hemi))
+        roi_mask_file = opj(base_dir,'raw_data','surfaces','pauli_atlas',"CIT168toMNI152_prob_atlas_bilat_1mm_{hemi}_resample.nii.gz".format(hemi = hemi))
+        
+        # combine hemi and roi to create mask_file
+        
+        for mask_dir in ['all','pos','neg']:
             
+            in_file = opj(deriv_dir,mask_dir,"prf_deriv_subcortical_{mask_dir}.nii.gz".format(mask_dir = mask_dir))
+            folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
+            
+            mask_nii_2_hdf5(in_file = in_file,
+                            mask_file = mask_file,
+                            hdf5_file = h5_file,
+                            folder_alias = folder_alias,
+                            roi_num = roi_num)
