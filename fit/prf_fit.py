@@ -78,7 +78,7 @@ data = data_file_load[0]
 data_to_analyse = data[:,int(start_idx):int(end_idx)]
 
 # Create stimulus design
-visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','stim','retinotopysmall_all.mat'))
+visual_dm_file = scipy.io.loadmat(opj(base_dir,'raw_data','stim','retinotopysmall5.mat'))
 visual_dm = visual_dm_file['stim']
 
 stimulus = VisualStimulus(  stim_arr = visual_dm,

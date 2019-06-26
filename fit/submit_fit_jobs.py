@@ -16,7 +16,7 @@ Output(s):
 -----------------------------------------------------------------------------------------
 Exemple:
 #1: sub 192641 : ran 18/08/2018 at 20:15
-python fit/submit_fit_jobs.py 999999 gauss 2500 30
+python fit/submit_fit_jobs.py 999999 gauss 2500 10
 -----------------------------------------------------------------------------------------
 """
 
@@ -68,7 +68,7 @@ except:
 data = []
     
 # Determine data to analyse
-data_file  =  "{basedir}/raw_data/{sub}/tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii".format(basedir = base_dir,
+data_file  =  "{basedir}/raw_data/{sub}/tfMRI_RETBARS_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii".format(basedir = base_dir,
                                                                                                                 sub = subject)
 
 # Cut it in small pieces of voxels

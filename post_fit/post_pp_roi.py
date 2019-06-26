@@ -41,13 +41,12 @@ deb = ipdb.set_trace
 # MRI imports
 # -----------
 import nibabel as nb
-import cortex
+import cortex 
 
 # Functions import
 # ----------------
 from plot_class import PlotOperator
 from utils import set_pycortex_config_file, mask_gii_2_hdf5 
-
 
 # Get inputs
 # ----------
@@ -64,7 +63,8 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
-    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+    #main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+    main_cmd = '/home/ada/software/workbench/bin_rh_linux64/wb_command'
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
     main_cmd = '/Applications/workbench/bin_macosx64/wb_command'
@@ -88,8 +88,8 @@ vox_num = data.shape[1]
 
 # Change cortex database folder
 # -----------------------------
-pycortex_folder     =   opj(base_dir,'pp_data','cortex')
-set_pycortex_config_file(   project_folder = pycortex_folder)
+pycortex_folder = opj(base_dir,'pp_data','cortex')
+set_pycortex_config_file(project_folder = pycortex_folder)
 
 # Create mask from overlay.svg
 # ----------------------------
