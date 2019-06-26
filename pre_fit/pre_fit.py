@@ -61,9 +61,10 @@ for subject in analysis_info['subject_list']:
                                      deriv = analysis_info['sg_filt_deriv'],
                                      axis = 1, 
                                      mode = 'nearest').T
-
-        data_mean_blank = data_filt.mean(axis=0)
-        data_filt_psc = 100.0 * (data_filt - data_mean_blank)/data_mean_blank
+        
+        data_filt = data - data_filt + data_filt.mean(axis=0)
+        data_filt_mean = data_filt.mean(axis=0)
+        data_filt_psc = 100.0 * (data_filt - data_filt_mean)/data_filt_mean
         
         if task_num == 0:
             all_data_filt_psc = data_filt_psc

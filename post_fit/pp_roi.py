@@ -70,8 +70,8 @@ with open('settings.json') as f:
 # -----------------------------------------
 if 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder']
-    #main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
-    main_cmd = '/home/ada/software/workbench/bin_rh_linux64/wb_command'
+    main_cmd = '/home/szinte/software/workbench/bin_rh_linux64/wb_command'
+    # main_cmd = '/home/ada/software/workbench/bin_rh_linux64/wb_command'
 
 elif 'local' in platform.uname()[1]:
     base_dir = analysis_info['local_base_folder'] 
@@ -134,47 +134,59 @@ deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
                     #fit_model = fit_model)
 
 
+print('separate cifti in cortical and subcortical')
+base_dir,'raw_data', 
+cii_start = '/home/shared/2018/visual/subcortical_hcp/raw_data/999999/tfMRI_RETBARS_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc'
+cii_in = '/home/shared/2018/visual/subcortical_hcp/raw_data/999999/tfMRI_RETBARS_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii'
+
+separate_cmd = """{main_cmd} -cifti-separate {cii_in} COLUMN -volume-all {cii_start}_subcortical.nii.gz -metric CORTEX_LEFT {cii_start}_L.func.gii  -metric CORTEX_RIGHT {cii_start}_R.func.gii"""
+os.system(separate_cmd.format(main_cmd = main_cmd,
+                                  cii_in = cii_in,
+                                  cii_start = cii_start
+                                  ))
+            
+            
 # Resample gii to fsaverage
 # -------------------------
-#print('separate cifti in cortical and subcortical')
-#for mask_dir in ['all','pos','neg']:
+print('separate cifti in cortical and subcortical')
+for mask_dir in ['all','pos','neg']:
 
-    #separate_cmd = """{main_cmd} -cifti-separate {cii_in}.nii COLUMN -volume-all {cii_start}_subcortical.nii.gz -metric CORTEX_LEFT {cii_start}_L_{mask_dir}.func.gii  -metric CORTEX_RIGHT {cii_start}_R_{mask_dir}.func.gii"""
-    #os.system(separate_cmd.format(main_cmd = main_cmd,
-                                  #cii_in = opj(deriv_dir,mask_dir,"prf_deriv_{mask_dir}".format(mask_dir = mask_dir)),
-                                  #cii_start = opj(deriv_dir,mask_dir,"prf_deriv"),
-                                  #mask_dir = mask_dir
-                                  #))
+    separate_cmd = """{main_cmd} -cifti-separate {cii_in}.nii COLUMN -volume-all {cii_start}_subcortical_{mask_dir}.nii.gz -metric CORTEX_LEFT {cii_start}_L_{mask_dir}.func.gii  -metric CORTEX_RIGHT {cii_start}_R_{mask_dir}.func.gii"""
+    os.system(separate_cmd.format(main_cmd = main_cmd,
+                                  cii_in = opj(deriv_dir,mask_dir,"prf_deriv_{mask_dir}".format(mask_dir = mask_dir)),
+                                  cii_start = opj(deriv_dir,mask_dir,"prf_deriv"),
+                                  mask_dir = mask_dir
+                                  ))
 
 # determine number of vertex and time_serie
-#data = []
-#data_file  =  opj(deriv_dir,mask_dir,"prf_deriv_L_{mask_dir}.func.gii".format(mask_dir = mask_dir)),
-#data_file_load = nb.load(data_file[0])
-#data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
-#data = np.vstack(data) 
-#ts_num,vox_num = data.shape[0],data.shape[1]
+data = []
+data_file  =  opj(deriv_dir,mask_dir,"prf_deriv_L_{mask_dir}.func.gii".format(mask_dir = mask_dir)),
+data_file_load = nb.load(data_file[0])
+data.append(np.array([data_file_load.darrays[i].data for i in range(len(data_file_load.darrays))]))
+data = np.vstack(data) 
+ts_num,vox_num = data.shape[0],data.shape[1]
 
-#print('converting derivative files to fsaverage')
-#resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
-#for hemi in ['L','R']:
+print('converting derivative files to fsaverage')
+resample_cmd = """{main_cmd} -metric-resample {metric_in} {current_sphere} {new_sphere} ADAP_BARY_AREA {metric_out} -area-metrics {current_area} {new_area}"""
+for hemi in ['L','R']:
 
-    #current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.{num_vox_k}k_fs_LR.surf.gii'.format(hemi=hemi, num_vox_k = int(np.round(vox_num/1000))))
-    #new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
-    #current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.{num_vox_k}k_fs_LR.shape.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
-    #new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
+    current_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR-deformed_to-fsaverage.{hemi}.sphere.{num_vox_k}k_fs_LR.surf.gii'.format(hemi=hemi, num_vox_k = int(np.round(vox_num/1000))))
+    new_sphere = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage_std_sphere.{hemi}.164k_fsavg_{hemi}.surf.gii'.format(hemi=hemi))
+    current_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fs_LR.{hemi}.midthickness_va_avg.{num_vox_k}k_fs_LR.shape.gii'.format(hemi=hemi,num_vox_k = int(np.round(vox_num/1000))))
+    new_area = opj(base_dir,'raw_data/surfaces/resample_fsaverage','fsaverage.{hemi}.midthickness_va_avg.164k_fsavg_{hemi}.shape.gii'.format(hemi=hemi))
 
-    #for mask_dir in ['all','pos','neg']:
+    for mask_dir in ['all','pos','neg']:
         
-        #metric_in = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.func.gii".format(hemi = hemi, mask_dir = mask_dir))
-        #metric_out = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_in = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}.func.gii".format(hemi = hemi, mask_dir = mask_dir))
+        metric_out = opj(deriv_dir,mask_dir,"prf_deriv_{hemi}_{mask_dir}_fsaverage.func.gii".format(hemi = hemi, mask_dir = mask_dir))
 
-        #os.system(resample_cmd.format(  main_cmd = main_cmd,
-                                        #metric_in = metric_in, 
-                                        #current_sphere = current_sphere, 
-                                        #new_sphere = new_sphere, 
-                                        #metric_out = metric_out, 
-                                        #current_area = current_area, 
-                                        #new_area = new_area))
+        os.system(resample_cmd.format(  main_cmd = main_cmd,
+                                        metric_in = metric_in, 
+                                        current_sphere = current_sphere, 
+                                        new_sphere = new_sphere, 
+                                        metric_out = metric_out, 
+                                        current_area = current_area, 
+                                        new_area = new_area))
 
 if draw_roi:
     
