@@ -60,6 +60,8 @@ if 'lisa' in platform.uname()[1]:
     N_PROCS = 16
 elif 'aeneas' in platform.uname()[1]:
     N_PROCS = 2
+else: # cartesius
+    N_PROCS = 16
 Ns = analysis_info["fit_step"]
 
 # Define output file path and directories

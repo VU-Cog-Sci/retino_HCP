@@ -16,7 +16,7 @@ Output(s):
 -----------------------------------------------------------------------------------------
 Exemple:
 #1: sub 192641 : ran 18/08/2018 at 20:15
-python fit/submit_fit_jobs.py 999999 gauss 2500 10
+python fit/submit_fit_jobs.py 999999 gauss 5000 20
 -----------------------------------------------------------------------------------------
 """
 
@@ -55,6 +55,12 @@ elif 'aeneas' in platform.uname()[1]:
     base_dir = analysis_info['aeneas_base_folder'] 
     sub_command = 'sh '
     print('analysis running on aeneas')
+else: # cartesius
+    jobscript_template_file = opj(os.getcwd(),'fit','cartesius_jobscript_template.sh')
+    base_dir = analysis_info['cartesius_base_folder'] 
+    sub_command = 'sbatch '
+    print('analysis running on cartesius')
+
 
 fit_script = 'fit/prf_fit.py'
 
@@ -132,5 +138,9 @@ for iter_job in np.arange(0,start_idx.shape[0],1):
         os.system(sub_command + js_name)
 
     elif 'aeneas' in platform.uname()[1]:
+        os.system(sub_command + js_name)
+ 
+    else: # cartesius
+        os.chdir(opj(base_dir,'pp_data',subject,fit_model,'log_outputs'))
         os.system(sub_command + js_name)
     

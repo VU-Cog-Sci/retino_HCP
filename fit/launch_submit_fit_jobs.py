@@ -37,7 +37,7 @@ with open('settings.json') as f:
     analysis_info = json.loads(json_s)
 
 fit_model = sys.argv[1]
-num_vox = 2500
+num_vox = 5000
 dur_fit = 20
 
 # 000-010/ "192641", "105923", "111312", "926862", "182739", "167440", "789373", "690152", "148133", "467351",
