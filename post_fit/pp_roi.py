@@ -111,17 +111,17 @@ if num_miss_part != 0:
 
 # Combine fit files
 # -----------------
-# print('combining fit files')
-# data_combined = np.zeros((fit_val, vox_num))
-# for fit_filename in fit_est_files:
-#     data_fit_file = cifti.read(fit_filename)
-#     data_fit = data_fit_file[0]
-#     data_combined = data_combined + data_fit
+print('combining fit files')
+data_combined = np.zeros((fit_val, vox_num))
+for fit_filename in fit_est_files:
+    data_fit_file = cifti.read(fit_filename)
+    data_fit = data_fit_file[0]
+    data_combined = data_combined + data_fit
 
-# prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
-# bm_full = data_fit_file[1][1]
-# series = cifti.Series(start=0, step=1, size=fit_val)
-# cifti.write(prf_filename, data_combined, (series, bm_full)) 
+prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
+bm_full = data_fit_file[1][1]
+series = cifti.Series(start=0, step=1, size=fit_val)
+cifti.write(prf_filename, data_combined, (series, bm_full)) 
 
 # Compute derived measures from prfs
 # ----------------------------------

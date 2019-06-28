@@ -46,7 +46,7 @@ import cortex
 # Functions import
 # ----------------
 from plot_class import PlotOperator
-from utils import set_pycortex_config_file, mask_gii_2_hdf5 
+from utils import set_pycortex_config_file, mask_gii_2_hdf5, mask_nii_2_hdf5
 
 # Get inputs
 # ----------
@@ -166,11 +166,12 @@ for roi_num, roi in enumerate(analysis_info['rois']):
 
 
 
+
 # Save subcortical ROIS data in hdf5
 # ----------------------------------
 print('creating subcortical h5 files')
 subcortical_file = ''
-for sub_roi_num, sub_roi in enumerate(analysis_info['subcortical_rois']):
+for sub_roi_num, sub_roi in enumerate(analysis_info['rois_subcortical']):
     try: os.makedirs(h5_dir)
     except OSError: pass
     
@@ -181,17 +182,20 @@ for sub_roi_num, sub_roi in enumerate(analysis_info['subcortical_rois']):
     for hemi in ['L','R']:
         
         hemi_mask_file = opj(base_dir,'raw_data','surfaces','pauli_atlas',"MNI152_T1_1mm_brain_mask_{hemi}_resample.nii.gz".format(hemi = hemi))
-        roi_mask_file = opj(base_dir,'raw_data','surfaces','pauli_atlas',"CIT168toMNI152_prob_atlas_bilat_1mm_{hemi}_resample.nii.gz".format(hemi = hemi))
+        roi_mask_file = opj(base_dir,'raw_data','surfaces','pauli_atlas',"CIT168toMNI152_prob_atlas_bilat_1mm_{sub_roi}_resample.nii.gz".format(sub_roi = sub_roi))
+        
         
         # combine hemi and roi to create mask_file
-        
         for mask_dir in ['all','pos','neg']:
             
             in_file = opj(deriv_dir,mask_dir,"prf_deriv_subcortical_{mask_dir}.nii.gz".format(mask_dir = mask_dir))
             folder_alias = '{hemi}_{mask_dir}'.format(hemi = hemi,mask_dir = mask_dir)
             
             mask_nii_2_hdf5(in_file = in_file,
-                            mask_file = mask_file,
+                            hemi_mask_file = hemi_mask_file,
+                            roi_mask_file = roi_mask_file,
                             hdf5_file = h5_file,
                             folder_alias = folder_alias,
-                            roi_num = roi_num)
+                            rois_th = analysis_info['rois_subcortical_threshold'],
+                            mask_dir = mask_dir,
+                            hemi = hemi)

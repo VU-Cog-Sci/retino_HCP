@@ -71,36 +71,36 @@ class PlotOperator(object):
         return colors_val_rgb
 
 
-    def get_weighted_regression_line(self, main_fig, data_source, rsq_string = 'rsq'):
-        import numpy as np
-        from scipy.optimize import curve_fit
+#     def get_weighted_regression_line(self, main_fig, data_source, rsq_string = 'rsq'):
+#         import numpy as np
+#         from scipy.optimize import curve_fit
         
         
-        linear_function = lambda x, a, b: a * x + b
+#         linear_function = lambda x, a, b: a * x + b
         
-        x_reg                           =   data_source[self.x_source_label]                                                      # x data for regression line
-        y_reg                           =   data_source[self.y_source_label]                                   # y data for regression line
-        weight_reg                      =   data_source[rsq_string]                                                   # weight values for regression line
+#         x_reg                           =   data_source[self.x_source_label]                                                      # x data for regression line
+#         y_reg                           =   data_source[self.y_source_label]                                   # y data for regression line
+#         weight_reg                      =   data_source[rsq_string]                                                   # weight values for regression line
         
-        x_reg                       =   x_reg[(~np.isnan(x_reg) & ~np.isnan(y_reg))]
-        y_reg                       =   y_reg[(~np.isnan(x_reg) & ~np.isnan(y_reg))]
+#         x_reg                       =   x_reg[(~np.isnan(x_reg) & ~np.isnan(y_reg))]
+#         y_reg                       =   y_reg[(~np.isnan(x_reg) & ~np.isnan(y_reg))]
 
-        coeffs, matcov                  =   curve_fit(                                                              # Use non-linear least squares to fit a function, f, to data.
-                                                f                   =   linear_function,                                       # fit function to use
-                                                xdata               =   x_reg,                                      # x data for regression fit
-                                                ydata               =   y_reg,                                      # y data for regression fit
-                                                sigma               =   weight_reg)                                 # weight
+#         coeffs, matcov                  =   curve_fit(                                                              # Use non-linear least squares to fit a function, f, to data.
+#                                                 f                   =   linear_function,                                       # fit function to use
+#                                                 xdata               =   x_reg,                                      # x data for regression fit
+#                                                 ydata               =   y_reg,                                      # y data for regression fit
+#                                                 sigma               =   weight_reg)                                 # weight
         
-        x_fit                           =   np.arange(self.stim_fig_xlim[0], self.stim_fig_xlim[1] + self.x_tick_steps, self.x_tick_steps) # define fitted line x values
-        y_fit                           =   linear_function(x_fit, coeffs[0], coeffs[1])                                       # define fitted line y values
+#         x_fit                           =   np.arange(self.stim_fig_xlim[0], self.stim_fig_xlim[1] + self.x_tick_steps, self.x_tick_steps) # define fitted line x values
+#         y_fit                           =   linear_function(x_fit, coeffs[0], coeffs[1])                                       # define fitted line y values
 
-        plot_reg                        =   main_fig.line(                                                          # draw fitted line on main figure
-                                                x                   =  x_fit,                                       # define x of the line
-                                                y                   =  y_fit,                                       # define y of the line
-                                                line_color          =  'black',                                     # define line color
-                                                line_width          =  4,
-                                                line_alpha          =  0.5)                                         # define line alpha
-        return plot_reg
+#         plot_reg                        =   main_fig.line(                                                          # draw fitted line on main figure
+#                                                 x                   =  x_fit,                                       # define x of the line
+#                                                 y                   =  y_fit,                                       # define y of the line
+#                                                 line_color          =  'black',                                     # define line color
+#                                                 line_width          =  4,
+#                                                 line_alpha          =  0.5)                                         # define line alpha
+#         return plot_reg
 
 
     def create_horizontal_histogram(self, data_source, main_fig):

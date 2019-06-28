@@ -7,6 +7,7 @@ from scipy.signal import savgol_filter
 from skimage.transform import rotate
 from math import *
 import cortex
+import cifti
 
 def set_pycortex_config_file(project_folder):
 
@@ -61,10 +62,9 @@ def set_pycortex_config_file(project_folder):
     os.rename(new_pycortex_config_file, pycortex_config_file)
     return None
 
-def convert_fit_results(prf_filename,
-                        output_dir,
+def convert_fit_results(prf_filename, 
+                        output_dir, 
                         stim_radius,
-                        hemi,
                         fit_model):
     """
     Convert pRF fitting value in different parameters for following analysis
@@ -74,14 +74,13 @@ def convert_fit_results(prf_filename,
     prf_filename: absolute paths to prf result files.
     output_dir: absolute path to directory into which to put the resulting files.
     stim_radius: stimulus radius in deg
-    hemi: brain hemisphere
     fit_model: fit model ('gauss','css')
 
     Returns
     -------
-    prf_deriv_L_all and  prf_deriv_R_all: derivative of pRF analysis for all pRF voxels
-    prf_deriv_L_neg and  prf_deriv_R_neg : derivative of pRF analysis for all negative pRF voxels
-    prf_deriv_L_pos and  prf_deriv_R_pos : derivative of pRF analysis for all positive pRF voxels
+    prf_deriv_all: derivative of pRF analysis for all pRF voxels
+    prf_deriv_neg: derivative of pRF analysis for all negative pRF voxels
+    prf_deriv_pos: derivative of pRF analysis for all positive pRF voxels
 
     stucture output:
     columns: 1->32492
@@ -111,6 +110,7 @@ def convert_fit_results(prf_filename,
     import numpy as np
     import ipdb
     deb = ipdb.set_trace
+  
 
     # Popeye imports
     from popeye.spinach import generate_og_receptive_fields
@@ -127,12 +127,8 @@ def convert_fit_results(prf_filename,
 
     # Get data details
     # ----------------
-    prf_data = []
-    prf_data_load = nb.load(prf_filename[0])
-    prf_data.append(np.array([prf_data_load.darrays[i].data for i in range(len(prf_data_load.darrays))]))
-    prf_data = np.vstack(prf_data)    
-    ext = prf_data_load.extra
-    hdr = prf_data_load.header
+    prf_data_file = cifti.read(prf_filename)
+    prf_data = prf_data_file[0]
 
     # Compute derived measures from prfs
     # ----------------------------------
@@ -204,10 +200,11 @@ def convert_fit_results(prf_filename,
     # pRF y
     prf_y_all = prf_data[y_idx,:]
 
+
     # Saving
     # ------
     for mask_dir in ['all','pos','neg']:
-        print('saving: %s'%('os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii")'.format(hemi = hemi, mask_dir = mask_dir)))
+        print('saving: %s'%('os.path.join(output_dir,"{mask_dir}","prf_deriv_{mask_dir}.nii")'.format(mask_dir = mask_dir)))
         for output_type in ['prf_sign','prf_rsq','prf_ecc','prf_polar_real','prf_polar_imag','prf_size','prf_non_lin','prf_amp','prf_baseline','prf_cov','prf_x','prf_y']:
             exec('{output_type}_{mask_dir} = np.copy({output_type}_all)'.format(mask_dir = mask_dir, output_type = output_type))
             exec('{output_type}_{mask_dir}[~{mask_dir}_mask] = np.nan'.format(mask_dir = mask_dir, output_type = output_type))
@@ -217,9 +214,10 @@ def convert_fit_results(prf_filename,
                 prf_x_{mask_dir},prf_y_{mask_dir}))'.format(mask_dir = mask_dir))
         
         exec('prf_deriv_{mask_dir} = prf_deriv_{mask_dir}.astype(np.float32)'.format(mask_dir = mask_dir))
-        exec('darrays = [nb.gifti.gifti.GiftiDataArray(d) for d in prf_deriv_{mask_dir}]'.format(mask_dir = mask_dir))
-        exec('gii_out = nb.gifti.gifti.GiftiImage(header = hdr, extra = ext, darrays = darrays)')
-        exec('nb.save(gii_out,os.path.join(output_dir,"{mask_dir}","prf_deriv_{hemi}_{mask_dir}.gii"))'.format(hemi = hemi, mask_dir = mask_dir))
+        bm_full = prf_data_file[1][1]
+        series = cifti.Series(start=0, step=1, size=12)
+        exec('cifti.write(os.path.join(output_dir,"{mask_dir}","prf_deriv_{mask_dir}.nii"), prf_deriv_{mask_dir}, (series,bm_full))'.format(mask_dir = mask_dir))
+
 
     return None
 
@@ -264,7 +262,9 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
     gii_in_data = nb.load(in_file)
     data_mat = np.array([gii_in_data.darrays[i].data for i in range(len(gii_in_data.darrays))])
     data_name = op.split(in_file)[-1].split('.gii')[0]
-
+    
+    
+    
     gii_in_mask = nb.load(mask_file)
     mask_mat = np.array([gii_in_mask.darrays[i].data for i in range(len(gii_in_mask.darrays))])
 
@@ -287,6 +287,79 @@ def mask_gii_2_hdf5(in_file, mask_file, hdf5_file, folder_alias, roi_num):
 
     return None
 
+def mask_nii_2_hdf5(in_file, hemi_mask_file, roi_mask_file, hdf5_file, folder_alias, rois_th, hemi, mask_dir):
+    
+    """masks data in in_file with mask in mask_file,
+    to be stored in an hdf5 file
+
+    Takes a list of 3D or 4D fMRI nifti-files and masks the
+    data with all masks in the list of nifti-files mask_files.
+    These files are assumed to represent the same space, i.e.
+    that of the functional acquisitions. 
+    These are saved in hdf5_file, in the folder folder_alias.
+
+    Parameters
+    ----------
+    in_files : list
+        list of absolute path to functional nifti-files.
+        all nifti files are assumed to have the same ndim
+    hemi_mask_file : list
+        list of absolute path to mask nifti-files.
+        mask_files are assumed to be 3D
+        hemisphere mask
+    roi_mask_file : list
+        list of absolute path to mask nifti-files.
+        mask_files are assumed to be 3D
+        roi mask
+    hdf5_file : str
+        absolute path to hdf5 file.
+    folder_alias : str
+                name of the to-be-created folder in the hdf5 file.
+
+    Returns
+    -------
+    hdf5_file : str
+        absolute path to hdf5 file.
+    """
+
+    import nibabel as nb
+    import os.path as op
+    import numpy as np
+    import h5py
+    import ipdb
+    deb = ipdb.set_trace
+
+
+    nii_in = nb.load(in_file)
+    data_mat = nii_in.get_data()
+    data_name = "prf_deriv_{hemi}_{mask_dir}.func".format(hemi = hemi, mask_dir = mask_dir)
+
+    nii_in_hemi_mask = nb.load(hemi_mask_file)
+    hemi_mask_mat = nii_in_hemi_mask.get_data()>=1.0
+    
+    nii_in_roi_mask = nb.load(roi_mask_file)
+    roi_mask_mat = nii_in_roi_mask.get_data()
+    roi_mask_mat_th = roi_mask_mat>=rois_th
+    
+    mask_mat = np.logical_and(hemi_mask_mat,roi_mask_mat_th)
+    roi_data = data_mat[mask_mat,:].T
+    
+    try:
+        h5file = h5py.File(hdf5_file, "r+")
+    except:
+        h5file = h5py.File(hdf5_file, "a")
+    
+    try:
+        g_hemi = h5file.create_group(folder_alias)    
+    except:
+        None
+
+    h5file.create_dataset('{folder_alias}/{data_name}'.format(folder_alias = folder_alias, data_name = data_name),data = roi_data,dtype='float32')
+    
+    return None
+
+    
+
 def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps = 255,\
                         alpha = None,depth = 1,thick = 1,height = 1024,sampler = 'nearest',\
                         with_curvature = True,with_labels = False,with_colorbar = False,\
@@ -299,7 +372,7 @@ def draw_cortex_vertex(subject,data,cmap,vmin,vmax,cbar = 'discrete',cmap_steps 
     ----------
     subject             : subject id (e.g. 'sub-001')
     data                : the data you would like to plot on a flatmap
-    cmap                : colormap that shoudl be used for plotting
+    cmap                : colormap that shoudl be used for pldata_matotting
     vmin                : minimal value iqn colormap
     vmax                : maximal value in colormap
     cbar                : color bar layout
