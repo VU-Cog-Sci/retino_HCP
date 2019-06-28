@@ -80,56 +80,56 @@ deriv_dir = opj(base_dir,'pp_data',subject,fit_model,'deriv')
 
 # Determine number of vertex and time_series
 # -------------------------------------------
-# data_file = opj(base_dir,'raw_data', subject, 'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
-# data_file_load = cifti.read(data_file)
-# data = data_file_load[0]
-# vox_num = data.shape[1]
+data_file = opj(base_dir,'raw_data', subject, 'tfMRI_RETALL_Atlas_1.6mm_MSMAll_hp2000_clean_sg_psc.dtseries.nii')
+data_file_load = cifti.read(data_file)
+data = data_file_load[0]
+vox_num = data.shape[1]
 
 # Check if all slices are present
 # -------------------------------
-# start_idx =  np.arange(0,vox_num,job_vox)
-# end_idx = start_idx+job_vox
-# end_idx[-1] = vox_num
-# num_miss_part = 0
+start_idx =  np.arange(0,vox_num,job_vox)
+end_idx = start_idx+job_vox
+end_idx[-1] = vox_num
+num_miss_part = 0
 
-# fit_est_files = []
-# for iter_job in np.arange(0,start_idx.shape[0],1):
-#     fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_est_%s_to_%s.dtseries.nii' %(base_file_name,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
-#     if os.path.isfile(fit_est_file):
-#         if os.path.getsize(fit_est_file) == 0:
-#             num_miss_part += 1 
-#         else:
-#             fit_est_files.append(fit_est_file)
-#     else:
-#         num_miss_part += 1
+fit_est_files = []
+for iter_job in np.arange(0,start_idx.shape[0],1):
+    fit_est_file = opj(base_dir,'pp_data',subject,fit_model,'fit', '%s_est_%s_to_%s.dtseries.nii' %(base_file_name,str(int(start_idx[iter_job])),str(int(end_idx[iter_job]))))
+    if os.path.isfile(fit_est_file):
+        if os.path.getsize(fit_est_file) == 0:
+            num_miss_part += 1 
+        else:
+            fit_est_files.append(fit_est_file)
+    else:
+        num_miss_part += 1
 
-# if num_miss_part != 0:
-#     sys.exit('%i missing files, analysis stopped'%num_miss_part)
+if num_miss_part != 0:
+    sys.exit('%i missing files, analysis stopped'%num_miss_part)
 
 
 # Combine fit files
 # -----------------
-# print('combining fit files')
-# data_combined = np.zeros((fit_val, vox_num))
-# for fit_filename in fit_est_files:
-#     data_fit_file = cifti.read(fit_filename)
-#     data_fit = data_fit_file[0]
-#     data_combined = data_combined + data_fit
+print('combining fit files')
+data_combined = np.zeros((fit_val, vox_num))
+for fit_filename in fit_est_files:
+    data_fit_file = cifti.read(fit_filename)
+    data_fit = data_fit_file[0]
+    data_combined = data_combined + data_fit
 
-# prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
-# bm_full = data_fit_file[1][1]
-# series = cifti.Series(start=0, step=1, size=fit_val)
-# cifti.write(prf_filename, data_combined, (series, bm_full)) 
+prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
+bm_full = data_fit_file[1][1]
+series = cifti.Series(start=0, step=1, size=fit_val)
+cifti.write(prf_filename, data_combined, (series, bm_full)) 
 
 # Compute derived measures from prfs
 # ----------------------------------
-# print('extracting pRF derivatives')
-# prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
+print('extracting pRF derivatives')
+prf_filename = opj(base_dir,'pp_data',subject,fit_model,'fit',"{bfn}.dtseries.nii".format(bfn= base_file_name))
 
-# convert_fit_results(prf_filename = prf_filename,
-#                     output_dir = deriv_dir,
-#                     stim_radius = analysis_info['stim_radius'],
-#                     fit_model = fit_model)
+convert_fit_results(prf_filename = prf_filename,
+                    output_dir = deriv_dir,
+                    stim_radius = analysis_info['stim_radius'],
+                    fit_model = fit_model)
 
 
 # Resample gii to fsaverage
