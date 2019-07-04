@@ -38,7 +38,7 @@ with open('settings.json') as f:
 
 fit_model = sys.argv[1]
 num_vox = 5000
-dur_fit = 20
+dur_fit = 10
 
 # 000-010/ "192641", "105923", "111312", "926862", "182739", "167440", "789373", "690152", "148133", "467351",
 # 010-020/ "233326", "144226", "638049", "318637", "165436", "771354", "995174", "463040", "187345", "547046",
@@ -65,7 +65,7 @@ subs = analysis_info['subject_list']
 # Subject to analyse
 # ------------------
 index_start = 0
-index_end = 1
+index_end = 20
 for subject in subs[index_start:index_end]:
     
     os.system("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
