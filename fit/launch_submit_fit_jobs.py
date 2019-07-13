@@ -64,8 +64,8 @@ subs = analysis_info['subject_list']
 
 # Subject to analyse
 # ------------------
-index_start = 95
-index_end = 120
+index_start = 120
+index_end = 145
 for subject in subs[index_start:index_end]:
     
     os.system("python fit/submit_fit_jobs.py {subject} {fit_model} {num_vox} {dur_fit}".format(subject = subject, 
