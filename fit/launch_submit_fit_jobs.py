@@ -64,7 +64,7 @@ subs = analysis_info['subject_list']
 
 # Subject to analyse
 # ------------------
-index_start = 170
+index_start = 0
 index_end = 182
 for subject in subs[index_start:index_end]:
     
