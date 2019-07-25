@@ -45,7 +45,7 @@ deb = ipdb.set_trace
 # Get inputs
 # ----------
 fit_model = sys.argv[1]
-max_tmux = int(sys.argv[2])
+# max_tmux = int(sys.argv[2])
 job_vox = 5000
 
 # Define analysis parameters
@@ -71,12 +71,16 @@ subject_list = analysis_info['subject_list']
 # -------------
 num_run = 0
 for subject_fit in subject_list:
-    if num_run < max_tmux:
-        if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'deriv'))==0:
-            session_name = "{subject_fit}_{fit_model}_pp_roi".format(subject_fit = subject_fit, fit_model = fit_model)
-            print("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox} 0'".format(\
-                session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
-            os.system("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox} 0'".format(\
-                session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
-            time.sleep(2)
-            num_run = num_run + 1
+    # if num_run < max_tmux:
+    #     if os.path.isdir(opj(base_dir,'pp_data',subject_fit,fit_model,'deriv'))==0:
+    #         session_name = "{subject_fit}_{fit_model}_pp_roi".format(subject_fit = subject_fit, fit_model = fit_model)
+    #         print("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox} 0'".format(\
+    #             session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
+    #         os.system("tmux new-session -d -s {session_name} 'python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox} 0'".format(\
+    #             session_name = session_name, subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
+    #         time.sleep(2)
+    #         num_run = num_run + 1
+    
+    print("python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox} 0".format(subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
+    os.system("python post_fit/pp_roi.py {subject_fit} {fit_model} {job_vox} 0".format(subject_fit = subject_fit, fit_model = fit_model, job_vox = job_vox))
+
